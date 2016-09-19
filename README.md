@@ -1,14 +1,15 @@
 # cu-perception-manipulation-stack
 Contains ros packages for perception and arm manipulation of the Jaco arm. 
 
+## Installation
 
 Dependencies:
 
-- [ ] ros-indigo
-- [ ] ubuntu 14.04
-- [ ] ros-indigo-ar-track-alvar
-- [ ] ...
-- [ ] the rest to be added later
++ ros-indigo
++ ubuntu 14.04
++ ros-indigo-ar-track-alvar
++ ...
++ the rest to be added later
 
 Setting up a workspace
 In your home directory:
@@ -21,13 +22,13 @@ mkdir jaco_ws/src
 follow instructions on ros for setting up a workspace before proceeding. Add the following github repos in the src directory in your workspace(s). Use "catkin build" instead of "catkin_make" when compiling. 
 
 use git clone inside jaco_ws/src:
-- [ ] b indigo-devel https://github.com/davetcoleman/rviz_visual_tools.git
-- [ ] https://github.com/ros-planning/moveit_robots.git
-- [ ] -b indigo-devel https://github.com/davetcoleman/moveit_visual_tools.git
-- [ ] https://github.com/correlllab/cu-perception-manipulation-stack.git
-- [ ] https://github.com/Kinovarobotics/kinova-ros.git
++ b indigo-devel https://github.com/davetcoleman/rviz_visual_tools.git
++ https://github.com/ros-planning/moveit_robots.git
++ -b indigo-devel https://github.com/davetcoleman/moveit_visual_tools.git
++ https://github.com/correlllab/cu-perception-manipulation-stack.git
++ https://github.com/Kinovarobotics/kinova-ros.git
 
-###### follow kinova-ros instructions for udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
+..* follow kinova-ros instructions for udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
 
 
 .bashrc lines to add:
@@ -40,6 +41,8 @@ export HOSTNAME=localhost  # Jaco, etc
 export ROS_MASTER_URI=http://$HOSTNAME:11311
 export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
 ```
+
+## Running the packages
 launch files:
 ```
     roslaunch openni2_launch openni2.launch 
