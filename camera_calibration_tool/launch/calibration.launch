@@ -1,0 +1,6 @@
+<launch>
+
+  <!-- Camera Calibration -->
+  <node name="camera_align" pkg="camera_calibration_tool" type="camera_alignment" output="screen"/>
+
+</launch>

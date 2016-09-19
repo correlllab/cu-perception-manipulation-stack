@@ -1,0 +1,13 @@
+<launch>
+  <arg name="limb" default="right"/>
+  <arg name="reset" default="false"/>
+
+  <node name="pick_and_place_node" pkg="pick_and_place"
+  type="golf.py" args="--limb $(arg limb)"
+  output="screen" unless="$(arg reset)"/>
+
+  <node name="pick_and_place_node" pkg="pick_and_place"
+  type="golf.py" args="--limb $(arg limb) --reset"
+  output="screen" if="$(arg reset)"/>
+
+</launch>

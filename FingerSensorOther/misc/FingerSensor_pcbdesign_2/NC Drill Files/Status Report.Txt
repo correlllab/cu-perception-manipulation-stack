@@ -1,0 +1,13 @@
+Output: NC Drill Files
+Type  : NC Drill
+From  : Project [FingerSensors.PrjPCB]
+   Generated File[FingerSensor.TXT]
+   Generated File[FingerSensor-BoardEdgeRout.TXT]
+   Generated File[FingerSensor.LDP]
+   Generated File[FingerSensor.DRR]
+
+
+Files Generated   : 4
+Documents Printed : 0
+
+Finished Output Generation At 5:05:17 PM On 12/3/2015

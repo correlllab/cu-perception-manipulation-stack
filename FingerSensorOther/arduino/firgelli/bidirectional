@@ -1,0 +1,35 @@
+int enablePin = 11;
+int in1Pin = 10;
+int in2Pin = 9;
+int switchPin = 7;
+int potPin = A0;
+int sensorPin = A1;
+int sensorValue = 0;
+int CurrentPosition = 0;
+int speed1 = 0;
+ 
+void setup() {
+  Serial.begin(9600);
+  pinMode(in1Pin, OUTPUT);
+  pinMode(in2Pin, OUTPUT);
+  pinMode(enablePin, OUTPUT);
+  pinMode(switchPin, INPUT); digitalWrite(switchPin, HIGH);
+  
+}
+ 
+void loop()
+{
+  CurrentPosition = analogRead(sensorPin);
+  Serial.println(CurrentPosition);
+  
+  int speed1 = analogRead(potPin) /4;
+  boolean reverse = digitalRead(switchPin);
+  setMotor(speed1, reverse);
+}
+ 
+void setMotor(int speed1, boolean reverse)
+{
+  analogWrite(enablePin, speed1);
+  digitalWrite(in1Pin, ! reverse);
+  digitalWrite(in2Pin, reverse);
+}

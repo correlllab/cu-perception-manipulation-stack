@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+NCDrill File Report For: FingerSensor.PcbDoc   12/3/2015  5:05:17 PM
+---------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : FingerSensor.TXT
+
+Tool         Hole Size           Hole Type     Hole Count Plated       Tool Travel
+---------------------------------------------------------------------------
+T1        15mil (0.381mm)          Round          44               5.75 Inch (146.13 mm)
+T2        35mil (0.889mm)          Round          10               4.82 Inch (122.30 mm)
+T3        100mil (2.54mm)          Round          1                0.00 Inch (0.00 mm)
+---------------------------------------------------------------------------
+Totals                                            55               10.57 Inch (268.43 mm)
+
+Total Processing Time (hh:mm:ss) : 00:00:00
