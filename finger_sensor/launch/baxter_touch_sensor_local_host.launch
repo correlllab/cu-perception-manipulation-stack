@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- send robot XML to param server -->
+  <param name="robot_description" command="cat $(find baxter_description)/urdf/baxter.urdf" />
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="TRUE" />
+  </node>
+
+  <!-- Combine joint values -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+  <!-- Show in Rviz   -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ros_finger_sensor)/launch/finger_sensor.rviz"/>
+
+  <!-- Manual calibrationof camera TF -->
+  <node pkg="keyboard" type="keyboard" name="keyboard_base_to_camera" />
+  <node pkg="tf_keyboard_cal" type="tf_keyboard_cal" name="tf_keyboard_base_to_camera" output="screen">
+    <rosparam command="load" file="$(find ros_finger_sensor)/config/tf_to_camera.yaml"/>
+  </node>
+
+  <!-- Manual calibrationof camera TF -->
+  <node pkg="keyboard" type="keyboard" name="keyboard_base_to_table" />
+  <node pkg="tf_keyboard_cal" type="tf_keyboard_cal" name="tf_keyboard_base_to_table" output="screen">
+    <rosparam command="load" file="$(find ros_finger_sensor)/config/tf_to_table.yaml"/>
+  </node>
+
+  <!-- Start Xtion -->
+  <include file="$(find openni2_launch)/launch/openni2.launch">
+    <arg name="depth_registration" value="true" />
+    <arg name="publish_tf" value="true" />
+  </include>
+
+
+</launch>

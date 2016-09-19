@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- static transform to xtion -->
+  <node pkg="tf" type="static_transform_publisher" name="my_tf" args="0 0 0 0 0 0 /base /my_states/base 100"/>
+
+
+  <!-- send robot XML to param server -->
+  <param name="robot_description" command="cat $(find baxter_description)/urdf/baxter.urdf" />
+  
+  <!-- Combine joint values -->
+  <node name="planning_robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" >
+    <param name="tf_prefix" value="my_states" />
+    <remap from="joint_states" to="my_states" />
+  </node>
+
+  <!-- Show in Rviz   -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ros_finger_sensor)/launch/baxter_control.rviz"/>
+
+</launch>

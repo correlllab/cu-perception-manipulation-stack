@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package>
+  <name>finger_sensor</name>
+  <version>0.0.0</version>
+  <description>The finger_sensor package</description>
+
+  <maintainer email="andy@todo.todo">andy</maintainer>
+
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>rviz_visual_tools</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>tf_conversions</build_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>baxter_core_msgs</build_depend>
+  <build_depend>eigen_conversions</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>rviz_visual_tools</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>tf_conversions</run_depend>
+  <run_depend>libpcl-all</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>baxter_core_msgs</run_depend>
+  <run_depend>eigen_conversions</run_depend>
+  <run_depend>pick_and_place</run_depend>
+
+
+  <export>
+  </export>
+</package>

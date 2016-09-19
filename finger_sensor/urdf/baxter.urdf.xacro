@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<!-- mcevoy.andy@gmail.com -->
+
+<robot name="baxter" 
+       xmlns:xacro="http://www.ros.org/wiki/xacro"
+       xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<!-- baxter urdf files -->
+<xacro:include filename="$(find ros_finger_sensor)/urdf/baxter_no_end_effectors.urdf"/>
+<!-- <xacro:include filename="$(find ros_finger_sensor)/urdf/electric_gripper.urdf.xacro" /> -->
+
+<!-- open hand urdf files -->
+<!-- <xacro:include filename="$(find ros_finger_sensor)/urdf/model_t.urdf.xacro" /> -->
+<!-- <xacro:include filename="$(find ros_finger_sesnsor)/urdf/model_o.urdf.xacro" /> -->
+
+<!-- UNCOMMENT THE GRIPPERS THAT CORRESPOND TO YOUR CONFIGURATION -->
+
+<!-- *** BAXTER ELECTRIC PARALLEL GRIPPER *** -->
+<!-- <xacro:electric_parallel_gripper arm="left" /> -->
+<!-- <xacro:electric_parallel_gripper arm="right" /> -->
+
+<!-- *** YALE OPEN HAND GRIPPERS *** -->
+
+<!-- MODEL T -->
+<!-- xacro:model_t arm="left"/ -->
+<!-- <xacro:model_t arm="right"/> -->
+
+<!-- MODEL O -->
+<!-- xacro:model_o arm="left"/ -->
+<!-- xacro:model_o arm="right"/ -->
+
+</robot>

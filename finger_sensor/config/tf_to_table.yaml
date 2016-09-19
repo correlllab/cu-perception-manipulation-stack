@@ -1,0 +1,11 @@
+initial_x: 1.43
+initial_y: 0.72
+initial_z: 0.52
+initial_roll: -0.01
+initial_pitch: 0
+initial_yaw: 0
+from: base
+to: table
+file_package: ros_finger_sensor
+file_name: /config/tf_to_table.yaml
+topic_name: /keyboard_base_to_table/keydown

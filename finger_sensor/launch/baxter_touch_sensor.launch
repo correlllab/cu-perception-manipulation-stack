@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- send robot XML to param server -->
+  <param name="robot_description" command="cat $(find baxter_description)/urdf/baxter.urdf" />
+
+  <!-- Show in Rviz   -->
+  <node name="$(anon rviz)" pkg="rviz" type="rviz" args="-d $(find ros_finger_sensor)/launch/finger_sensor.rviz"/>
+
+  <!-- Manual calibration of camera TF -->
+  <node pkg="keyboard" type="keyboard" name="keyboard_base_to_camera" />
+  <node pkg="tf_keyboard_cal" type="tf_keyboard_cal" name="tf_keyboard_base_to_camera" output="screen">
+    <rosparam command="load" file="$(find ros_finger_sensor)/config/tf_to_camera.yaml"/>
+  </node>
+
+  <!-- Start Xtion -->
+  <include file="$(find openni_launch)/launch/openni.launch">
+    <arg name="depth_registration" value="true" />
+    <arg name="publish_tf" value="true" />
+  </include>
+
+  <!-- Track QR Codes from xtion-->
+  <arg name="marker_size" default="4.4" />
+  <arg name="max_new_marker_error" default="0.08" />
+  <arg name="max_track_error" default="0.2" />
+  <arg name="cam_image_topic" default="/camera/depth_registered/points" />
+  <arg name="cam_info_topic" default="/camera/rgb/camera_info" />
+  <arg name="output_frame" default="/base" />
+
+  <node name="ar_track_alvar_xtion" pkg="ar_track_alvar" type="individualMarkers" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
+
+
+</launch>

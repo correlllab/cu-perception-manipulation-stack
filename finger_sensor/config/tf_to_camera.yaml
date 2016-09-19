@@ -1,0 +1,11 @@
+initial_x: 0
+initial_y: 0
+initial_z: 0
+initial_roll: 0
+initial_pitch: -1.5708
+initial_yaw: 3.14159
+from: right_hand
+to: camera_link
+file_package: ros_finger_sensor
+file_name: /config/tf_to_camera.yaml
+topic_name: /keyboard_base_to_camera/keydown
