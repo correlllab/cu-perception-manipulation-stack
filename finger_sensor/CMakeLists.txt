@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   sensor_msgs
   cmake_modules
-  baxter_core_msgs
   pick_and_place
 )
 
@@ -30,12 +29,13 @@ include_directories(
 )
 
 # baxter control server
-add_executable(baxter_control
-  src/baxter_control.cpp
-)
-target_link_libraries(baxter_control
-  ${catkin_LIBRARIES}
-)
+
+#add_executable(baxter_control
+#  src/baxter_control.cpp
+#)
+#target_link_libraries(baxter_control
+#  ${catkin_LIBRARIES}
+#)
 
 # perception server
 add_executable(main_experiment 

@@ -7,7 +7,6 @@ project(pick_and_place)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
-  teleop_interface
 )
 
 ## System dependencies are found with CMake's conventions

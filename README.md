@@ -50,7 +50,6 @@ launch files:
     roslaunch perception interface.launch
 ```
 rosrun scripts:
-To enable or disable baxter:
 ```
     rosrun image_view image_view image:=/camera/rgb/image_raw
     rosrun keyboard keyboard
