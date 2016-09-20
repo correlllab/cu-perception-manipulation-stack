@@ -15,7 +15,7 @@ Contains ros packages for perception, calibration, and arm manipulation of the J
 
 In your home directory:
 ```
-mkdir ros/jaco_ws/src
+mkdir -p ~/ros/jaco_ws/src
 cd ros/aco_ws/src
 catkin_init_workspace
 cd ..
