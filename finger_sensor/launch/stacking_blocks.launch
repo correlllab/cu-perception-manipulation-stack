@@ -1,0 +1,63 @@
+<launch>
+
+  <!-- Start camera calibration for Jaco -->
+  <include file="$(find teleop_interface)/launch/teleop_calibration_jaco.launch"/>
+  <!-- </include> -->
+
+  <!-- teleop_interface_jaco.launch -->
+  <!-- launch qr tracking for camera pose estimation -->
+  <arg name="marker_size" default="5.6" />
+  <arg name="max_new_marker_error" default="0.08" />
+  <arg name="max_track_error" default="0.2" />
+  <arg name="cam_image_topic" default="/camera/depth_registered/points" />
+  <arg name="cam_info_topic" default="/camera/rgb/camera_info" />
+  <arg name="output_frame" default="/camera_rgb_frame" />
+  <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkers" respawn="false" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
+
+  <!-- Perception Server -->
+  <node name="teleop_perception" pkg="teleop_interface" type="teleop_perception" output="screen"/>
+
+
+  <!-- launch rviz -->
+  <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="true" output="screen"
+	args="-d $(find teleop_interface)/launch/teleop_interface_jaco.rviz">
+  </node>
+
+  <!-- <include file="$(find teleop_interface)/launch/teleop_interface_jaco.launch">
+  </include> -->
+
+  <!-- kinova_robot.launch -->
+  <arg name="use_urdf" default="true"/>
+  <arg name="kinova_robotType" default="j2n6a300" />
+
+  <node name="$(arg kinova_robotType)_driver" pkg="kinova_driver" type="kinova_arm_driver" output="screen" cwd="node" args="$(arg kinova_robotType)">
+  <!-- Set this parameter to use a specific arm on your system    -->
+  <!-- <param name="serial_number" value="PJ00000001030703130" /> -->
+  </node>
+
+  <group unless="$(arg use_urdf)">
+    <node name="$(arg kinova_robotType)_tf_updater" pkg="kinova_driver" type="kinova_tf_updater" output="screen" cwd="node" args="$(arg kinova_robotType)">
+      <remap from="/$(arg kinova_robotType)_tf_updater/in/joint_angles" to="/$(arg kinova_robotType)_driver/out/joint_angles"/>
+    </node>
+  </group>
+
+  <group if="$(arg use_urdf)">
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find kinova_description)/urdf/$(arg kinova_robotType)_standalone.xacro'" />
+    <node name="$(arg kinova_robotType)_state_publisher"
+           pkg="robot_state_publisher"
+          type="robot_state_publisher">
+      <remap from="joint_states" to="/$(arg kinova_robotType)_driver/out/joint_state"/>
+    </node>
+  </group>
+
+  <!-- <include file="$(find kinova_bringup)/launch/kinova_robot.launch">
+  </include> -->
+
+
+  <!-- Start Xtion -->
+  <include file="$(find openni2_launch)/launch/openni2.launch">
+    <arg name="depth_registration" value="true" />
+    <arg name="publish_tf" value="true" />
+  </include>
+
+</launch>
