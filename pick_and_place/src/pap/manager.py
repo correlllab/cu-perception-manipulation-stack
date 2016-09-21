@@ -17,14 +17,13 @@ from interactive_markers.interactive_marker_server import (
 from .interactive_marker import make_interactive_marker
 from .utils import Point2list, Quaternion2list
 
-
 class Manager(object):
     def __init__(self, name):
         rospy.init_node(name)
 
         self.transition_table = None
         self.state = 'initial'
-
+	rospy.loginfo("manager.py")
         self.keyboard_sub = rospy.Subscriber("/keyboard/keyup",
                                              Key,
                                              self.handle_keyboard,
@@ -52,7 +51,7 @@ class Manager(object):
 class PickAndPlaceNode(Manager):
     def __init__(self, robot, *robotargs):
         super(PickAndPlaceNode, self).__init__('pp_node')
-
+	rospy.loginfo("PickAndPlaceNode")
         _post_perceive_trans = defaultdict(lambda: self._pick)
         _post_perceive_trans.update({'c': self._calibrate})
         _preplace = defaultdict(lambda: self._preplace)
@@ -68,13 +67,13 @@ class PickAndPlaceNode(Manager):
             'preplace': {'s': self._place},
             'place': {'q': self._perceive, 'c': self._calibrate}
             }
-
+	rospy.loginfo("PickAndPlaceNode1")
         if callable(robot):
             self.robot = robot(*robotargs)
         else:
             self.robot = robot
         self.robot.level = 1
-
+	rospy.loginfo("PickAndPlaceNode2")
         # Hardcoded place for now
         self.place_pose = PoseStamped(
             Header(0, rospy.Time(0), self.robot.base),
@@ -94,7 +93,7 @@ class PickAndPlaceNode(Manager):
                                              Bool,
                                              queue_size=1)
         self.br = tf.TransformBroadcaster()
-
+	rospy.loginfo("PickAndPlaceNode3")
         self.int_marker_server = InteractiveMarkerServer('int_markers')
         # Dict to map imarker names and their updated poses
         self.int_markers = {}

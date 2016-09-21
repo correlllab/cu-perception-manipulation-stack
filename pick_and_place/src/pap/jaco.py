@@ -2,6 +2,7 @@ from robot import Robot
 import rospy
 import kinova_msgs.msg
 from kinova_msgs.srv import HomeArm
+import actionlib
 
 class JacoGripper(object):
     def __init__(self, robot_type='j2n6a300'):

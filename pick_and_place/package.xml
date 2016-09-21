@@ -45,8 +45,6 @@
 
   <run_depend>rospy</run_depend>
 
-  <build_depend>teleop_interface</build_depend>
-  <run_depend>teleop_interface</run_depend>
   <build_depend>message_generation</build_depend>
   <run_depend>message_runtime</run_depend>
 

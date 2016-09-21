@@ -160,6 +160,7 @@ add_executable(perception
 target_link_libraries(perception
   ${catkin_LIBRARIES}
 )
+add_dependencies(perception beginner_tutorials_generate_messages_cpp)
 
 #############
 ## Install ##

@@ -5,11 +5,18 @@ Contains ros packages for perception, calibration, and arm manipulation of the J
 
 ### Dependencies:
 
-+ ros-indigo
++ ros-indigo installation
 + ubuntu 14.04
++ catkin_tools: http://catkin-tools.readthedocs.io/en/latest/installing.html
+
+Using sudo apt-get install:
 + ros-indigo-ar-track-alvar
-+ ...
-+ the rest to be added later
++ ros-indigo-moveit-core
++ ros-indigo-graph-msgs
++ ros-indigo-moveit-ros-robot-interaction
++ ros-indigo-openni2-launch
++ ros-indigo-keyboard
++ ros-indigo-moveit-ros
 
 ### Setting up a workspace and adding the packages
 
@@ -33,7 +40,13 @@ packages:
 + https://github.com/correlllab/cu-perception-manipulation-stack.git
 + https://github.com/Kinovarobotics/kinova-ros.git
 
-Note: follow kinova-ros instructions for udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
+Note: follow kinova-ros instructions for adding udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
+
+restart udev so it reads the new rules:
+
+```
+sudo /etc/init.d/udev restart
+```
 
 ### Compile
 Use "catkin build" in your workspace one more time
@@ -72,6 +85,7 @@ roscore
     roslaunch openni2_launch openni2.launch 
     roslaunch camera_calibration_tool calibration.launch
     roslaunch perception interface.launch
+    roslaunch kinova_bringup kinova_robot.launch
 ```
 ### rosrun scripts:
 ```

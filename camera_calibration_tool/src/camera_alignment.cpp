@@ -45,7 +45,7 @@ public:
   {
     ROS_INFO_STREAM_NAMED("constructor","starting CameraAlignmentTester...");
 
-    qr_marker_ = "ar_marker_4";
+    qr_marker_ = "ar_marker_2";
     camera_cf_ = "camera_link";
     base_cf_ = "base";
 
