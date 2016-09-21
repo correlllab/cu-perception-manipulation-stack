@@ -3,6 +3,7 @@
 ## TODO:
 
 - [X] Publish a custom message with identified objects that includes pose, grasping points, object type, maybe a unique ID, etc...
+- [ ] Filter out objects not on or near the plane of the table
 - [ ] Identify an object and publish above information
 - [ ] Identify multiple objects and publish them
 - [ ] Find grasping points on objects ( just hard code initially and for the competition)

@@ -16,7 +16,7 @@ Contains ros packages for perception, calibration, and arm manipulation of the J
 In your home directory:
 ```
 mkdir -p ~/ros/jaco_ws/src
-cd ros/aco_ws/src
+cd ros/jaco_ws/src
 catkin_init_workspace
 cd ..
 catkin build
@@ -27,16 +27,16 @@ cd src
 git clone <package>
 ```
 packages:
-+ b indigo-devel https://github.com/davetcoleman/rviz_visual_tools.git
++ -b indigo-devel https://github.com/davetcoleman/rviz_visual_tools.git
 + https://github.com/ros-planning/moveit_robots.git
 + -b indigo-devel https://github.com/davetcoleman/moveit_visual_tools.git
 + https://github.com/correlllab/cu-perception-manipulation-stack.git
 + https://github.com/Kinovarobotics/kinova-ros.git
 
-- follow kinova-ros instructions for udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
+Note: follow kinova-ros instructions for udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
 
 ### Compile
-Use "catkin build" in your workspace
+Use "catkin build" in your workspace one more time
 ```
 catkin build
 ```
@@ -84,9 +84,9 @@ roscore
     rosrun finger_sensor sensor.py
     rosrun finger_sensor sensor_visual.py
 ```
-### Main manipulation script (will be restructured):
+### Main manipulation script for jaco:
 ```
-    rosrun finger_sensor stacking_blocks.py
+    rosrun pick_and_place pap_with_perception.py
 ```
 
 ## More instructions coming soon!
