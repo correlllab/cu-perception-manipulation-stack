@@ -13,9 +13,15 @@
   <include file="$(find perception)/launch/interface.launch"/>
   <!-- </include> -->
   
+
+  <!-- kinova_robot.launch -->
   <include file="$(find kinova_bringup)/launch/kinova_robot.launch" />
 
-  <include file="$(find openni2_launch)/launch/openni2.launch"/>
+
+  <include file="$(find openni2_launch)/launch/openni2.launch">
+    <arg name="depth_registration" value="true" />
+    <arg name="publish_tf" value="true" />
+  </include>
 
   <!-- launch pick and place manager -->
   <!-- <node name="pap_with_perception" pkg="pick_and_place" type="pap_with_perception.py" output="screen" /> -->

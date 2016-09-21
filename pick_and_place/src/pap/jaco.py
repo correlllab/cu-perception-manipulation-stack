@@ -47,7 +47,7 @@ class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):
         super(Jaco, self).__init__(base='root')
         self.robot_type = robot_type
-        self.home()
+        #self.home()
         self.gripper = JacoGripper()
         self.velocity_pub = rospy.Publisher(
             '/{}_driver/in/cartesian_velocity'.format(self.robot_type),

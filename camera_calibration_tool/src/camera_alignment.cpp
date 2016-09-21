@@ -39,6 +39,8 @@ private:
   bool refined_;
   bool previously_refined_;
 
+  Eigen::Affine3d qr_location;
+
 public:
   CameraAlignmentTester(int test)
   : nh_("~")
@@ -47,7 +49,7 @@ public:
 
     qr_marker_ = "ar_marker_2";
     camera_cf_ = "camera_link";
-    base_cf_ = "base";
+    base_cf_ = "root";
 
     align_sub_ = nh_.subscribe("/alignment/doit", 1, &CameraAlignmentTester::alignCamera, this);
 
@@ -67,13 +69,13 @@ public:
         refined_ = false;
       }
       tf_visualizer_.publishTransform(camera_pose_, base_cf_, camera_cf_);
+      tf_visualizer_.publishTransform(qr_location, base_cf_, "qr_location");
       loop_rate.sleep();
     }
-  }   
+  }
 
   void alignCamera(const std_msgs::Bool &msg)
   {
-    // TODO: need to add refined poses instead of replacing so estimate gets better. 
     // Add std::vector of poses and just keep the average?
     // The mean (centroid) minimizes the sum of square distances, so let's try doing that.
     if (msg.data)
@@ -104,16 +106,16 @@ public:
     tf::StampedTransform qr_transform;
     Eigen::Affine3d qr_marker_poses[25];
     Eigen::Matrix4d avg_pose = Eigen::Matrix4d::Zero();
-    
+
     // compute average qr pose over 25 readings...
-    
+
     for (std::size_t i = 0; i < 25; i++)
     {
       ROS_DEBUG_STREAM_NAMED("rcp","getting frame " << i << " of 25");
-      tf_listener_.waitForTransform(camera_cf_, qr_marker_, ros::Time(0), ros::Duration(1.0));
+      tf_listener_.waitForTransform(qr_marker_, camera_cf_, ros::Time(0), ros::Duration(1.0));
       try
       {
-        tf_listener_.lookupTransform(camera_cf_, qr_marker_, ros::Time(0), qr_transform);
+        tf_listener_.lookupTransform(qr_marker_, camera_cf_, ros::Time(0), qr_transform);
       }
       catch (tf::TransformException ex)
       {
@@ -122,7 +124,7 @@ public:
         continue;
       }
 
-      tf::transformTFToEigen(qr_transform, qr_marker_poses[i]);    
+      tf::transformTFToEigen(qr_transform, qr_marker_poses[i]);
       ros::Duration(0.1).sleep();
     }
 
@@ -132,31 +134,30 @@ public:
     }
     avg_pose /= 25;
 
-    Eigen::Affine3d qr_pose; 
+    Eigen::Affine3d qr_pose;
     qr_pose.matrix() = avg_pose; // qr pose in w.r.t. camera frame
     ROS_DEBUG_STREAM_NAMED("rcp","qr_pose = \n" << qr_pose.matrix());
 
     // compute pose of camera w.r.t. base frame
     tf::StampedTransform rh_transform;
     Eigen::Affine3d rh_pose;
-    Eigen::Affine3d qr_location = Eigen::Affine3d::Identity();
+    qr_location = Eigen::Affine3d::Identity();
     Eigen::Affine3d rh_to_qr = Eigen::Affine3d::Identity();
     Eigen::Affine3d camera_pose = Eigen::Affine3d::Identity();
 
-    // TODO I think order is swapped here to?
     // arguments are (target, source, etc). Also shouldn't it use ros::Time::now()???
-    tf_listener_.waitForTransform(base_cf_, "right_hand", ros::Time(0), ros::Duration(1.0));
-    tf_listener_.lookupTransform(base_cf_, "right_hand", ros::Time(0), rh_transform);
-    tf::transformTFToEigen(rh_transform, rh_pose);    
+    tf_listener_.waitForTransform(base_cf_, "j2n6a300_link_6", ros::Time(0), ros::Duration(1.0));
+    tf_listener_.lookupTransform(base_cf_, "j2n6a300_link_6", ros::Time(0), rh_transform);
+    tf::transformTFToEigen(rh_transform, rh_pose);
 
     // location of qr tag on laser cut plate
-    rh_to_qr.translation()[0] -= 0.08;
-    rh_to_qr.translation()[2] += 0.0028;
-    // TODO isn't the order swapped? Same below.
-    qr_location = rh_pose * rh_to_qr;
+    rh_to_qr.translation()[0] += 0.081559;
+    rh_to_qr.translation()[2] -= 0.00966;
+    Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-M_PI / 2.0, Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitZ()));
+    qr_location =  rh_pose * (rh_to_qr * qr_rotation);
     visual_tools_->publishAxisLabeled(qr_location, "qr_location");
 
-    camera_pose = qr_location * qr_pose.inverse();
+    camera_pose = qr_location * qr_pose;
     visual_tools_->publishAxisLabeled(camera_pose, "camera_pose");
 
     ROS_DEBUG_STREAM_NAMED("rcp", "camera_pose = \n" << camera_pose.matrix());

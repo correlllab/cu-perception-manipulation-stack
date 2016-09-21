@@ -94,6 +94,7 @@ public:
     ros::Rate loop_rate(50);
     while(ros::ok())
     {
+      //ROS_INFO_STREAM_NAMED("PercConstr", "While Loop");
       if (objects_detected_)
       {
         // TODO: we're using camera_rgb_optical_frame all the time, but the
@@ -111,6 +112,20 @@ public:
           ss << "object_pose_" << idx++;
           tf_visualizer_.publishTransform(*it, "camera_rgb_optical_frame", ss.str());
         }
+      }
+      else
+      {
+          //added to try to eliminate the error messages. errors still exist:
+          /* TF2 exception: Lookup would require extrapolation into the future.  Requested time 1474480049.311874859 but the latest data is at time 1474480049.296680328, when looking up
+           * transform from frame [camera_depth_optical_frame] to frame [camera_rgb_optical_frame]
+           */
+          std_msgs::Int64 msg;
+          msg.data = 0;
+          number_of_objects_pub_.publish(msg);
+          Eigen::Affine3d it;
+          std::ostringstream ss;
+          ss << "object_pose_" << 0;
+          tf_visualizer_.publishTransform(it, "camera_rgb_optical_frame", ss.str());
       }
 
       loop_rate.sleep();
