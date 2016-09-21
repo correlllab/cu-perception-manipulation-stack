@@ -31,9 +31,9 @@ class grasp_generator(object):
     # frame_name = "object_pose_{}".format(obj_to_get)
     #
     # rospy.loginfo("Picking object {}...".format(obj_to_get))
-        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_3"):
-            t = self.listen.getLatestCommonTime("/root", "/object_pose_3")
-            rdhn_translation, rdhn_quaternion = self.listen.lookupTransform("/root", "/object_pose_3", t)
+        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_4"):
+            t = self.listen.getLatestCommonTime("/root", "/object_pose_4")
+            rdhn_translation, rdhn_quaternion = self.listen.lookupTransform("/root", "/object_pose_4", t)
 
             self.broadcast.sendTransform(rdhn_translation,
                                     rdhn_quaternion,
@@ -47,12 +47,12 @@ class grasp_generator(object):
             rdhn_translation_list[2] += 0.09
             rdhn_translation = tuple(rdhn_translation_list)
 
-            # rdhn_quaternion_list = list(rdhn_quaternion)
-            # rdhn_quaternion_list[0] += 0
-            # rdhn_quaternion_list[1] += 6
-            # rdhn_quaternion_list[2] += 0
-            # rdhn_quaternion_list[3] += 0
-            # rdhn_quaternion = tuple(rdhn_quaternion_list)
+            rdhn_quaternion_list = list(rdhn_quaternion)
+            rdhn_quaternion_list[0] += 0
+            rdhn_quaternion_list[1] += 6
+            rdhn_quaternion_list[2] += 0
+            rdhn_quaternion_list[3] += 0
+            rdhn_quaternion = tuple(rdhn_quaternion_list)
 
             print rdhn_translation, rdhn_quaternion
             # cup_frame = tf.TransformerROS().fromTranslationRotation(rdhn_translation,   #convert trans and quat in 4X4matrix
