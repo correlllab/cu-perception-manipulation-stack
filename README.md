@@ -67,13 +67,10 @@ source ~/ros/jaco_ws/devel/setup.bash
 
 export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
 # Local ROS
-#export ROS_HOSTNAME=localhost
-#export ROS_MASTER_URI=http://localhost:11311
-
-# roscore on the main machine
-export ROS_HOSTNAME=
-export BRICK_IP=128.138.244.28  #brick's IP
-export ROS_MASTER_URI=http://$BRICK_IP:11311
+#export HOSTNAME=localhost
+#export BRICK_IP=128.138.244.28  #brick's IP
+export HOSTNAME=correlllab-GB-BSi7-6500.local
+export ROS_MASTER_URI=http://$HOSTNAME:11311
 
 # ROS Workspaces
 function rosPackagePath()
