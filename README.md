@@ -61,30 +61,19 @@ gedit ~/.bashrc
 ```
 .bashrc lines to add:
 ```
-# Git
-# Show what git or hg branch we are in
-function parse_vc_branch_and_add_brackets {
-    gitbranch=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\ \[\1\]/'`
-    if [[ "$gitbranch" != '' ]]; then
-	echo $gitbranch
-    else
-	hg branch 2> /dev/null | awk '{print $1 }'
-    fi
-}
-
 # Sourcing ROS and your workspace(s)
 source /opt/ros/indigo/setup.bash 
 source ~/ros/jaco_ws/devel/setup.bash
 
+export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
 # Local ROS
-#export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
 #export ROS_HOSTNAME=localhost
 #export ROS_MASTER_URI=http://localhost:11311
 
-# roscore on another machine
-export ROS_HOSTNAME=localhost
-export ROS_IP=128.138.244.28
-export ROS_MASTER_URI=http://$ROS_IP:11311
+# roscore on the main machine
+export ROS_HOSTNAME=
+export BRICK_IP=128.138.244.28  #brick's IP
+export ROS_MASTER_URI=http://$BRICK_IP:11311
 
 # ROS Workspaces
 function rosPackagePath()
@@ -104,35 +93,57 @@ echo "ROS_IP = "$ROS_IP
 echo "ROS_MASTER_URI = "$ROS_MASTER_URI
 ```
 
-#export HOSTNAME=011305P0009.local  # To connect to Baxter
-export HOSTNAME=localhost  # Jaco, etc
-export ROS_MASTER_URI=http://$HOSTNAME:11311
-export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
-```
 Either open a new terminal or source that file:
 ```
 source ~/.bashrc
 ```
 
-## Running the packages
-If connecting to Jaco, run:
+## Running the everything on your machine
+Uncomment and comment out pertaining sections in .bashrc shown above and run the following in a terminal(s)
 ```
 roscore
 ```
 
 ### launch files:
+Single one that launches all of the nodes:
 ```
-    roslaunch openni2_launch openni2.launch 
+   roslaunch pick_and_place pap_full.launch
+```
+Launching the nodes individually:
+```
+    roslaunch openni2_launch openni2.launch depth_registration:=true publish_tf:=true
     roslaunch camera_calibration_tool calibration.launch
     roslaunch perception interface.launch
     roslaunch kinova_bringup kinova_robot.launch
-```
-### rosrun scripts:
-```
     rosrun image_view image_view image:=/camera/rgb/image_raw
     rosrun keyboard keyboard
 ```
 
+### for finger sensors, one of the following: 
+```
+    rosrun finger_sensor sensor.py
+    rosrun finger_sensor sensor_visual.py
+```
+### Main manipulation script for jaco:
+```
+    rosrun pick_and_place pap_with_perception.py
+```
+
+## Connecting to roscore in the lab
+.bashrc script above configures your computer to connect with ROS. Make sure this is sourced properly
+Test connection:
+```
+rostopic list
+```
+Possible solutions if connection fails, but pinging is successful; installing openssh-client and opentssh-server. Using netcat and testing ports. Restarting. Ones of these magically fixed our issues. 
+
+### launch files:
+Launching the nodes:
+```
+    roslaunch perception interface.launch
+    rosrun image_view image_view image:=/camera/rgb/image_raw
+    rosrun keyboard keyboard
+```
 ### for finger sensors, one of the following: 
 ```
     rosrun finger_sensor sensor.py
