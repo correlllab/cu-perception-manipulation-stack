@@ -54,15 +54,55 @@ Use "catkin build" in your workspace one more time
 catkin build
 ```
 
-### Sourcing
+### Sourcing and Configuring .bashrc
 Assuming you were able to compile, you will need to source your packages to be able to run them:
 ```
 gedit ~/.bashrc
 ```
 .bashrc lines to add:
 ```
+# Git
+# Show what git or hg branch we are in
+function parse_vc_branch_and_add_brackets {
+    gitbranch=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\ \[\1\]/'`
+    if [[ "$gitbranch" != '' ]]; then
+	echo $gitbranch
+    else
+	hg branch 2> /dev/null | awk '{print $1 }'
+    fi
+}
+
+# Sourcing ROS and your workspace(s)
 source /opt/ros/indigo/setup.bash 
 source ~/ros/jaco_ws/devel/setup.bash
+
+# Local ROS
+#export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
+#export ROS_HOSTNAME=localhost
+#export ROS_MASTER_URI=http://localhost:11311
+
+# roscore on another machine
+export ROS_HOSTNAME=localhost
+export ROS_IP=128.138.244.28
+export ROS_MASTER_URI=http://$ROS_IP:11311
+
+# ROS Workspaces
+function rosPackagePath()
+{
+    arr=$(echo $CMAKE_PREFIX_PATH | tr ":" "\n")
+    for x in $arr
+    do
+	rootpath1="/home/<your_account>/ros/"
+	rootpath2="/opt/ros/"
+	x=${x#${rootpath1}}
+	echo " " ${x#${rootpath2}}
+    done
+};
+rosPackagePath
+echo "ROS_HOSTNAME = "$ROS_HOSTNAME
+echo "ROS_IP = "$ROS_IP
+echo "ROS_MASTER_URI = "$ROS_MASTER_URI
+```
 
 #export HOSTNAME=011305P0009.local  # To connect to Baxter
 export HOSTNAME=localhost  # Jaco, etc
