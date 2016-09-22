@@ -3,6 +3,9 @@ import rospy
 import kinova_msgs.msg
 from kinova_msgs.srv import HomeArm
 import actionlib
+from geometry_msgs.msg import Point, Quaternion, Pose, PoseStamped
+from std_msgs.msg import Header, Int64, Bool
+import numpy as np
 
 class JacoGripper(object):
     def __init__(self, robot_type='j2n6a300'):
@@ -47,7 +50,7 @@ class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):
         super(Jaco, self).__init__(base='root')
         self.robot_type = robot_type
-        #self.home()
+        self.home()
         self.gripper = JacoGripper()
         self.velocity_pub = rospy.Publisher(
             '/{}_driver/in/cartesian_velocity'.format(self.robot_type),
@@ -89,7 +92,7 @@ class Jaco(Robot):
         rospy.loginfo("Sending goal")
         self.client.send_goal(goal)
 
-        t = 3.0
+        t = 10.0
         rospy.loginfo("Waiting for up to {} s for result".format(t))
         if self.client.wait_for_result(rospy.Duration(t)):
             rospy.loginfo("Action succeeded")
@@ -111,4 +114,3 @@ class Jaco(Robot):
                 twist_angular_z=10.0)
             self.velocity_pub.publish(msg)
             r.sleep()
-
