@@ -3,8 +3,9 @@ from __future__ import division, print_function, absolute_import
 import rospy
 from pap.jaco import Jaco
 from pap.manager import PickAndPlaceNode
+from kinova_msgs.msg import JointAngles
 
-from std_msgs.msg import Header, Int64, Bool
+from std_msgs.msg import Header
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
 import tf
@@ -13,6 +14,22 @@ class pick_peas_class(object):
     def __init__(self):
         self.j = Jaco()
         self.listen = tf.TransformListener()
+        self.joint_angles = [0]*6
+
+
+    def readJointAngles(self):
+        self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
+                                                                JointAngles, self.callback)
+
+    def callback(self,data):
+        self.joint_angles[0] = data.joint1
+        self.joint_angles[1] = data.joint2
+        self.joint_angles[2] = data.joint3
+        self.joint_angles[3] = data.joint4
+        self.joint_angles[4] = data.joint5
+        self.joint_angles[5] = data.joint6
+        #print (self.joint_angles)
+
 
     def move_calib_position(self):
         # move arm to the calibration position
@@ -30,7 +47,7 @@ class pick_peas_class(object):
             translation, quaternion = self.listen.lookupTransform("/root", "/spoon_position", t)
 
             self.spoon_pose = PoseStamped(
-                Header(0, rospy.Time(0), 'spoon_position'),
+                Header(0, rospy.Time(0), 'root'),
                 Pose(Point(float(translation[0]),float(translation[1]),float(translation[2])),
                     Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
             self.j.gripper.open()
@@ -51,7 +68,7 @@ class pick_peas_class(object):
 
             # print (translation)
             self.bowl_pose = PoseStamped(
-                Header(1, rospy.Time(), 'bowl_pose'),
+                Header(1, rospy.Time(), 'root'),
                 Pose(Point(float(translation[0]),float(translation[1]),float(translation[2])),
                      Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
 
@@ -62,16 +79,40 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the bowl frame")
 
+
+    def move_joints(self):
+        #print (self.joint_angles)
+            jointangles = [self.joint_angles[0], self.joint_angles[1], self.joint_angles[2], self.joint_angles[3], self.joint_angles[4], self.joint_angles[5]+20]
+            try:
+                self.j.move_joints(jointangles)
+            except rospy.ROSInterruptException:
+                print('program interrupted before completion')
+
+
+
+
 if __name__ == '__main__':
     rospy.init_node("task_1")
     # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
+    p.readJointAngles()
     # p.move_calib_position()
     # p.j.home()
-    while not rospy.is_shutdown():
-        if p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position"):
-            # p.pick_spoon()
-            p.goto_bowl()
-            break
+    #while not rospy.is_shutdown():
+    #    if p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position"):
+    print ("Waiting for frame...")
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
+        pass
+    print ("Starting task...\n")
+
+    p.j.home()
+    p.pick_spoon()
+
+    print ("Spoon reached\n")
+    p.goto_bowl()
+    p.move_joints()
+            # p.scoop_peas()
+            # break
+    # p.move_joints()
 
     # rospy.spin()

@@ -50,17 +50,21 @@ class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):
         super(Jaco, self).__init__(base='root')
         self.robot_type = robot_type
-        self.home()
+        #self.home()
         self.gripper = JacoGripper()
+
         self.velocity_pub = rospy.Publisher(
             '/{}_driver/in/cartesian_velocity'.format(self.robot_type),
             kinova_msgs.msg.PoseVelocity,
             queue_size=1)
-        action_address = ('/' + self.robot_type +
-                          '_driver/pose_action/tool_pose')
-        self.client = actionlib.SimpleActionClient(
-            action_address,
-            kinova_msgs.msg.ArmPoseAction)
+
+
+
+        # action_address_joints = ('/' + self.robot_type +
+        #                   '_driver/pose_action/tool_pose')
+        # self.client_joints = actionlib.SimpleActionClient(
+        #     action_address_joints,
+        #     kinova_msgs.msg.ArmJointAnglesAction)
 
     def home(self):
         addr = '/{}_driver/in/home_arm'.format(self.robot_type)
@@ -76,6 +80,11 @@ class Jaco(Robot):
         """Take a PoseStamped and move the arm there.
 
         """
+        action_address = ('/' + self.robot_type + '_driver/pose_action/tool_pose')
+        self.client = actionlib.SimpleActionClient(
+                    action_address,
+                    kinova_msgs.msg.ArmPoseAction)
+
         if not isinstance(stamped_pose, PoseStamped):
             raise TypeError("No duck typing here? :(")
         pose = stamped_pose.pose
@@ -92,14 +101,44 @@ class Jaco(Robot):
         rospy.loginfo("Sending goal")
         self.client.send_goal(goal)
 
-        t = 10.0
-        rospy.loginfo("Waiting for up to {} s for result".format(t))
-        if self.client.wait_for_result(rospy.Duration(t)):
+        # rospy.loginfo("Waiting for up to {} s for result".format(t))
+        if self.client.wait_for_result(rospy.Duration(100)):
             rospy.loginfo("Action succeeded")
             return self.client.get_result()
         else:
             self.client.cancel_all_goals()
             rospy.loginfo('        the cartesian action timed-out')
+            return None
+
+    def move_joints(self,jointangles):
+        """Take a joint angles and move the arm.
+
+        """
+        action_address_joints = ('/' + self.robot_type +
+                          '_driver/joints_action/joint_angles')
+        self.client_joints = actionlib.SimpleActionClient(
+            action_address_joints,
+            kinova_msgs.msg.ArmJointAnglesAction)
+
+        self.client_joints.wait_for_server()
+
+        goal = kinova_msgs.msg.ArmJointAnglesGoal()
+
+        goal.angles.joint1 = jointangles[0]
+        goal.angles.joint2 = jointangles[1]
+        goal.angles.joint3 = jointangles[2]
+        goal.angles.joint4 = jointangles[3]
+        goal.angles.joint5 = jointangles[4]
+        goal.angles.joint6 = jointangles[5]
+
+        self.client_joints.send_goal(goal)
+        if self.client_joints.wait_for_result(rospy.Duration(100.0)):
+            return self.client_joints.get_result()
+        else:
+            print('        the joint angle action timed-out')
+            self.client_joints.cancel_all_goals()
+            return None
+
 
     def kinematic_control(self):
         r = rospy.Rate(100)

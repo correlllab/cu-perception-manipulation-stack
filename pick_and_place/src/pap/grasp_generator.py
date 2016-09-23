@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import rospy
 import tf
 
@@ -27,21 +28,15 @@ class grasp_generator(object):
             t = self.listen.getLatestCommonTime("/root", "/object_pose_4")
             translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_4", t)
 
-            # self.broadcast.sendTransform(rdhn_translation,
-            #                         rdhn_quaternion,
-            #                         rospy.Time.now(),
-            #                         "cup_position",
-            #                         "/root")
-
             translation_list = list(translation)
             translation_list[0] -= 0.03
             translation_list[1] -= 0.05
-            translation_list[2] += 0.09
+            translation_list[2] += 0.19
             translation = tuple(translation_list)
 
             quaternion_list = list(quaternion)
-            quaternion_list[0] += 0.7071
-            quaternion_list[1] += -0.4071
+            quaternion_list[0] += 0
+            quaternion_list[1] += -0
             quaternion_list[2] += -0.97
             quaternion_list[3] += 0
             quaternion = tuple(quaternion_list)
@@ -58,16 +53,10 @@ class grasp_generator(object):
             t = self.listen.getLatestCommonTime("/root", "/object_pose_1")
             translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_1", t)
 
-            # self.broadcast.sendTransform(rdhn_translation,
-            #                         rdhn_quaternion,
-            #                         rospy.Time.now(),
-            #                         "cup_position",
-            #                         "/root")
-
             translation_list = list(translation)
             translation_list[0] -= 0.03
             translation_list[1] -= 0.05
-            translation_list[2] += 0.09
+            translation_list[2] += 0.29
             translation = tuple(translation_list)
 
             quaternion_list = list(quaternion)

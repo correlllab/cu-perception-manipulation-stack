@@ -13,7 +13,7 @@
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <rviz_visual_tools/tf_visual_tools.h>
 
-// Eigen and TF 
+// Eigen and TF
 #include <eigen_conversions/eigen_msg.h>
 #include <tf/transform_broadcaster.h>
 
@@ -47,7 +47,7 @@ class PerceptionTester
 {
 private:
   ros::NodeHandle nh_;
-  
+
   ros::Subscriber raw_cloud_sub_;
   ros::Subscriber enabled_sub_;
   ros::Publisher not_table_cloud_pub_;
@@ -130,7 +130,7 @@ public:
 
       loop_rate.sleep();
     }
-  }   
+  }
 
   ~PerceptionTester()
   {
@@ -291,7 +291,7 @@ public:
      *  -start to save objects
      */
     ec.setMinClusterSize(200);  // less than a wood cube
-    ec.setMaxClusterSize(8000);  // a plate is around 6000
+    ec.setMaxClusterSize(10000);  // a plate is around 6000
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
     ec.extract(cluster_indices);
@@ -424,4 +424,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
