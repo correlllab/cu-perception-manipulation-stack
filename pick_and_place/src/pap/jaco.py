@@ -59,13 +59,6 @@ class Jaco(Robot):
             queue_size=1)
 
 
-
-        # action_address_joints = ('/' + self.robot_type +
-        #                   '_driver/pose_action/tool_pose')
-        # self.client_joints = actionlib.SimpleActionClient(
-        #     action_address_joints,
-        #     kinova_msgs.msg.ArmJointAnglesAction)
-
     def home(self):
         addr = '/{}_driver/in/home_arm'.format(self.robot_type)
         rospy.wait_for_service(addr)

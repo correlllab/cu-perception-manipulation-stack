@@ -3,7 +3,7 @@ from __future__ import division, print_function, absolute_import
 import rospy
 from pap.jaco import Jaco
 from pap.manager import PickAndPlaceNode
-from kinova_msgs.msg import JointAngles
+from kinova_msgs.msg import JointAngles, PoseVelocity
 
 from std_msgs.msg import Header, Int32MultiArray
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
@@ -15,8 +15,10 @@ class pick_peas_class(object):
         self.j = Jaco()
         self.listen = tf.TransformListener()
         self.joint_angles = [0]*6
-        self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
-                                     self.callback3, queue_size=1)
+        # self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
+        #                              self.callback, queue_size=1)
+        self.cart_vel_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
+                                                            PoseVelocity, queue_size=1)
 
 
     def readJointAngles(self):
@@ -94,6 +96,14 @@ class pick_peas_class(object):
             except rospy.ROSInterruptException:
                 print('program interrupted before completion')
 
+    def cartesian_velocity_cmmnd(self, joint_velo):
+        self.dicta = joint_velo
+        print type(self.dicta)
+        rate = rospy.Rate(100) #100Hz
+        while not rospy.is_shutdown():
+            self.cart_vel_pub.publish(self.dicta)
+            rate.sleep()
+
 
 
 
@@ -106,20 +116,26 @@ if __name__ == '__main__':
     # p.j.home()
     #while not rospy.is_shutdown():
     #    if p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position"):
-    print ("Waiting for frame...")
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
-        pass
-    print ("Starting task...\n")
-
-    # p.j.home()
+    # print ("Waiting for frame...")
+    # while not (p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
+        # pass
+    # print ("Starting task...\n")
     # p.pick_spoon()
-
-    print ("Spoon reached\n")
-    p.goto_bowl()
-    print ("Bowl reached\n")
+    # print ("Spoon reached\n")
+    # p.goto_bowl()
+    # print ("Bowl reached\n")
     # p.move_joints()
-            # p.scoop_peas()
-            # break
-    # p.move_joints()
+    vel = PoseVelocity
+    vel.twist_linear_x = 0
+    vel.twist_linear_y = 0
+    vel.twist_linear_z = 0
+    vel.twist_angular_x = 0
+    vel.twist_angular_y = 0
+    vel.twist_angular_z = 10
 
-    # rospy.spin()
+    # print (vel.twist_angular_z)
+
+    try:
+        p.cartesian_velocity_cmmnd(vel)
+    except rospy.ROSInterruptException:
+        pass

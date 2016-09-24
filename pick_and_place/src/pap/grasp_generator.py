@@ -29,38 +29,46 @@ class grasp_generator(object):
             # print ('we have the frame')
             t = self.listen.getLatestCommonTime("/root", "/object_pose_4")
             translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_4", rospy.Time(0))
-            print 'Translation BEFORE'
-            print translation,quaternion
+            # print '------ \n'
+            # print 'Translation BEFORE'
+            # print translation,quaternion
             matrix1 = self.listen.fromTranslationRotation(translation, quaternion)
-            print 'this is the matrix BEFORE'
-            print (matrix1)
+            # print '\n'
+            # print 'this is the matrix BEFORE'
+            # print (matrix1)
+
             # Identity matrix
-            requrd_rot = (0,0,0)
-            requrd_trans = (0,-0.05,0.04)
+            requrd_rot = (3.14,0,0) # in radians
+            requrd_trans = (0,0.05,0.09)
             #euler to quaternion
             requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
             # print (requrd_quat)
             matrix2 = self.listen.fromTranslationRotation(requrd_trans, requrd_quat) #identity matrix
             # print (matrix2)
             matrix3 =  np.zeros((4,4))
-            matrix3 = np.dot(matrix2,matrix1)
-            print 'this is the matrix AFTER'
-            print (matrix3)
+            matrix3 = np.dot(matrix1,matrix2)
+            # print '\n'
+            # print 'this is the matrix AFTER'
+            # print (matrix3)
+
             #get the euler angles from 4X4 T martix
-            scale, shear, rpy_angles, trans, perps = tf.transformations.decompose_matrix(matrix3)
+            scale, shear, rpy_angles, trans_1, perps = tf.transformations.decompose_matrix(matrix3)
 
             # covert quaternion to euler
-            quaternion2 = tf.transformations.quaternion_from_euler(rpy_angles[0], rpy_angles[1], rpy_angles[2])
-            print 'Decomposing the AFTER matrix'
-            print trans, quaternion2
+            quat_1 = tf.transformations.quaternion_from_euler(rpy_angles[0], rpy_angles[1], rpy_angles[2])
+            # print '\n'
+            # print 'Decomposing the AFTER matrix'
+            # print trans, quaternion2
+            # print '------ \n'
+
             #converting numpy.ndarray into tuple
-            trans = tuple(trans.tolist())
-            quaternion2 = tuple(quaternion2)
+            trans_1 = tuple(trans_1.tolist())
+            quat_1 = tuple(quat_1)
             # print 'Transltaion AFTER'
             # print trans, quaternion2
 
-            self.broadcast.sendTransform(trans,
-                                    quaternion2,
+            self.broadcast.sendTransform(trans_1,
+                                    quat_1,
                                     rospy.Time.now(),
                                     "spoon_position",
                                     "root")
@@ -69,23 +77,31 @@ class grasp_generator(object):
             t = self.listen.getLatestCommonTime("/root", "/object_pose_2")
             translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_2", rospy.Time(0))
 
-            translation_list = list(translation)
-            translation_list[0] -= 0.03
-            translation_list[1] -= 0.05
-            translation_list[2] += 0.19
-            translation = tuple(translation_list)
+            matrix1 = self.listen.fromTranslationRotation(translation, quaternion)
 
-            quaternion_list = list(quaternion)
-            quaternion_list[0] += 0
-            quaternion_list[1] += 0
-            quaternion_list[2] += 0
-            quaternion_list[3] += 0
-            quaternion = tuple(quaternion_list)
+            # Identity matrix
+            requrd_rot = (-3.14,0,1.5) # in radians
+            requrd_trans = (0,0.05,0.09)
+            #euler to quaternion
+            requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
+            # print (requrd_quat)
+            matrix2 = self.listen.fromTranslationRotation(requrd_trans, requrd_quat) #identity matrix
 
-            # print translation, quaternion
+            matrix3 =  np.zeros((4,4))
+            matrix3 = np.dot(matrix1,matrix2)
 
-            self.broadcast.sendTransform(translation,
-                                    quaternion,
+            #get the euler angles from 4X4 T martix
+            scale, shear, rpy_angles, trans_1, perps = tf.transformations.decompose_matrix(matrix3)
+
+            # covert quaternion to euler
+            quat_1 = tf.transformations.quaternion_from_euler(rpy_angles[0], rpy_angles[1], rpy_angles[2])
+
+            #converting numpy.ndarray into tuple
+            trans_1 = tuple(trans_1.tolist())
+            quat_1 = tuple(quat_1)
+
+            self.broadcast.sendTransform(trans_1,
+                                    quat_1,
                                     rospy.Time.now(),
                                     "bowl_position",
                                     "/root")
