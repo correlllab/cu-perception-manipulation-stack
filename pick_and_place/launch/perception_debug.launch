@@ -1,0 +1,26 @@
+<launch>
+
+  <!-- launch keyboard listener -->
+  <node name="keyboard" pkg="keyboard" type="keyboard" output="screen" />
+
+
+  <!-- Perception Server -->
+  <node name="perception" pkg="perception" type="perception" output="screen"/>
+
+  <!-- launch rviz -->
+  <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="true" output="screen"
+        args="-d $(find perception)/launch/interface.rviz">
+  </node>
+
+
+  <include file="$(find openni2_launch)/launch/openni2.launch">
+    <arg name="depth_registration" value="true" />
+    <arg name="publish_tf" value="true" />
+  </include>
+
+  <!-- Start camera calibration for Jaco -->
+  <include file="$(find camera_calibration_tool)/launch/calibration.launch"/>
+
+  <!-- launch pick and place manager -->
+  <!-- <node name="pap_with_perception" pkg="pick_and_place" type="pap_with_perception.py" output="screen" /> -->
+</launch>

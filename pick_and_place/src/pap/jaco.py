@@ -99,11 +99,13 @@ class Jaco(Robot):
         goal.pose.pose.orientation = orientation
 
         rospy.loginfo("Sending goal")
+        print goal
         self.client.send_goal(goal)
 
         # rospy.loginfo("Waiting for up to {} s for result".format(t))
         if self.client.wait_for_result(rospy.Duration(100)):
             rospy.loginfo("Action succeeded")
+            print self.client.get_result()
             return self.client.get_result()
         else:
             self.client.cancel_all_goals()

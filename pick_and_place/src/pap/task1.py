@@ -5,7 +5,7 @@ from pap.jaco import Jaco
 from pap.manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles
 
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Int32MultiArray
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
 import tf
@@ -15,6 +15,8 @@ class pick_peas_class(object):
         self.j = Jaco()
         self.listen = tf.TransformListener()
         self.joint_angles = [0]*6
+        self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
+                                     self.callback3, queue_size=1)
 
 
     def readJointAngles(self):
@@ -66,14 +68,18 @@ class pick_peas_class(object):
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
             translation, quaternion = self.listen.lookupTransform("/root", "/bowl_position", rospy.Time(0))
 
-            # print (translation)
+            print (translation)
             self.bowl_pose = PoseStamped(
-                Header(1, rospy.Time(), 'root'),
+                Header(0, rospy.Time(0), 1),
                 Pose(Point(float(translation[0]),float(translation[1]),float(translation[2])),
                      Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
 
             # print (self.bowl_pose.pose)
             # self.j.gripper.open()
+            # print ("waiting...")
+            #self.j.client.cancel_all_goals()
+            # print ()
+            #rospy.sleep(10)
             self.j.move_ik(self.bowl_pose)
             # self.j.gripper.close()
         else:
@@ -105,12 +111,13 @@ if __name__ == '__main__':
         pass
     print ("Starting task...\n")
 
-    p.j.home()
-    p.pick_spoon()
+    # p.j.home()
+    # p.pick_spoon()
 
     print ("Spoon reached\n")
     p.goto_bowl()
-    p.move_joints()
+    print ("Bowl reached\n")
+    # p.move_joints()
             # p.scoop_peas()
             # break
     # p.move_joints()

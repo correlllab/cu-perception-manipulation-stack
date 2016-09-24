@@ -9,8 +9,8 @@
   <include file="$(find camera_calibration_tool)/launch/calibration.launch"/>
   <!-- </include> -->
 
-  <!-- Start percetion -->
-  <include file="$(find perception)/launch/interface.launch"/>
+  <!-- Start perception -->
+  <include file="$(find perception)/launch/interface.launch"/> 
   <!-- </include> -->
 
 

@@ -129,16 +129,18 @@ Visualization Manager:
           Value: true
         base:
           Value: false
+        bowl_position:
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
         camera_rgb_frame:
           Value: false
         camera_rgb_optical_frame:
-          Value: false
+          Value: true
         j2n6a300_end_effector:
           Value: true
         j2n6a300_link_1:
@@ -169,9 +171,23 @@ Visualization Manager:
           Value: false
         object_pose_0:
           Value: false
+        object_pose_1:
+          Value: false
+        object_pose_2:
+          Value: true
+        object_pose_3:
+          Value: true
+        object_pose_4:
+          Value: true
+        object_pose_5:
+          Value: true
+        object_pose_6:
+          Value: true
         qr_location:
           Value: false
         root:
+          Value: true
+        spoon_position:
           Value: true
         world:
           Value: false
@@ -185,6 +201,8 @@ Visualization Manager:
           base:
             {}
           root:
+            bowl_position:
+              {}
             camera_link:
               camera_depth_frame:
                 camera_depth_optical_frame:
@@ -196,6 +214,18 @@ Visualization Manager:
                   ar_marker_2:
                     {}
                   object_pose_0:
+                    {}
+                  object_pose_1:
+                    {}
+                  object_pose_2:
+                    {}
+                  object_pose_3:
+                    {}
+                  object_pose_4:
+                    {}
+                  object_pose_5:
+                    {}
+                  object_pose_6:
                     {}
             j2n6a300_link_base:
               j2n6a300_link_1:
@@ -216,6 +246,8 @@ Visualization Manager:
                             j2n6a300_link_finger_tip_3:
                               {}
             qr_location:
+              {}
+            spoon_position:
               {}
       Update Interval: 0
       Value: true
@@ -338,7 +370,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base
+    Fixed Frame: root
     Frame Rate: 30
   Name: root
   Tools:
@@ -359,22 +391,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.873432
+      Distance: 0.231239
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.199376
-        Y: -0.369488
-        Z: 0.106119
+        X: 0.201882
+        Y: -0.321454
+        Z: 0.0542564
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.394796
+      Pitch: 0.174796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.91091
+      Yaw: 0.705908
     Saved: ~
 Window Geometry:
   Displays:

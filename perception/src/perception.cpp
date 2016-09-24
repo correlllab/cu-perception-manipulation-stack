@@ -356,7 +356,7 @@ public:
       local_poses.push_back(object_pose);
       objects_detected_ = true;
 
-      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx++ << " has " << single_object->width * single_object->height << " points");
+      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx++ << " has " << single_object->width << "*" << single_object->height << " points");
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
       //Attempting to get the distances between centroids of objects. the minimum may be our mug
