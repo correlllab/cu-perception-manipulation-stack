@@ -18,6 +18,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <tf/transform_datatypes.h>
 
 // Image processing
 #include <pcl_ros/point_cloud.h>
@@ -333,6 +334,7 @@ public:
       // TODO: why does centroid 3D need a 4 vector, but the last value seems
       // useless (?)
       Eigen::Vector4d useless_centroid;
+      tf::StampedTransform qr_transform;
       Eigen::Vector3d object_centroid;
       Eigen::Affine3d object_pose = Eigen::Affine3d::Identity();
       pcl::compute3DCentroid(*not_table,

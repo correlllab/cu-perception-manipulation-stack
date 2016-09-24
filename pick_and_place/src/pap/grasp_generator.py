@@ -25,10 +25,10 @@ class grasp_generator(object):
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_1"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_4"):
             # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/object_pose_1")
-            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_1", rospy.Time(0))
+            t = self.listen.getLatestCommonTime("/root", "/object_pose_4")
+            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_4", rospy.Time(0))
             print 'Translation BEFORE'
             print translation,quaternion
             matrix1 = self.listen.fromTranslationRotation(translation, quaternion)
@@ -36,7 +36,7 @@ class grasp_generator(object):
             print (matrix1)
             # Identity matrix
             requrd_rot = (0,0,0)
-            requrd_trans = (0,0,0)
+            requrd_trans = (0,-0.05,0.04)
             #euler to quaternion
             requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
             # print (requrd_quat)
@@ -63,11 +63,11 @@ class grasp_generator(object):
                                     quaternion2,
                                     rospy.Time.now(),
                                     "spoon_position",
-                                    "object_pose_1")
+                                    "root")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_4"):
-            t = self.listen.getLatestCommonTime("/root", "/object_pose_4")
-            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_4", rospy.Time(0))
+        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_2"):
+            t = self.listen.getLatestCommonTime("/root", "/object_pose_2")
+            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_2", rospy.Time(0))
 
             translation_list = list(translation)
             translation_list[0] -= 0.03
