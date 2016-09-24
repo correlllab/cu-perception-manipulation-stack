@@ -16,6 +16,8 @@
 // Eigen and TF
 #include <eigen_conversions/eigen_msg.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 
 // Image processing
 #include <pcl_ros/point_cloud.h>
@@ -63,6 +65,7 @@ private:
   bool image_processing_enabled_;
 
   rviz_visual_tools::TFVisualTools tf_visualizer_;
+  tf::TransformListener tf_listener_;
 
 public:
   PerceptionTester(int test)
@@ -336,6 +339,19 @@ public:
                              *it,  // indices to be used from cloud. Checked that matches output of compute3dcentroid(single_object)
                              useless_centroid);
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2);
+      tf_listener_.waitForTransform("camera_rgb_optical_frame", "base", ros::Time(0), ros::Duration(1.0));
+      try
+      {
+        tf_listener_.lookupTransform("camera_rgb_optical_frame", "base", ros::Time(0), qr_transform);
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_ERROR("%s", ex.what());
+        ros::Duration(1.0).sleep();
+        continue;
+      }
+
+      tf::transformTFToEigen(qr_transform, object_pose);
       object_pose.translation() = object_centroid;
       local_poses.push_back(object_pose);
       objects_detected_ = true;
