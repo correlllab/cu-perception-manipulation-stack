@@ -25,10 +25,10 @@ class grasp_generator(object):
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_3"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/cup_with_spoon"):
             # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/object_pose_3")
-            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_3", rospy.Time(0))
+            t = self.listen.getLatestCommonTime("/root", "/cup_with_spoon")
+            translation, quaternion = self.listen.lookupTransform("/root", "/cup_with_spoon", rospy.Time(0))
             # print '------ \n'
             # print 'Translation BEFORE'
             # print translation,quaternion
@@ -39,7 +39,7 @@ class grasp_generator(object):
 
             # Identity matrix
             requrd_rot = (3.14,0,0) # in radians
-            requrd_trans = (0,0.05,0.09)
+            requrd_trans = (-0.05,-0.05,0.11)
             #euler to quaternion
             requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
             # print (requrd_quat)
@@ -73,15 +73,15 @@ class grasp_generator(object):
                                     "spoon_position",
                                     "root")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_2"):
-            t = self.listen.getLatestCommonTime("/root", "/object_pose_2")
-            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_2", rospy.Time(0))
+        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_1"):
+            t = self.listen.getLatestCommonTime("/root", "/unknown_1")
+            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_1", rospy.Time(0))
 
             matrix1 = self.listen.fromTranslationRotation(translation, quaternion)
 
             # Identity matrix
             requrd_rot = (-3.14,0,1.5) # in radians
-            requrd_trans = (0,0.05,0.09)
+            requrd_trans = (0,0,0.09)
             #euler to quaternion
             requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
             # print (requrd_quat)

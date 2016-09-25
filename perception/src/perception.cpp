@@ -425,7 +425,7 @@ public:
     if((cws_height_min <= depth) && (depth <= cws_height_max))
     {
       ROS_INFO_STREAM_NAMED("ppc", "Cup/spoon object found #: " << index);
-      ss << cws_label << "_" << index;
+      ss << cws_label;
     }
     else
     {

@@ -102,6 +102,16 @@ class pick_peas_class(object):
             except rospy.ROSInterruptException:
                 print('program interrupted before completion')
 
+    def cmmd_cart_velo(self,cart_velo):
+        msg = PoseVelocity(
+            twist_linear_x=cart_velo[0],
+            twist_linear_y=cart_velo[1],
+            twist_linear_z=cart_velo[2],
+            twist_angular_x=cart_velo[3],
+            twist_angular_y=cart_velo[4],
+            twist_angular_z=cart_velo[5])
+
+        self.j.kinematic_control(msg)
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
@@ -117,13 +127,5 @@ if __name__ == '__main__':
     # p.goto_bowl()
     # print ("Bowl reached\n")
     # p.move_joints()
-    msg = PoseVelocity(
-        twist_linear_x=0.0,
-        twist_linear_y=0.0,
-        twist_linear_z=0.1,
-        twist_angular_x=0.0,
-        twist_angular_y=0.0,
-        twist_angular_z=0.0)
-    # p.j.kinematic_control(msg)
-
-    # print (vel.twist_angular_z)
+    cart_velocities = [.05,0,0,0,0,0] # linear[0:2], angular[3:5]
+    p.cmmd_cart_velo(cart_velocities)
