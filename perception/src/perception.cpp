@@ -45,7 +45,7 @@
 //dynamic reconfiguration of variables during runtime
 #include <dynamic_reconfigure/server.h>
 #include <perception/perception_paramConfig.h>
-#include "perception_params.h"
+#include <perception/perception_param.h>
 
 namespace perception
 {

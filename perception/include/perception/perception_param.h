@@ -1,10 +1,10 @@
-#ifndef PERCEPTION_PARAMS_H
-#define PERCEPTION_PARAMS_H
+#ifndef PERCEPTION_PARAM_H
+#define PERCEPTION_PARAM_H
 
 #include <ros/ros.h>
 #include <string>
 
-namespace teleop_perception
+namespace perception
 {
   //cup with spoon
   double cws_height_min = .16;
@@ -24,4 +24,4 @@ namespace teleop_perception
 }
 
 
-#endif // PERCEPTION_PARAMS_H
+#endif // PERCEPTION_PARAM_H
