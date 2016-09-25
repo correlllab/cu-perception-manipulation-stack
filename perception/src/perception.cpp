@@ -10,7 +10,7 @@
 #include <std_msgs/Int64.h>
 #include <std_msgs/Bool.h>
 #include <math.h>
-#include <rviz_visual_tools/rviz_visual_tools.h>
+//#include <rviz_visual_tools/rviz_visual_tools.h>
 #include <rviz_visual_tools/tf_visual_tools.h>
 
 // Eigen and TF
@@ -80,7 +80,7 @@ private:
   rviz_visual_tools::TFVisualTools tf_visualizer_;
   tf::TransformListener tf_listener_;
 
-  rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
+  //rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
 public:
   PerceptionTester(int test)
     : nh_("~")
@@ -108,7 +108,7 @@ public:
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
-    visual_tools_->enableBatchPublishing();
+    //visual_tools_->enableBatchPublishing();
 
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
@@ -313,7 +313,7 @@ public:
     object_labels = new std::string[objects_found];
     Eigen::Vector3f centroids[objects_found];
     Eigen::Affine3d pose1 = Eigen::Affine3d::Identity();
-    visual_tools_->deleteAllMarkers();
+   // visual_tools_->deleteAllMarkers();
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
          it != cluster_indices.end();
          ++it)
@@ -403,7 +403,7 @@ public:
     }
     objects_detected_ = true;
     object_poses_ = local_poses;
-    visual_tools_->triggerBatchPublish();
+    //visual_tools_->triggerBatchPublish();
 
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
   }
@@ -433,7 +433,7 @@ public:
     }
     object_labels[index] = ss.str();
     //displaying wireframe cuboid
-    visual_tools_->publishWireframeCuboid(object_pose, height, width, depth, rviz_visual_tools::RAND);
+   //visual_tools_->publishWireframeCuboid(object_pose, height, width, depth, rviz_visual_tools::RAND);
   }
 }; // end class PerceptionTester
 } // end namespace perception
