@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
   std_msgs
   tf
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -57,6 +58,10 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+)
+
+generate_dynamic_reconfigure_options(
+  cfg/perception_param.cfg
 )
 ## Generate messages in the 'msg' folder
 # add_message_files(
@@ -161,6 +166,7 @@ target_link_libraries(perception
   ${catkin_LIBRARIES}
 )
 add_dependencies(perception perception_generate_messages_cpp)
+add_dependencies(perception teleop_interface_gencfg)
 
 #############
 ## Install ##

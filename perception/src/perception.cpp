@@ -36,15 +36,27 @@
 #include <pcl/segmentation/extract_polygonal_prism_data.h>
 
 //object identification
-#include <perception/identified_object.h>
+//#include <perception/identified_object.h>
 #include <pcl/common/geometry.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/common/common.h>
 
+//dynamic reconfiguration of variables during runtime
+#include <dynamic_reconfigure/server.h>
+#include <perception/perception_paramConfig.h>
+#include "perception_params.h"
 
 namespace perception
 {
+void callback(teleop_interface::perception_paramConfig &config, uint32_t level)
+{
+  std::ostringstream ss;
+  ss << "Reconfigure request, min_cup_height: " << config.min_cup_height << ", max_cup_height: " << config.max_cup_height;
+  ROS_INFO_STREAM_NAMED("ppc",ss.str());
+  cws_height_min = config.min_cup_height;
+  cws_height_max = config.max_cup_height;
+}
 
 class PerceptionTester
 {
@@ -68,6 +80,7 @@ private:
   rviz_visual_tools::TFVisualTools tf_visualizer_;
   tf::TransformListener tf_listener_;
 
+  rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
 public:
   PerceptionTester(int test)
     : nh_("~")
@@ -88,7 +101,14 @@ public:
     objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/objects_cloud", 1);
     number_of_objects_pub_ = nh_.advertise<std_msgs::Int64>("/num_objects", 1);
 
-    identified_objects_ = nh_.advertise<perception::identified_object>("/identified_objects", 1);
+    //identified_objects_ = nh_.advertise<perception::identified_object>("/identified_objects", 1);
+
+    dynamic_reconfigure::Server<teleop_interface::perception_paramConfig> srv;
+    dynamic_reconfigure::Server<teleop_interface::perception_paramConfig>::CallbackType f;
+    f = boost::bind(&callback, _1, _2);
+    srv.setCallback(f);
+
+    visual_tools_->enableBatchPublishing();
 
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
@@ -112,24 +132,9 @@ public:
         {
           // Can't get this to work :S
           // ROS_ERROR(boost::lexical_cast<std::string>(object_poses_.size()));
-          std::ostringstream ss;
-          ss << "object_pose_" << idx++;
-          tf_visualizer_.publishTransform(*it, "camera_rgb_optical_frame", ss.str());
+          tf_visualizer_.publishTransform(*it, "camera_rgb_optical_frame", object_labels[idx]);
+          idx++;
         }
-      }
-      else
-      {
-          //added to try to eliminate the error messages. errors still exist:
-          /* TF2 exception: Lookup would require extrapolation into the future.  Requested time 1474480049.311874859 but the latest data is at time 1474480049.296680328, when looking up
-           * transform from frame [camera_depth_optical_frame] to frame [camera_rgb_optical_frame]
-           */
-          std_msgs::Int64 msg;
-          msg.data = 0;
-          number_of_objects_pub_.publish(msg);
-          Eigen::Affine3d it;
-          std::ostringstream ss;
-          ss << "object_pose_" << 0;
-          tf_visualizer_.publishTransform(it, "camera_rgb_optical_frame", ss.str());
       }
 
       loop_rate.sleep();
@@ -304,15 +309,11 @@ public:
     object_poses_ = local_poses;
     std::size_t idx = 0;
 
-    int tallest_object = -1;
-    float max_height = -1;
-    float tmp_distance = -1;
-    float unit_cubed;
-    float max_z;
-    float min_z;
     int objects_found = cluster_indices.end() - cluster_indices.begin();
+    object_labels = new std::string[objects_found];
     Eigen::Vector3f centroids[objects_found];
-    //pcl::PointXYZRGB
+    Eigen::Affine3d pose1 = Eigen::Affine3d::Identity();
+    visual_tools_->deleteAllMarkers();
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
          it != cluster_indices.end();
          ++it)
@@ -356,35 +357,12 @@ public:
       tf::transformTFToEigen(qr_transform, object_pose);
       object_pose.translation() = object_centroid;
       local_poses.push_back(object_pose);
-      objects_detected_ = true;
 
-      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx++ << " has " << single_object->width << "*" << single_object->height << " points");
 
+      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx << " has " << single_object->width << "*" << single_object->height << " points");
+      ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
-      //Attempting to get the distances between centroids of objects. the minimum may be our mug
-      pcl::PointXYZRGB min, max;
-      pcl::getMinMax3D(*single_object, min, max);
-      ROS_INFO_STREAM_NAMED("ppc", "Min: " << min << ", Max: " << max);
-      unit_cubed = std::abs(max.z-min.z)*std::abs(max.y-min.y)*std::abs(max.x-min.x);
-      ROS_INFO_STREAM_NAMED("ppc", "Cubic area: " << unit_cubed);
-
-      perception::identified_object object_msg;
-      object_msg.object_id = idx-1;
-      if(unit_cubed > max_height)
-      {
-          max_height = unit_cubed;
-          tallest_object = idx-1;
-          ROS_INFO_STREAM_NAMED("ppc", "Bigger object found #: " << tallest_object);
-
-          object_msg.object_identity = "tall";
-
-      }
-      else
-      {
-          object_msg.object_identity = "short";
-      }
-
-      identified_objects_.publish(object_msg);
+      object_recognition( object_pose, single_object, idx);
 
       /* Calculations for min distance between centroids. removed because the coffee cup problem was fixed my upping the distance between
        * separate point cloud objects
@@ -420,12 +398,42 @@ public:
       /*******************************END REBECCA'S PERCEPTION ADDITIONS*******************************************************************/
 
       objects_cloud_pub_.publish(single_object);
+      idx++;
 
     }
+    objects_detected_ = true;
     object_poses_ = local_poses;
-    ROS_INFO_STREAM_NAMED("ppc", "I think the coffee cup is object " << tallest_object);
+    visual_tools_->triggerBatchPublish();
 
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
+  }
+
+  void object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index)
+  {
+    pcl::PointXYZRGB min, max;
+    pcl::getMinMax3D(*single_object, min, max);
+    double height = max.z-min.z;
+    double width = max.x-min.x;
+    double depth = max.y-min.y;
+    std::ostringstream ss;
+    ROS_INFO_STREAM_NAMED("ppc", "Bounds Min: " << cws_height_min << ", Max: " << cws_height_max);
+    ROS_INFO_STREAM_NAMED("ppc", "Min: " << min << ", Max: " << max);
+    ROS_INFO_STREAM_NAMED("ppc", "Height: " << height << ", Width: " << width << ", Depth: " << depth );
+    double unit_cubed = std::abs(height)*std::abs(width)*std::abs(depth);
+    ROS_INFO_STREAM_NAMED("ppc", "Cubic area: " << unit_cubed);
+
+    if((cws_height_min <= depth) && (depth <= cws_height_max))
+    {
+      ROS_INFO_STREAM_NAMED("ppc", "Cup/spoon object found #: " << index);
+      ss << cws_label << "_" << index;
+    }
+    else
+    {
+      ss << unknown_label << "_" << index;
+    }
+    object_labels[index] = ss.str();
+    //displaying wireframe cuboid
+    visual_tools_->publishWireframeCuboid(object_pose, height, width, depth, rviz_visual_tools::RAND);
   }
 }; // end class PerceptionTester
 } // end namespace perception
