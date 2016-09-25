@@ -50,7 +50,7 @@ class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):
         super(Jaco, self).__init__(base='root')
         self.robot_type = robot_type
-        #self.home()
+        # self.home()
         self.gripper = JacoGripper()
 
         self.velocity_pub = rospy.Publisher(
@@ -135,16 +135,9 @@ class Jaco(Robot):
             return None
 
 
-    def kinematic_control(self):
+    def kinematic_control(self,msg):
         r = rospy.Rate(100)
-        return
-        while not self.done:
-            msg = kinova_msgs.msg.PoseVelocity(
-                twist_linear_x=0.0,
-                twist_linear_y=0.0,
-                twist_linear_z=0.0,
-                twist_angular_x=0.0,
-                twist_angular_y=0.0,
-                twist_angular_z=10.0)
+        # return
+        while not rospy.is_shutdown():
             self.velocity_pub.publish(msg)
             r.sleep()

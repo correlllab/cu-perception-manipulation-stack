@@ -25,10 +25,10 @@ class grasp_generator(object):
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_4"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/object_pose_3"):
             # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/object_pose_4")
-            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_4", rospy.Time(0))
+            t = self.listen.getLatestCommonTime("/root", "/object_pose_3")
+            translation, quaternion = self.listen.lookupTransform("/root", "/object_pose_3", rospy.Time(0))
             # print '------ \n'
             # print 'Translation BEFORE'
             # print translation,quaternion
