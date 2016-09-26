@@ -22,6 +22,7 @@ class Robot(object):
             Robot base/root tf"""
         self.base = base
         self.tl = tf.TransformListener()
+        # self.home()
 
     def pick(self, pose, direction=(0, 0, 1), distance=0.1):
         """Go to pose + pick_direction * pick_distance, open, go to pose,

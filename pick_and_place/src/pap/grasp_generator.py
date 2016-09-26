@@ -38,7 +38,7 @@ class grasp_generator(object):
             # print (matrix1)
 
             # Identity matrix
-            requrd_rot = (3.14,0,0) # in radians
+            requrd_rot = (1.57,0,0) # in radians
             requrd_trans = (-0.05,-0.05,0.11)
             #euler to quaternion
             requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
@@ -80,7 +80,7 @@ class grasp_generator(object):
             matrix1 = self.listen.fromTranslationRotation(translation, quaternion)
 
             # Identity matrix
-            requrd_rot = (-3.14,0,1.5) # in radians
+            requrd_rot = (3.14,0,0) # in radians
             requrd_trans = (0,0,0.09)
             #euler to quaternion
             requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])

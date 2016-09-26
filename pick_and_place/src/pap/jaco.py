@@ -140,4 +140,4 @@ class Jaco(Robot):
         # return
         while not rospy.is_shutdown():
             self.velocity_pub.publish(msg)
-            r.sleep()
+            # r.sleep()
