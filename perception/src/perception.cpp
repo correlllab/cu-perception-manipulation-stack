@@ -52,10 +52,27 @@ namespace perception
 void callback(teleop_interface::perception_paramConfig &config, uint32_t level)
 {
   std::ostringstream ss;
-  ss << "Reconfigure request, min_cup_height: " << config.min_cup_height << ", max_cup_height: " << config.max_cup_height;
+  ss << "Reconfigure request, min_cup_height: " << config.min_cws_height << ", max_cup_height: " << config.max_cws_height;
   ROS_INFO_STREAM_NAMED("ppc",ss.str());
-  cws_height_min = config.min_cup_height;
-  cws_height_max = config.max_cup_height;
+  //cup with spoon
+  cws_height_min = config.min_cws_height;
+  cws_height_max = config.max_cws_height;
+  cws_xy_min = config.min_cws_xy;
+  cws_xy_max = config.max_cws_xy;
+
+  //plate
+  plate_height_min = config.min_plate_height;
+  plate_height_max = config.max_plate_height;
+  plate_xy_min = config.min_plate_xy;
+  plate_xy_max = config.max_plate_xy;
+
+  //bowl
+  bowl_height_min = config.min_bowl_height;
+  bowl_height_max = config.max_bowl_height;
+  bowl_xy_min = config.min_bowl_xy;
+  bowl_xy_max = config.max_bowl_xy;
+
+  task = static_cast<task_running>(config.task);
 }
 
 class PerceptionTester
@@ -259,6 +276,7 @@ public:
     // The prism is not great at removing the whole plane, even if we increase the lower height
     // limit to 0.005 m, so let's get its output, fit a plane, and get everything that's not a
     // plane. Repetitive code. There should be a better pcl API
+    table_segmenter.setDistanceThreshold(0.01);
     table_segmenter.setInputCloud(objects);
     table_segmenter.segment(*inliers, *coefficients);
 
@@ -300,20 +318,36 @@ public:
      *  -start to save objects
      */
     ec.setMinClusterSize(200);  // less than a wood cube
-    ec.setMaxClusterSize(10000);  // a plate is around 6000
+    ec.setMaxClusterSize(15000);  // a plate is lots
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
     ec.extract(cluster_indices);
 
+    //TODO: Old poses continue to be published?
     std::vector<Eigen::Affine3d> local_poses;
-    object_poses_ = local_poses;
+    local_poses.clear();
+    object_poses_.clear();
     std::size_t idx = 0;
 
     int objects_found = cluster_indices.end() - cluster_indices.begin();
-    object_labels = new std::string[objects_found];
-    Eigen::Vector3f centroids[objects_found];
-    Eigen::Affine3d pose1 = Eigen::Affine3d::Identity();
-   // visual_tools_->deleteAllMarkers();
+    object_labels = new std::string[objects_found + 1];
+    Eigen::Vector4d useless_centroid;
+    Eigen::Vector3d object_centroid;
+    tf::StampedTransform qr_transform;
+    Eigen::Affine3d object_pose;
+    //visual_tools_->deleteAllMarkers();
+
+    tf_listener_.waitForTransform("camera_rgb_optical_frame", "base", ros::Time(0), ros::Duration(1.0));
+    try
+    {
+      tf_listener_.lookupTransform("camera_rgb_optical_frame", "base", ros::Time(0), qr_transform);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      //ros::Duration(1.0).sleep();
+    }
+
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
          it != cluster_indices.end();
          ++it)
@@ -330,39 +364,42 @@ public:
       single_object->is_dense = true;
       single_object->header.frame_id = "camera_rgb_optical_frame";
 
+      //removing noise
+      pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+
+     // sor.setInputCloud (single_object);
+      //sor.setMeanK (50);
+     // sor.setStddevMulThresh (1.0);
+      //sor.filter (*single_object);
+
       // Compute single_object centroid (i.e., our estimated position in the
       // camera_rgb_optical_frame).
       // TODO: why does centroid 3D need a 4 vector, but the last value seems
       // useless (?)
-      Eigen::Vector4d useless_centroid;
-      tf::StampedTransform qr_transform;
-      Eigen::Vector3d object_centroid;
-      Eigen::Affine3d object_pose = Eigen::Affine3d::Identity();
+
+      object_pose = Eigen::Affine3d::Identity();
       pcl::compute3DCentroid(*not_table,
                              *it,  // indices to be used from cloud. Checked that matches output of compute3dcentroid(single_object)
                              useless_centroid);
-      object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2);
-      tf_listener_.waitForTransform("camera_rgb_optical_frame", "base", ros::Time(0), ros::Duration(1.0));
-      try
-      {
-        tf_listener_.lookupTransform("camera_rgb_optical_frame", "base", ros::Time(0), qr_transform);
-      }
-      catch (tf::TransformException ex)
-      {
-        ROS_ERROR("%s", ex.what());
-        ros::Duration(1.0).sleep();
-        continue;
-      }
+      object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
 
       tf::transformTFToEigen(qr_transform, object_pose);
+      pcl::transformPointCloud (*single_object, *single_object, object_pose);
+
       object_pose.translation() = object_centroid;
       local_poses.push_back(object_pose);
 
 
-      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx << " has " << single_object->width << "*" << single_object->height << " points");
+      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx << " has " << single_object->width * single_object->height << " points");
+
       ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
-      object_recognition( object_pose, single_object, idx);
+      //cuboid_pose = Eigen::Affine3d::Identity();
+
+      //cuboid_pose.translation() = object_centroid;
+      //tf::transformTFToEigen(qr_transform, cuboid_pose);
+
+      object_recognition( object_pose, single_object, idx, useless_centroid_table(0));
 
       /* Calculations for min distance between centroids. removed because the coffee cup problem was fixed my upping the distance between
        * separate point cloud objects
@@ -401,6 +438,11 @@ public:
       idx++;
 
     }
+    object_pose = Eigen::Affine3d::Identity();
+    tf::transformTFToEigen(qr_transform, object_pose);
+    object_pose.translation() = object_centroid_table;
+    local_poses.push_back(object_pose);
+    object_labels[objects_found] = "table_centroid";
     objects_detected_ = true;
     object_poses_ = local_poses;
     //visual_tools_->triggerBatchPublish();
@@ -408,32 +450,66 @@ public:
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
   }
 
-  void object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index)
+  //TODO: Why are there points below the table for some objects?
+  // -set min height to the height of the table
+  void object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index, double table_z)
   {
     pcl::PointXYZRGB min, max;
     pcl::getMinMax3D(*single_object, min, max);
-    double height = max.z-min.z;
-    double width = max.x-min.x;
+    double width = max.z-min.z;
+    double height = max.x-min.x;
     double depth = max.y-min.y;
-    std::ostringstream ss;
-    ROS_INFO_STREAM_NAMED("ppc", "Bounds Min: " << cws_height_min << ", Max: " << cws_height_max);
+
+    //ROS_INFO_STREAM_NAMED("ppc", "Bounds Min: " << cws_height_min << ", Max: " << cws_height_max);
     ROS_INFO_STREAM_NAMED("ppc", "Min: " << min << ", Max: " << max);
     ROS_INFO_STREAM_NAMED("ppc", "Height: " << height << ", Width: " << width << ", Depth: " << depth );
-    double unit_cubed = std::abs(height)*std::abs(width)*std::abs(depth);
-    ROS_INFO_STREAM_NAMED("ppc", "Cubic area: " << unit_cubed);
+   // double unit_cubed = std::abs(height)*std::abs(width)*std::abs(depth);
+    //ROS_INFO_STREAM_NAMED("ppc", "Cubic area: " << unit_cubed);
+    switch(task)
+    {
+    case TASK1:
+      object_labels[index] = task_1_object_id(depth, width, height, index);
+    case TASK0:
+    default:
+      object_labels[index] = task_1_object_id(depth, width, height, index);
+      break;
+    }
 
-    if((cws_height_min <= depth) && (depth <= cws_height_max))
+    //object_labels[index] = ss.str();
+    //displaying wireframe cuboid
+    //visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, rviz_visual_tools::RAND);
+  }
+
+  std::string task_1_object_id(double depth, double width, double height, int index)
+  {
+    std::ostringstream ss;
+
+    if((cws_height_min < height) && (height < cws_height_max)
+       && (cws_xy_min < width) && (width < cws_xy_max)
+       && (cws_xy_min < depth) && (depth < cws_xy_max) )
     {
       ROS_INFO_STREAM_NAMED("ppc", "Cup/spoon object found #: " << index);
       ss << cws_label;
+    }
+    else if((bowl_height_min < height) && (height < bowl_height_max)
+            && (bowl_xy_min < width) && (width < bowl_xy_max)
+            && (bowl_xy_min < depth) && (depth < bowl_xy_max))
+    {
+      ROS_INFO_STREAM_NAMED("ppc", "Bowl object found #: " << index);
+      ss << bowl_label;
+    }
+    else if((plate_height_min < height) && (height < plate_height_max)
+            && (plate_xy_min < width) && (width < plate_xy_max)
+            && (plate_xy_min < depth) && (depth < plate_xy_max))
+    {
+      ROS_INFO_STREAM_NAMED("ppc", "Plate object found #: " << index);
+      ss << plate_label;
     }
     else
     {
       ss << unknown_label << "_" << index;
     }
-    object_labels[index] = ss.str();
-    //displaying wireframe cuboid
-   //visual_tools_->publishWireframeCuboid(object_pose, height, width, depth, rviz_visual_tools::RAND);
+    return ss.str();
   }
 }; // end class PerceptionTester
 } // end namespace perception
