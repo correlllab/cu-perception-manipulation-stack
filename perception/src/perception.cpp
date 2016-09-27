@@ -24,6 +24,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/common/centroid.h>
+#include <pcl/common/transforms.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
@@ -330,7 +331,7 @@ public:
     std::size_t idx = 0;
 
     int objects_found = cluster_indices.end() - cluster_indices.begin();
-    object_labels = new std::string[objects_found + 1];
+    object_labels = new std::string[objects_found];
     Eigen::Vector4d useless_centroid;
     Eigen::Vector3d object_centroid;
     tf::StampedTransform qr_transform;
@@ -399,7 +400,7 @@ public:
       //cuboid_pose.translation() = object_centroid;
       //tf::transformTFToEigen(qr_transform, cuboid_pose);
 
-      object_recognition( object_pose, single_object, idx, useless_centroid_table(0));
+      object_recognition( object_pose, single_object, idx);//, useless_centroid_table(0));
 
       /* Calculations for min distance between centroids. removed because the coffee cup problem was fixed my upping the distance between
        * separate point cloud objects
@@ -438,11 +439,11 @@ public:
       idx++;
 
     }
-    object_pose = Eigen::Affine3d::Identity();
-    tf::transformTFToEigen(qr_transform, object_pose);
-    object_pose.translation() = object_centroid_table;
-    local_poses.push_back(object_pose);
-    object_labels[objects_found] = "table_centroid";
+    //object_pose = Eigen::Affine3d::Identity();
+    //tf::transformTFToEigen(qr_transform, object_pose);
+    //object_pose.translation() = object_centroid_table;
+    //local_poses.push_back(object_pose);
+    //object_labels[objects_found] = "table_centroid";
     objects_detected_ = true;
     object_poses_ = local_poses;
     //visual_tools_->triggerBatchPublish();
@@ -452,7 +453,7 @@ public:
 
   //TODO: Why are there points below the table for some objects?
   // -set min height to the height of the table
-  void object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index, double table_z)
+  void object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index)//, double table_z)
   {
     pcl::PointXYZRGB min, max;
     pcl::getMinMax3D(*single_object, min, max);
