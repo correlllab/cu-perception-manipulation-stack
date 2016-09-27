@@ -40,7 +40,7 @@ packages:
 + https://github.com/correlllab/cu-perception-manipulation-stack.git
 + https://github.com/Kinovarobotics/kinova-ros.git
 
-Note: follow kinova-ros instructions for adding udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h" 
+Note: follow kinova-ros instructions for adding udev rules. kinova-ros may fail to build. check correct include file paths in kinova_comm.cpp: #include "kinova/KinovaTypes.h". Some other packages may fail in moveit, just add .CATKIN_IGNORE file or delete the directory.
 
 restart udev so it reads the new rules:
 
