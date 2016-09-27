@@ -118,7 +118,7 @@ def setcurrentCartesianCommand(feedback):
         # print ('this is the current cartesian command')
         # print (currentCartesianCommand)
     # the following directly reading only read once and didn't update the value.
-    currentCartesianCommand = [feedback.X, feedback.Y, feedback.Z, feedback.ThetaX, feedback.ThetaY, feedback.Z]
+    # currentCartesianCommand = [feedback.X, feedback.Y, feedback.Z, feedback.ThetaX, feedback.ThetaY, feedback.Z]
     # print 'currentCartesianCommand in setcurrentCartesianCommand is: ', currentCartesianCommand
 
 
@@ -172,6 +172,7 @@ def unitParser(unit_, pose_value_, relative_):
         if relative_:
             position_[i] = pose_value_[i] + currentCartesianCommand[i]
         else:
+            print ('it does not add!!')
             position_[i] = pose_value_[i]
 
     print ('AFTER addition. . . .')
@@ -183,13 +184,16 @@ def unitParser(unit_, pose_value_, relative_):
         if relative_:
             # print ('we r inside the if loop')
             orientation_XYZ = Quaternion2EulerXYZ(orientation_)
-            orientation_xyz_list = [orientation_XYZ[i] + currentCartesianCommand[3+i] for i in range(0,3)]
+            orientation_xyz_list = [currentCartesianCommand[3+i] + orientation_XYZ[i] for i in range(0,3)]
             orientation_q = EulerXYZ2Quaternion(orientation_xyz_list)
         else:
+            print ('it does not add orientation')
             orientation_q = orientation_
 
         orientation_rad = Quaternion2EulerXYZ(orientation_q)
         orientation_deg = list(map(math.degrees, orientation_rad))
+
+        print ('oreintation: ' + str(orientation_q))
 
     elif unit_ == 'mdeg':
         if relative_:

@@ -58,20 +58,37 @@ class pick_peas_class(object):
             quaternion = list(quaternion)
             pose_value = translation + quaternion
             # print ('this is the coordinate of the spoon \n')
-            # print (pose_value)
-
+            orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
+            print ('Translation',translation)
+            print ('Orientation: ' + str(orientation_XYZ) +'\n')
             # self.spoon_pose = PoseStamped(
             #     Header(0, rospy.Time(0), 'root'),
             #     Pose(Point(float(translation[0]),float(translation[1]),float(translation[2])),
             #         Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
 
-            # self.j.gripper.open()
+            self.j.gripper.open()
             # self.j.move_ik(self.spoon_pose)
 
             pose_action_client.getcurrentCartesianCommand('j2n6a300_')
-            pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, '-r')
+            pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, 0)
             # print ('this is pose wrt home .. !? maybe \n')
-            # print (pose_mq)
+
+            # # Print spoon and final position
+            # if self.listen.frameExists("/root") and self.listen.frameExists("/spoon_position"):
+            #     self.listen.waitForTransform('/root','/spoon_position',rospy.Time(),rospy.Duration(100.0))
+            #     t = self.listen.getLatestCommonTime("/root", "/spoon_position")
+            #     translation, quaternion = self.listen.lookupTransform("/root", "/spoon_position", t)
+            #     orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
+            #     print ('\nSpoon Translation wrt /root',translation)
+            #     print ('Spoon Orientation wrt /root: ' + str(orientation_XYZ) +'\n')
+
+            poses = [float(n) for n in pose_mq]
+            orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(poses[3:])
+            print ('Cmd Pose Translation',poses[:3])
+            print ('Cmd Pose Orientation: ' + str(orientation_XYZ) +'\n')
+
+
+            #print (pose_mdeg)
             try:
                 poses = [float(n) for n in pose_mq]
                 result = pose_action_client.cartesian_pose_client(poses[:3], poses[3:])
@@ -81,7 +98,7 @@ class pick_peas_class(object):
                 print ("program interrupted before completion")
 
             # pose_action_client.cartesian_pose_client(self.spoon_pose.pose.position, self.spoon_pose.pose.orientation)
-            # self.j.gripper.close()
+            self.j.gripper.close()
 
         else:
             print ("we DONT have the frame")
@@ -108,7 +125,7 @@ class pick_peas_class(object):
             print (pose_value)
 
             pose_action_client.getcurrentCartesianCommand('j2n6a300_')
-            pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value)
+            pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, 0)
             print ('this is pose wrt home .. !? maybe \n')
             print (pose_mq)
             try:
@@ -149,7 +166,7 @@ if __name__ == '__main__':
     p = pick_peas_class()
     p.readJointAngles()
 
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
+    while not (p.listen.frameExists("/j2n6a300_end_effector") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
         pass
 
     print ("Starting task...\n")
@@ -169,7 +186,7 @@ if __name__ == '__main__':
     #         print (i)
     # p.j.home()
 
-    # print ("Spoon reached\n")
-    # p.goto_bowl()
-    # print ("Bowl reached\n")
+    print ("Spoon reached\n")
+    p.goto_bowl()
+    print ("Bowl reached\n")
     # p.move_joints()
