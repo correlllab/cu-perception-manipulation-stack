@@ -326,9 +326,13 @@ public:
 
     //TODO: Old poses continue to be published?
     std::vector<Eigen::Affine3d> local_poses;
-    local_poses.clear();
-    object_poses_.clear();
+    object_poses_ = local_poses;
     std::size_t idx = 0;
+
+    cws_objects = 0;
+    plate_objects = 0;
+    bowl_objects = 0;
+    unknown_objects = 0;
 
     int objects_found = cluster_indices.end() - cluster_indices.begin();
     object_labels = new std::string[objects_found];
@@ -489,27 +493,30 @@ public:
        && (cws_xy_min < width) && (width < cws_xy_max)
        && (cws_xy_min < depth) && (depth < cws_xy_max) )
     {
-      ROS_INFO_STREAM_NAMED("ppc", "Cup/spoon object found #: " << index);
-      ss << cws_label;
+      ss << cws_label << "_" << cws_objects;
+      cws_objects++;
     }
     else if((bowl_height_min < height) && (height < bowl_height_max)
             && (bowl_xy_min < width) && (width < bowl_xy_max)
             && (bowl_xy_min < depth) && (depth < bowl_xy_max))
     {
-      ROS_INFO_STREAM_NAMED("ppc", "Bowl object found #: " << index);
-      ss << bowl_label;
+      ss << bowl_label << "_" << bowl_objects;
+      bowl_objects++;
     }
     else if((plate_height_min < height) && (height < plate_height_max)
             && (plate_xy_min < width) && (width < plate_xy_max)
             && (plate_xy_min < depth) && (depth < plate_xy_max))
     {
-      ROS_INFO_STREAM_NAMED("ppc", "Plate object found #: " << index);
-      ss << plate_label;
+      ss << plate_label << "_" << plate_objects;
+      plate_objects++;
     }
     else
     {
-      ss << unknown_label << "_" << index;
+      ss << unknown_label << "_" << unknown_objects;
+      unknown_objects++;
     }
+    ROS_INFO_STREAM_NAMED("ppc", "Object Identity: " << ss.str());
+
     return ss.str();
   }
 }; // end class PerceptionTester

@@ -13,18 +13,21 @@ namespace perception
   double cws_height_max;
   double cws_xy_min;
   double cws_xy_max;
+  int cws_objects = 0;
 
   //plate
   double plate_height_min;
   double plate_height_max;
   double plate_xy_min;
   double plate_xy_max;
+  int plate_objects = 0;
 
   //bowl
   double bowl_height_min;
   double bowl_height_max;
   double bowl_xy_min;
   double bowl_xy_max;
+  int bowl_objects = 0;
 
   //published labels
   const std::string cws_label = "cup_with_spoon";
@@ -34,7 +37,7 @@ namespace perception
   const std::string plate_label = "plate";
   const std::string hammer_label = "hammer";
   const std::string unknown_label = "unknown";
-  //std::ostringstream cws_label;
+  int unknown_objects = 0;
 
   std::string* object_labels;
 
