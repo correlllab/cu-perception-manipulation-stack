@@ -67,20 +67,9 @@ class pick_peas_class(object):
             #         Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
 
             self.j.gripper.open()
-            # self.j.move_ik(self.spoon_pose)
 
             pose_action_client.getcurrentCartesianCommand('j2n6a300_')
             pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, 0)
-            # print ('this is pose wrt home .. !? maybe \n')
-
-            # # Print spoon and final position
-            # if self.listen.frameExists("/root") and self.listen.frameExists("/spoon_position"):
-            #     self.listen.waitForTransform('/root','/spoon_position',rospy.Time(),rospy.Duration(100.0))
-            #     t = self.listen.getLatestCommonTime("/root", "/spoon_position")
-            #     translation, quaternion = self.listen.lookupTransform("/root", "/spoon_position", t)
-            #     orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
-            #     print ('\nSpoon Translation wrt /root',translation)
-            #     print ('Spoon Orientation wrt /root: ' + str(orientation_XYZ) +'\n')
 
             poses = [float(n) for n in pose_mq]
             orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(poses[3:])
