@@ -101,12 +101,6 @@ class pick_peas_class(object):
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
             translation, quaternion = self.listen.lookupTransform("/root", "/bowl_position", rospy.Time(0))
 
-            # print (translation)
-            # self.bowl_pose = PoseStamped(
-            #     Header(0, rospy.Time(0), 1),
-            #     Pose(Point(float(translation[0]),float(translation[1]),float(translation[2])),
-            #          Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
-
             translation =  list(translation)
             quaternion = list(quaternion)
             pose_value = translation + quaternion
@@ -129,6 +123,35 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the bowl frame")
 
+
+    def goto_plate(self):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
+            self.listen.waitForTransform('/root','/plate_position',rospy.Time(),rospy.Duration(100.0))
+            print ("we have the bowl frame")
+            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
+
+            translation =  list(translation)
+            quaternion = list(quaternion)
+            pose_value = translation + quaternion
+            print ('this is the coordinate of the spoon \n')
+            print (pose_value)
+
+            pose_action_client.getcurrentCartesianCommand('j2n6a300_')
+            pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, 0)
+            print ('this is pose wrt home .. !? maybe \n')
+            print (pose_mq)
+            try:
+                poses = [float(n) for n in pose_mq]
+                result = pose_action_client.cartesian_pose_client(poses[:3], poses[3:])
+                print('Cartesian pose sent!')
+
+            except rospy.ROSInterruptException:
+                print ("program interrupted before completion")
+
+
+        else:
+            print ("we DONT have the bowl frame")
 
     def move_joints(self):
         #print (self.joint_angles)
@@ -178,4 +201,6 @@ if __name__ == '__main__':
     print ("Spoon reached\n")
     p.goto_bowl()
     print ("Bowl reached\n")
-    # p.move_joints()
+    p.move_joints()
+    p.goto_plate()
+    p.move_joints()
