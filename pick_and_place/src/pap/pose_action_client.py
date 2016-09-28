@@ -164,19 +164,12 @@ def unitParser(unit_, pose_value_, relative_):
 
     position_ = pose_value_[:3]
     orientation_ = pose_value_[3:]
-    print ('BEFORE addition . . .')
-    print ('currentCartesianCommand: ' + str(currentCartesianCommand) + '\n')
-    print ('pose_value_: ' + str(pose_value_) + '\n')
 
     for i in range(0,3):
         if relative_:
             position_[i] = pose_value_[i] + currentCartesianCommand[i]
         else:
-            print ('it does not add!!')
             position_[i] = pose_value_[i]
-
-    print ('AFTER addition. . . .')
-    print ('position: ' + str(position_))
 
     # print('pose_value_ in unitParser 1: {}'.format(pose_value_))  # debug
 
@@ -187,13 +180,11 @@ def unitParser(unit_, pose_value_, relative_):
             orientation_xyz_list = [currentCartesianCommand[3+i] + orientation_XYZ[i] for i in range(0,3)]
             orientation_q = EulerXYZ2Quaternion(orientation_xyz_list)
         else:
-            print ('it does not add orientation')
             orientation_q = orientation_
 
         orientation_rad = Quaternion2EulerXYZ(orientation_q)
         orientation_deg = list(map(math.degrees, orientation_rad))
 
-        print ('oreintation: ' + str(orientation_q))
 
     elif unit_ == 'mdeg':
         if relative_:

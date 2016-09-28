@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 from __future__ import division, print_function, absolute_import
+import sys
 import rospy
 from pap.jaco import Jaco
 from pap.manager import PickAndPlaceNode
@@ -43,8 +44,8 @@ class pick_peas_class(object):
         # move arm to the calibration position
         self.calib_pose = PoseStamped(
             Header(0, rospy.Time(0), self.j.base),
-            Pose(Point(0.3424,-0.1766,0.0381),
-                 Quaternion(0.1802, 0.6434, 0.7075, 0.2299)))
+            Pose(Point(0.338520675898,-0.175860479474,0.0356775075197),
+                 Quaternion(-0.0183493755758,0.708424150944, 0.704712092876, 0.0343413949013)))
         self.j.move_ik(self.calib_pose)
 
     def pick_spoon(self):
@@ -59,12 +60,6 @@ class pick_peas_class(object):
             pose_value = translation + quaternion
             # print ('this is the coordinate of the spoon \n')
             orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
-            print ('Translation',translation)
-            print ('Orientation: ' + str(orientation_XYZ) +'\n')
-            # self.spoon_pose = PoseStamped(
-            #     Header(0, rospy.Time(0), 'root'),
-            #     Pose(Point(float(translation[0]),float(translation[1]),float(translation[2])),
-            #         Quaternion(float(quaternion[0]),float(quaternion[1]),float(quaternion[2]),float(quaternion[3]))))
 
             self.j.gripper.open()
 
@@ -73,15 +68,11 @@ class pick_peas_class(object):
 
             poses = [float(n) for n in pose_mq]
             orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(poses[3:])
-            print ('Cmd Pose Translation',poses[:3])
-            print ('Cmd Pose Orientation: ' + str(orientation_XYZ) +'\n')
 
-
-            #print (pose_mdeg)
             try:
                 poses = [float(n) for n in pose_mq]
                 result = pose_action_client.cartesian_pose_client(poses[:3], poses[3:])
-                print('Cartesian pose sent!')
+                # print('Cartesian pose sent!')
 
             except rospy.ROSInterruptException:
                 print ("program interrupted before completion")
@@ -97,20 +88,16 @@ class pick_peas_class(object):
     def goto_bowl(self):
         if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_position"):
             self.listen.waitForTransform('/root','/bowl_position',rospy.Time(),rospy.Duration(100.0))
-            print ("we have the bowl frame")
+            # print ("we have the bowl frame")
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
             translation, quaternion = self.listen.lookupTransform("/root", "/bowl_position", rospy.Time(0))
 
             translation =  list(translation)
             quaternion = list(quaternion)
+            # print ("This is the orientation we want to reach" + str(quaternion))
             pose_value = translation + quaternion
-            print ('this is the coordinate of the spoon \n')
-            print (pose_value)
-
             pose_action_client.getcurrentCartesianCommand('j2n6a300_')
             pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, 0)
-            print ('this is pose wrt home .. !? maybe \n')
-            print (pose_mq)
             try:
                 poses = [float(n) for n in pose_mq]
                 result = pose_action_client.cartesian_pose_client(poses[:3], poses[3:])
@@ -118,8 +105,6 @@ class pick_peas_class(object):
 
             except rospy.ROSInterruptException:
                 print ("program interrupted before completion")
-
-
         else:
             print ("we DONT have the bowl frame")
 
@@ -132,24 +117,19 @@ class pick_peas_class(object):
             translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
 
             translation =  list(translation)
-            quaternion = list(quaternion)
+            quaternion = [0.8678189045198146, 0.0003956789257977804, -0.4968799802988633, 0.0006910675928639343]
             pose_value = translation + quaternion
-            print ('this is the coordinate of the spoon \n')
+            print ('this should be the orientation same as the bowl orientation \n')
             print (pose_value)
 
             pose_action_client.getcurrentCartesianCommand('j2n6a300_')
             pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, 0)
-            print ('this is pose wrt home .. !? maybe \n')
-            print (pose_mq)
             try:
                 poses = [float(n) for n in pose_mq]
                 result = pose_action_client.cartesian_pose_client(poses[:3], poses[3:])
-                print('Cartesian pose sent!')
-
+                # print('Cartesian pose sent!')
             except rospy.ROSInterruptException:
                 print ("program interrupted before completion")
-
-
         else:
             print ("we DONT have the bowl frame")
 

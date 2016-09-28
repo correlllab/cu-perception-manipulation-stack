@@ -101,15 +101,15 @@ class PickAndPlaceNode(Manager):
         # Ideally this call would be in a Factory/Metaclass/Parent
         self.show_options()
         # self.robot.home()
-        self.move_calib_position()
+        # self.move_calib_position()
+
 
     def move_calib_position(self):
         # move arm to the calibration position
-        print ("Moving to calibration position . . . ")
         self.calib_pose = PoseStamped(
             Header(0, rospy.Time(0), self.robot.base),
-            Pose(Point(0.3424,-0.1766,0.0381),
-                 Quaternion(0.1802, 0.6434, 0.7075, 0.2299)))
+            Pose(Point(0.338520675898,-0.175860479474,0.0356775075197),
+                 Quaternion(-0.0183493755758,0.708424150944, 0.704712092876, 0.0343413949013)))
         self.robot.move_ik(self.calib_pose)
 
     def update_num_objects(self, msg):
