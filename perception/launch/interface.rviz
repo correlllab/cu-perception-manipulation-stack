@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
       Splitter Ratio: 0.636943
-    Tree Height: 716
+    Tree Height: 359
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -82,7 +82,8 @@ Visualization Manager:
       Marker Topic: /ARmarker_points
       Name: Marker
       Namespaces:
-        {}
+        3dpts: true
+        arrow: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -91,6 +92,8 @@ Visualization Manager:
       Frames:
         All Enabled: false
         ar_marker_2:
+          Value: true
+        ar_marker_255:
           Value: true
         base:
           Value: false
@@ -155,6 +158,8 @@ Visualization Manager:
               camera_rgb_frame:
                 camera_rgb_optical_frame:
                   ar_marker_2:
+                    {}
+                  ar_marker_255:
                     {}
             j2n6a300_link_base:
               j2n6a300_link_1:
@@ -330,10 +335,10 @@ Visualization Manager:
         Z: -0.0505305
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.619799
+      Pitch: 0.4948
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.860889
+      Yaw: 1.66089
     Saved: ~
 Window Geometry:
   Displays:

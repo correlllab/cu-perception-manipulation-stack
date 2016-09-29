@@ -43,10 +43,16 @@ class FilterSignal(object):
             '/finger_sensor/sail',
             Float64,
             queue_size=5)
-        self.fai_pub = rospy.Publisher(
-            '/finger_sensor/fai',
+        self.fair_pub = rospy.Publisher(
+            '/finger_sensor/fair',
             Float64,
             queue_size=5)
+
+        self.fail_pub = rospy.Publisher(
+            '/finger_sensor/fail',
+            Float64,
+            queue_size=5)
+
         self.faii_pub = rospy.Publisher(
             '/finger_sensor/faii',
             Float64,
@@ -95,7 +101,7 @@ class FilterSignal(object):
         # print(rospy.get_rostime(), rospy.Time.now())  # They're different
         # self.sensor_t.append(rospy.Time())
         self.sensor_values.append(msg.data)
-        print (self.sensor_values)
+        #print (self.sensor_values)
 
     def compute_sai(self):
         # Skipping the front tip sensor (idx 7 and 15)
@@ -108,19 +114,35 @@ class FilterSignal(object):
             self.data['sair'].append((t, right))
             self.data['sail'].append((t, left))
 
-    def compute_fai(self):
+    def compute_fair(self):
         # Original code began by substracting the minimum ever seen,
         # maybe we "zero" the sensor instead? But in fact, with a
         # highpass filter, it won't matter anyway so we don't do
         # i... Assumption tested successfully too.
         filtered_values = signal.lfilter(self.b, self.a,
                                          self.sensor_values, axis=0)
-        self.fai = filtered_values.sum(axis=1)
-        val = self.fai[-1]
-        self.fai_pub.publish(Float64(val))
+        # print shape()
+        self.fair = filtered_values[-1][:2].sum()
+        val = self.fair
+        self.fair_pub.publish(Float64(val))
         if self.recording:
             t = time()
-            self.data['fai'].append((t, val))
+            self.data['fair'].append((t, val))
+
+    def compute_fail(self):
+        # Original code began by substracting the minimum ever seen,
+        # maybe we "zero" the sensor instead? But in fact, with a
+        # highpass filter, it won't matter anyway so we don't do
+        # i... Assumption tested successfully too.
+        filtered_values = signal.lfilter(self.b, self.a,
+                                         self.sensor_values, axis=0)
+
+        self.fail = filtered_values[-1][3:].sum()
+        val = self.fail
+        self.fail_pub.publish(Float64(val))
+        if self.recording:
+            t = time()
+            self.data['fail'].append((t, val))
 
     def compute_faii(self):
         filtered_acc = signal.lfilter(self.b1, self.a1, self.acc, axis=0)
@@ -146,7 +168,8 @@ if __name__ == '__main__':
     r = rospy.Rate(30)
     while not rospy.is_shutdown():
         f.compute_sai()
-        f.compute_fai()
+        f.compute_fair()
+        f.compute_fail()
         # f.compute_faii()
         r.sleep()
     # f.save()

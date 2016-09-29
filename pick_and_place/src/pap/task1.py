@@ -6,24 +6,31 @@ from pap.jaco import Jaco
 from pap.manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
 
-from std_msgs.msg import Header, Int32MultiArray
+from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
 import pose_action_client
 
 import tf
 
-currentCartesianCommand = [0.212322831154, -0.257197618484, 0.509646713734, 1.63771402836, 1.11316478252, 0.134094119072] # default home in unit mq
-
 class pick_peas_class(object):
     def __init__(self):
         self.j = Jaco()
         self.listen = tf.TransformListener()
         self.joint_angles = [0]*6
-        self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
-                                     self.callback_1, queue_size=1)
+        # self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
+        #                              self.callback_1, queue_size=1)
+
         self.cart_vel_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
                                                             PoseVelocity, queue_size=1)
+
+        # self.touch_r_sub = rospy.Subscriber("/finger_sensor_right/touch",
+        #                                 Bool,
+        #                                 queue_size=1)
+        #
+        # self.touch_l_sub = rospy.Subscriber("/finger_sensor_left/touch",
+        #                                 Bool,
+        #                                 queue_size=1)
 
 
     def readJointAngles(self):
@@ -40,7 +47,8 @@ class pick_peas_class(object):
         #print (self.joint_angles)
 
     def callback_1(self, msg):
-        print (msg.data)
+        # print (msg.data)
+        pass
 
 
     def move_calib_position(self):
@@ -74,7 +82,7 @@ class pick_peas_class(object):
             translation =  list(translation)
             quaternion = list(quaternion)
             pose_value = translation + quaternion
-            print (quaternion)
+            # print (quaternion)
             orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
 
             self.j.gripper.open()
@@ -145,27 +153,28 @@ if __name__ == '__main__':
     p = pick_peas_class()
     p.readJointAngles()
 
-    while not (p.listen.frameExists("/minor") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
         pass
 
     print ("Starting task...\n")
-    # p.pick_spoon()
+
+    p.pick_spoon()
 
     # p.move_cartcmmd([0, 0, 0.1, 0, 0, 0, 1], '-r')
 
-    # print ("Searching spoon...\n")
-    # for i in range(10):
-    #     if i<50:
-    #         cart_velocities = [0.05,0,0,0,0,0] # linear[0:2], angular[3:5]
-    #         p.cmmd_cart_velo(cart_velocities)
-    #         # i+=1
-    #         print (i)
-    #     else:
-    #         cart_velocities = [-0.05,0,0,0,0,0]
-    #         p.cmmd_cart_velo(cart_velocities)
-    #         # i+=1
-    #         print (i)
-    # p.j.home()
+    print ("Searching spoon...\n")
+    for i in range(10):
+        if i<5:
+            cart_velocities = [0,-0.5,0,0,0,0] # linear[0:2], angular[3:5]
+            p.cmmd_cart_velo(cart_velocities)
+            i+=1
+            # print (i)
+        else:
+            cart_velocities = [0,-0,0,0,0,0]
+            p.cmmd_cart_velo(cart_velocities)
+            i+=1
+            # print (i)
+    p.j.home()
 
     # print ("Spoon reached\n")
     # p.goto_bowl()
@@ -173,3 +182,4 @@ if __name__ == '__main__':
     # p.move_joints()
     # p.goto_plate()
     # p.move_joints()
+    # rospy.spin()
