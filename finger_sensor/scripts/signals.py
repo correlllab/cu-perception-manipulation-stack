@@ -20,16 +20,21 @@ class FilterSignal(object):
         self.names = ('sair', 'sail', 'fai', 'faii')
         self.data = {n: [] for n in self.names}
         # TODO hardcoded for left arm
-        self.acc_sub = rospy.Subscriber(
-            '/robot/accelerometer/left_accelerometer/state',
-            Imu,
-            self.handle_acc)
+        # self.acc_sub = rospy.Subscriber(
+        #     '/robot/accelerometer/left_accelerometer/state',
+        #     Imu,
+        #     self.handle_acc)
 
         self.sensor_sub = rospy.Subscriber(
             '/sensor_values',
             Int32MultiArray,
             self.handle_sensor)
 
+        self.kb_sub = rospy.Subscriber('/keyboard/keyup',
+                                       Key,
+                                       self.keyboard_cb, queue_size=10)
+
+        # Visualising the below pulished signals in rqt_plot is recommended
         self.sair_pub = rospy.Publisher(
             '/finger_sensor/sair',
             Float64,
@@ -47,12 +52,11 @@ class FilterSignal(object):
             Float64,
             queue_size=5)
 
-        self.kb_sub = rospy.Subscriber('/keyboard/keyup',
-                                       Key,
-                                       self.keyboard_cb, queue_size=10)
-
+        # print ("does it SAVE??")
         # Every queue should hold about 4 seconds of data
-        self.sensor_t = deque(maxlen=80)
+        # self.sensor_t = []
+        # self.sensor_t = deque(maxlen=80)
+        self.sensor_values = []
         self.sensor_values = deque(maxlen=80)
 
         self.acc_t = deque(maxlen=400)
@@ -89,13 +93,14 @@ class FilterSignal(object):
         # TODO maybe time stamp sensor values with header
         # TODO rospy.get_rostime() vs rospy.Time.now()?
         # print(rospy.get_rostime(), rospy.Time.now())  # They're different
-        self.sensor_t.append(rospy.Time.now())
+        # self.sensor_t.append(rospy.Time())
         self.sensor_values.append(msg.data)
+        print (self.sensor_values)
 
     def compute_sai(self):
         # Skipping the front tip sensor (idx 7 and 15)
-        right = sum(self.sensor_values[-1][8:15])
-        left = sum(self.sensor_values[-1][0:7])
+        right = sum(self.sensor_values[-1][2:3])
+        left = sum(self.sensor_values[-1][0:1])
         self.sair_pub.publish(Float64(right))
         self.sail_pub.publish(Float64(left))
         if self.recording:
@@ -142,6 +147,6 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         f.compute_sai()
         f.compute_fai()
-        f.compute_faii()
+        # f.compute_faii()
         r.sleep()
-    f.save()
+    # f.save()

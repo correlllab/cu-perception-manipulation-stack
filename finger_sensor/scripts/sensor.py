@@ -7,7 +7,7 @@ from std_msgs.msg import Int32MultiArray, MultiArrayLayout, MultiArrayDimension
 
 
 def collect_data(port='/dev/ttyACM0'):
-    with serial.Serial(port, 57600, timeout=0.1) as ser:
+    with serial.Serial(port, 115200, timeout=0.1) as ser:
         ser.flushInput()
         # Give it some time to initialize
         data = []
@@ -29,8 +29,8 @@ def collect_data(port='/dev/ttyACM0'):
                 continue
             try:
                 values = [int(i) for i in last_full_line.split()]
-                if len(values) == 16:
-                    rospy.loginfo(values)
+                if len(values) == 4:        # CHANGE this to no. of sensor values read
+                    rospy.loginfo(values)   # from serialport(just the values)
                     yield values
             except ValueError:
                 rospy.loginfo(last_full_line)
@@ -42,15 +42,14 @@ def collect_data(port='/dev/ttyACM0'):
 
 def sensor_node():
     c = collect_data()
-    #c = collect_data(port='/dev/ttyACM1')
     pub = rospy.Publisher('/sensor_values', Int32MultiArray, queue_size=1)
     rospy.init_node('sensor_node')
     rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         values = next(c)
         msg = Int32MultiArray(
-            MultiArrayLayout([MultiArrayDimension('sensor data', 16, 1)], 1),
-            values)
+            MultiArrayLayout([MultiArrayDimension('sensor data', 4, 1)], 1), # CHANGE the second arg to no. of sensor values read
+            values)                                                             # from serialport(just the values)
         pub.publish(msg)
         rate.sleep()
 

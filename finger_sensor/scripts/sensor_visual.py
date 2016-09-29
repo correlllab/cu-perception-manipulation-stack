@@ -63,10 +63,10 @@ class FingerSensorVisualizer(object):
 
     def callback(self, msg):
         nparr = Int32MultiArray2np(msg)
-        if nparr.shape != (16,):
+        if nparr.shape != (4,): # CHANGE this to no. of sensor values read from serialport(just the values)
             raise ValueError("Need 16 sensor values!")
 
-        data = nparr.reshape(2, 8)
+        data = nparr.reshape(2, 2)
         self.im.set_data(np.log2(data))
         self.ax.set_title(str(data))
         self.fig.canvas.draw()
