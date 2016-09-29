@@ -15,13 +15,13 @@ import tf
 
 currentCartesianCommand = [0.212322831154, -0.257197618484, 0.509646713734, 1.63771402836, 1.11316478252, 0.134094119072] # default home in unit mq
 
-class pick_peas_class(object):
+class stirCup(object):
     def __init__(self):
         self.j = Jaco()
         self.listen = tf.TransformListener()
         self.joint_angles = [0]*6
-        self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
-                                     self.callback_1, queue_size=1)
+        # self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
+        #                              self.callback, queue_size=1)
         self.cart_vel_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
                                                             PoseVelocity, queue_size=1)
 
@@ -38,9 +38,6 @@ class pick_peas_class(object):
         self.joint_angles[4] = data.joint5
         self.joint_angles[5] = data.joint6
         #print (self.joint_angles)
-
-    def callback_1(self, msg):
-        print (msg.data)
 
 
     def move_calib_position(self):
@@ -86,8 +83,6 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the frame")
 
-
-
     def goto_bowl(self):
         if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_position"):
             self.listen.waitForTransform('/root','/bowl_position',rospy.Time(),rospy.Duration(100.0))
@@ -103,22 +98,17 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the bowl frame")
 
+    def stir_cup(self):
+        for i in range(3):
+            self.move_cartcmmd([0.05, 0, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([0.025, -0.025, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([0, -0.05, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([-0.025, -0.025, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([-0.05, 0, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([-0.025, 0.025, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([0, 0.05, 0, 0, 0, 0, 1], '-r')
+            self.move_cartcmmd([0.025, 0.025, 0, 0, 0, 0, 1], '-r')
 
-    def goto_plate(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
-            self.listen.waitForTransform('/root','/plate_position',rospy.Time(),rospy.Duration(100.0))
-            print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
-
-            translation =  list(translation)
-            quaternion = [0.8678189045198146, 0.0003956789257977804, -0.4968799802988633, 0.0006910675928639343]
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.move_cartcmmd(pose_value, 0)
-
-        else:
-            print ("we DONT have the bowl frame")
 
     def move_joints(self):
         #print (self.joint_angles)
@@ -142,34 +132,16 @@ class pick_peas_class(object):
 if __name__ == '__main__':
     rospy.init_node("task_1")
     # n = PickAndPlaceNode(Jaco)
-    p = pick_peas_class()
-    p.readJointAngles()
+    s = stirCup()
+    s.readJointAngles()
 
-    while not (p.listen.frameExists("/minor") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
+    while not (s.listen.frameExists("/root") and s.listen.frameExists("/spoon_position") and s.listen.frameExists("/bowl_position")):
         pass
 
     print ("Starting task...\n")
-    # p.pick_spoon()
+    s.pick_spoon()
 
-    # p.move_cartcmmd([0, 0, 0.1, 0, 0, 0, 1], '-r')
-
-    # print ("Searching spoon...\n")
-    # for i in range(10):
-    #     if i<50:
-    #         cart_velocities = [0.05,0,0,0,0,0] # linear[0:2], angular[3:5]
-    #         p.cmmd_cart_velo(cart_velocities)
-    #         # i+=1
-    #         print (i)
-    #     else:
-    #         cart_velocities = [-0.05,0,0,0,0,0]
-    #         p.cmmd_cart_velo(cart_velocities)
-    #         # i+=1
-    #         print (i)
-    # p.j.home()
-
-    # print ("Spoon reached\n")
-    # p.goto_bowl()
-    # print ("Bowl reached\n")
-    # p.move_joints()
-    # p.goto_plate()
-    # p.move_joints()
+    s.move_cartcmmd([0, 0, 0.1, 0, 0, 0, 1], '-r')
+    s.goto_bowl()
+    # s.move_cartcmmd([0, 0, -0.08, 0, 0, 0, 1], '-r')
+    s.stir_cup()
