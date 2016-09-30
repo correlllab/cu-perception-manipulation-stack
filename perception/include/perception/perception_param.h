@@ -15,6 +15,9 @@ namespace perception
   double cws_xy_max;
   int cws_objects = 0;
 
+  //spoon without cup split
+  double spoon_start_height;
+
   //plate
   double plate_height_min;
   double plate_height_max;
@@ -39,7 +42,7 @@ namespace perception
   const std::string unknown_label = "unknown";
   int unknown_objects = 0;
 
-  std::string* object_labels;
+  std::vector<std::string> object_labels;
 
 }
 
