@@ -16,7 +16,7 @@ namespace perception
   int cws_objects = 0;
 
   //spoon without cup split
-  double spoon_start_height;
+  double cup_height;
 
   //plate
   double plate_height_min;

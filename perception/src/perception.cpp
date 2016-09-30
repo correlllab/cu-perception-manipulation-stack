@@ -342,7 +342,7 @@ public:
     Eigen::Vector3d object_centroid;
     tf::StampedTransform qr_transform;
     Eigen::Affine3d object_pose;
-    visual_tools_->deleteAllMarkers();
+    //visual_tools_->deleteAllMarkers();
 
     tf_listener_.waitForTransform("base", "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
     try
@@ -397,8 +397,6 @@ public:
       object_pose.translation() = object_centroid;
       single_object_transformed->header.frame_id = "base";
 
-      debug_object_cloud_.publish(single_object_transformed);
-
       object_pose = Eigen::Affine3d::Identity();
       pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
@@ -410,7 +408,7 @@ public:
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
 
-      std::string object_identity = object_recognition( object_pose, single_object_transformed, idx, useless_centroid_table(0));
+      std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
       object_labels.push_back(object_identity);
       if(object_identity == "cup_with_spoon_0")
       {
@@ -448,14 +446,14 @@ public:
     }
 
     object_poses_ = local_poses;
-    visual_tools_->triggerBatchPublish();
+    //visual_tools_->triggerBatchPublish();
 
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
   }
 
   double cup_min_z;
 
-  std::string object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index, double table_z)
+  std::string object_recognition(Eigen::Affine3d object_pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int index)
   {
     pcl::PointXYZRGB min, max;
 
