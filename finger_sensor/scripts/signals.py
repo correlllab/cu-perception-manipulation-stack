@@ -43,6 +43,10 @@ class FilterSignal(object):
             '/finger_sensor/sail',
             Float64,
             queue_size=5)
+        self.saim_pub = rospy.Publisher(
+            '/finger_sensor/saim',
+            Float64,
+            queue_size=5)
         self.fair_pub = rospy.Publisher(
             '/finger_sensor/fair',
             Float64,
@@ -50,6 +54,11 @@ class FilterSignal(object):
 
         self.fail_pub = rospy.Publisher(
             '/finger_sensor/fail',
+            Float64,
+            queue_size=5)
+
+        self.faim_pub = rospy.Publisher(
+            '/finger_sensor/faim',
             Float64,
             queue_size=5)
 
@@ -105,44 +114,37 @@ class FilterSignal(object):
 
     def compute_sai(self):
         # Skipping the front tip sensor (idx 7 and 15)
-        right = sum(self.sensor_values[-1][2:3])
-        left = sum(self.sensor_values[-1][0:1])
+        right = sum(self.sensor_values[-1][2:4])
+        left = sum(self.sensor_values[-1][0:2])
+        middle = sum(self.sensor_values[-1][4:6])
         self.sair_pub.publish(Float64(right))
         self.sail_pub.publish(Float64(left))
+        self.saim_pub.publish(Float64(middle))
         if self.recording:
             t = time()
             self.data['sair'].append((t, right))
             self.data['sail'].append((t, left))
+            self.data['saim'].append((t, middle))
 
-    def compute_fair(self):
-        # Original code began by substracting the minimum ever seen,
-        # maybe we "zero" the sensor instead? But in fact, with a
-        # highpass filter, it won't matter anyway so we don't do
-        # i... Assumption tested successfully too.
+    def compute_fai(self):
+
         filtered_values = signal.lfilter(self.b, self.a,
                                          self.sensor_values, axis=0)
         # print shape()
-        self.fair = filtered_values[-1][:2].sum()
-        val = self.fair
-        self.fair_pub.publish(Float64(val))
+        self.fail = filtered_values[-1][:2].sum()
+        self.fair = filtered_values[-1][2:4].sum()
+        self.faim = filtered_values[-1][4:6].sum()
+        right = self.fair
+        left = self.fail
+        middle = self.faim
+        self.fair_pub.publish(Float64(right))
+        self.fail_pub.publish(Float64(left))
+        self.faim_pub.publish(Float64(middle))
         if self.recording:
             t = time()
-            self.data['fair'].append((t, val))
-
-    def compute_fail(self):
-        # Original code began by substracting the minimum ever seen,
-        # maybe we "zero" the sensor instead? But in fact, with a
-        # highpass filter, it won't matter anyway so we don't do
-        # i... Assumption tested successfully too.
-        filtered_values = signal.lfilter(self.b, self.a,
-                                         self.sensor_values, axis=0)
-
-        self.fail = filtered_values[-1][3:].sum()
-        val = self.fail
-        self.fail_pub.publish(Float64(val))
-        if self.recording:
-            t = time()
-            self.data['fail'].append((t, val))
+            self.data['fair'].append((t, right))
+            self.data['fail'].append((t, left))
+            self.data['faim'].append((t, middle))
 
     def compute_faii(self):
         filtered_acc = signal.lfilter(self.b1, self.a1, self.acc, axis=0)
@@ -168,8 +170,7 @@ if __name__ == '__main__':
     r = rospy.Rate(30)
     while not rospy.is_shutdown():
         f.compute_sai()
-        f.compute_fair()
-        f.compute_fail()
+        f.compute_fai()
         # f.compute_faii()
         r.sleep()
     # f.save()

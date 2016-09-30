@@ -29,7 +29,7 @@ def collect_data(port='/dev/ttyACM0'):
                 continue
             try:
                 values = [int(i) for i in last_full_line.split()]
-                if len(values) == 4:        # CHANGE this to no. of sensor values read
+                if len(values) == 6:        # CHANGE this to no. of sensor values read
                     rospy.loginfo(values)   # from serialport(just the values)
                     yield values
             except ValueError:
@@ -48,7 +48,7 @@ def sensor_node():
     while not rospy.is_shutdown():
         values = next(c)
         msg = Int32MultiArray(
-            MultiArrayLayout([MultiArrayDimension('sensor data', 4, 1)], 1), # CHANGE the second arg to no. of sensor values read
+            MultiArrayLayout([MultiArrayDimension('sensor data', 6, 1)], 1), # CHANGE the second arg to no. of sensor values read
             values)                                                             # from serialport(just the values)
         pub.publish(msg)
         rate.sleep()

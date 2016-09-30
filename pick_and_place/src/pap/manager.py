@@ -101,7 +101,7 @@ class PickAndPlaceNode(Manager):
         # Ideally this call would be in a Factory/Metaclass/Parent
         self.show_options()
         # self.robot.home()
-        self.move_calib_position()
+        # self.move_calib_position()
 
 
     def move_calib_position(self):
