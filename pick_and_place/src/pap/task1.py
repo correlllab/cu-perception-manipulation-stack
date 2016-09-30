@@ -8,7 +8,7 @@ from kinova_msgs.msg import JointAngles, PoseVelocity
 
 from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-
+import numpy as np
 import pose_action_client
 
 import tf
@@ -24,6 +24,11 @@ class pick_peas_class(object):
         self.cart_vel_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
                                                             PoseVelocity, queue_size=1)
 
+        self.obj_det_sub = rospy.Subscriber('/finger_sensor/obj_detected',
+                                            Bool,
+                                            self.set_obj_det)
+        self.obj_det = False
+
         # self.touch_r_sub = rospy.Subscriber("/finger_sensor_right/touch",
         #                                 Bool,
         #                                 queue_size=1)
@@ -36,6 +41,9 @@ class pick_peas_class(object):
     def readJointAngles(self):
         self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
                                                                 JointAngles, self.callback)
+
+    def set_obj_det(self,msg):
+        self.obj_det = msg.data
 
     def callback(self,data):
         self.joint_angles[0] = data.joint1
@@ -85,11 +93,11 @@ class pick_peas_class(object):
             # print (quaternion)
             orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
 
-            self.j.gripper.open()
+            # self.j.gripper.open()
             #second arg=0 (absolute movement), arg = '-r' (relative movement)
             self.move_cartcmmd(pose_value, 0)
 
-            self.j.gripper.close()
+            # self.j.gripper.close()
 
         else:
             print ("we DONT have the frame")
@@ -147,34 +155,52 @@ class pick_peas_class(object):
 
         self.j.kinematic_control(msg)
 
+
+    def searchSpoon(self):
+        if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
+            # print ("we are in the search spoon fucntion")
+            self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/j2n6a300_end_effector","/root")
+            translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector","/root",t)
+            matrix1=self.listen.fromTranslationRotation(translation,quaternion)
+            counter=0
+            rate=rospy.Rate(100)
+            while not self.obj_det:
+                #   print ("we are in the search spoon fucntion")
+                  counter = counter + 1
+                  if(counter < 400):
+                    print('forward')
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
+                    cart_velocities = cart_velocities.T[0].tolist()
+                    self.cmmd_cart_velo(cart_velocities + [0,0,0,1])
+                  else:
+                    print('backwards')
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T)
+                    cart_velocities = cart_velocities.T[0].tolist()
+                    self.cmmd_cart_velo(cart_velocities + [0,0,0,1])
+                  rate.sleep()
+                  if(counter >800):
+                     counter=0
+
+
 if __name__ == '__main__':
     rospy.init_node("task_1")
     # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
+    p.j.gripper.set_position([0,100,100])
     p.readJointAngles()
 
     while not (p.listen.frameExists("/root") and p.listen.frameExists("bowl_position") and p.listen.frameExists("/spoon_position")):
         pass
 
     print ("Starting task...\n")
-
     p.pick_spoon()
 
-    # p.move_cartcmmd([0, 0, 0.1, 0, 0, 0, 1], '-r')
+    print ("Search spoon")
+    p.searchSpoon()
 
-    print ("Searching spoon...\n")
-    for i in range(10):
-        if i<5:
-            cart_velocities = [0,-0.5,0,0,0,0] # linear[0:2], angular[3:5]
-            p.cmmd_cart_velo(cart_velocities)
-            i+=1
-            # print (i)
-        else:
-            cart_velocities = [0,-0,0,0,0,0]
-            p.cmmd_cart_velo(cart_velocities)
-            i+=1
-            # print (i)
-    p.j.home()
+    p.j.gripper.close()
+
 
     # print ("Spoon reached\n")
     # p.goto_bowl()

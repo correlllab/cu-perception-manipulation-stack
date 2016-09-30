@@ -136,8 +136,5 @@ class Jaco(Robot):
 
 
     def kinematic_control(self,msg):
-        r = rospy.Rate(100)
-        # return
-        while not rospy.is_shutdown():
-            self.velocity_pub.publish(msg)
+        self.velocity_pub.publish(msg)
             # r.sleep()
