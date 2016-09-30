@@ -1,10 +1,16 @@
 #! /usr/bin/env python
+from collections import deque
 import rospy
 import numpy as np
 from std_msgs.msg import Int32MultiArray, Float64, Bool
 
 class SignalDetector():
     def __init__(self):
+        self.objectDet = False
+        self.object_det_pub = rospy.Publisher("/finger_sensor/obj_detected",
+                                        Bool,
+                                        queue_size=1)
+
         self.fail_sub = rospy.Subscriber("/finger_sensor/fail",
                                         Float64,
                                         self.fail_detect_change)
@@ -12,7 +18,11 @@ class SignalDetector():
         self.fair_sub = rospy.Subscriber("/finger_sensor/fair",
                                         Float64,
                                         self.fair_detect_change)
-
+        
+        self.sail_sub = rospy.Subscriber("/finger_sensor/sair",
+                                        Float64,
+                                        self.sair_detect_change)
+        
         self.touch_r_pub = rospy.Publisher("/finger_sensor_right/touch",
                                         Bool,
                                         queue_size=1)
@@ -20,6 +30,7 @@ class SignalDetector():
         self.touch_l_pub = rospy.Publisher("/finger_sensor_left/touch",
                                         Bool,
                                         queue_size=1)
+
         self.prev_val_l = False
         self.prev_val_r = False
 
@@ -31,8 +42,6 @@ class SignalDetector():
              self.touch_l_pub.publish(False)
              self.prev_val_l = False
 
-
-
     def fair_detect_change(self,msg):
         if msg.data > 1000.0 and self.prev_val_r == False:
              self.touch_r_pub.publish(True)
@@ -40,6 +49,19 @@ class SignalDetector():
         elif msg.data < -1000.0 and self.prev_val_r == True:
              self.touch_r_pub.publish(False)
              self.prev_val_r = False
+    
+    def sair_detect_change(self,msg):
+        print(msg.data)
+        if msg.data > 13120 and self.objectDet == False:
+            self.object_det_pub.publish(True)
+            self.objectDet = True
+        elif msg.data < 13120 and self.objectDet == True:
+            self.object_det_pub.publish(False)
+            self.objectDet = False
+
+
+
+    
 
 
 if __name__=='__main__':
