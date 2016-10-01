@@ -4,9 +4,10 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /RawCloud1
         - /TF1/Frames1
       Splitter Ratio: 0.636943
-    Tree Height: 359
+    Tree Height: 716
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -25,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: RawCloud
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -82,8 +83,7 @@ Visualization Manager:
       Marker Topic: /ARmarker_points
       Name: Marker
       Namespaces:
-        3dpts: true
-        arrow: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -91,10 +91,6 @@ Visualization Manager:
       Frame Timeout: 3
       Frames:
         All Enabled: false
-        ar_marker_2:
-          Value: true
-        ar_marker_255:
-          Value: true
         base:
           Value: false
         camera_depth_frame:
@@ -157,10 +153,7 @@ Visualization Manager:
                   {}
               camera_rgb_frame:
                 camera_rgb_optical_frame:
-                  ar_marker_2:
-                    {}
-                  ar_marker_255:
-                    {}
+                  {}
             j2n6a300_link_base:
               j2n6a300_link_1:
                 j2n6a300_link_2:
@@ -323,22 +316,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.7308
+      Distance: 4.32867
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.19008
-        Y: -0.348641
-        Z: -0.0505305
+        X: 0.226298
+        Y: -0.227746
+        Z: 0.17207
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.4948
+      Pitch: 0.525204
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.66089
+      Yaw: 1.87089
     Saved: ~
 Window Geometry:
   Displays:

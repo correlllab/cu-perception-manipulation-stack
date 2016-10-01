@@ -60,7 +60,7 @@ class PickAndPlaceNode(Manager):
             'initial': {'c': self._calibrate, 'q': self._perceive,
                         's': self._preplace},
             'calibrate': {'q': self._perceive, 'c': self._calibrate},
-            'perceive': {'q': self._post_perceive},
+            'perceive': {'p': self._post_perceive, 'q': self._perceive, 's': self._stop_perceive},
             'post_perceive': _post_perceive_trans,
             'postpick': {'1': self._level, '2': self._level, '9': self._level},
             'level': _preplace,
@@ -100,8 +100,9 @@ class PickAndPlaceNode(Manager):
 
         # Ideally this call would be in a Factory/Metaclass/Parent
         self.show_options()
+        self.perceive = False
         # self.robot.home()
-        # self.move_calib_position()
+        self.move_calib_position()
 
 
     def move_calib_position(self):
@@ -123,6 +124,11 @@ class PickAndPlaceNode(Manager):
         self.state = "perceive"
         rospy.loginfo("Asking for perception...")
         self.perception_pub.publish(Bool(True))
+
+    def _stop_perceive(self):
+        self.state = "perceive"
+        self.perception_pub.publish(Bool(False))
+
 
     def _post_perceive(self):
         self.state = "post_perceive"

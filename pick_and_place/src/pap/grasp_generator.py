@@ -39,15 +39,15 @@ class grasp_generator(object):
 
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
-
-        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_3"):
+        # print ('we have the frame')
+        if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_0"):
             # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/unknown_3")
-            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_3", rospy.Time(0))
+            t = self.listen.getLatestCommonTime("/root", "/bowl_0")
+            translation, quaternion = self.listen.lookupTransform("/root", "/bowl_0", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.5,0,0) # in radians
-            requrd_trans = (-0.05,-0.01,0.07)
+            requrd_trans = (-0.05,-0.01,0.08)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
