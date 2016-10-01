@@ -233,17 +233,17 @@ if __name__ == '__main__':
     rospy.init_node("task_1")
     # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
-    p.j.gripper.set_position([0,100,100])
+    # p.j.gripper.set_position([0,100,100])
     # p.move_fingercmmd((0, 0, 0))
     #
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
         pass
 
     print ("Starting task. . .\n")
-    p.pick_spoon()
+    # p.pick_spoon()
 
     print ("Searching spoon. . .\n")
-    p.searchSpoon()
+    # p.searchSpoon()
 
     print ("Spoon found yay!!\n")
     print ("Lifitng the spoon. . .\n")
