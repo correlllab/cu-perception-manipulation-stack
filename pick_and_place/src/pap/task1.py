@@ -247,11 +247,11 @@ if __name__ == '__main__':
 
     print ("Spoon found yay!!\n")
     print ("Lifitng the spoon. . .\n")
-    p.lift_spoon()
+    # p.lift_spoon()
     # # self.cmmd_cart_velo([0,0.1,0,0,0,0,1])
     #
     #
-    # # p.move_cartcmmd([0,0,0.1,0,0,0,1],'-r')
+    p.move_cartcmmd([0,-0.1,0,0,0,0,1],'-r')
     #
     # print ("Going to bowl. . .\n")
     # # p.goto_bowl()
