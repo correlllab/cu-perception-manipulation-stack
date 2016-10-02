@@ -94,6 +94,43 @@ class grasp_generator(object):
                                     "plate_position",
                                     "root")
 
+        if self.listen.frameExists("/root") and self.listen.frameExists("/j2n6a300_link_finger_3"):
+            # print ('we have the frame')
+            t = self.listen.getLatestCommonTime("/root", "/j2n6a300_link_finger_tip_3")
+            translation, quaternion = self.listen.lookupTransform("/root", "/j2n6a300_link_finger_3", rospy.Time(0))
+
+            # Identity matrix. Set the requ rot n trans wrt obj frame
+            requrd_rot = (0,0,1.48) # in radians
+            requrd_trans = (0,0,0)
+            # calculate and get an offset frame w/o ref to objct frame
+            pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
+            trans_1= tuple(pose[:3])
+            quat_1= tuple(pose[3:])
+            
+            requrd_rot2 = (0,0,0) # in radians
+            requrd_trans2 = (0.07,0,0)
+            # calculate and get an offset frame w/o ref to objct frame
+            pose = self.getOffsetPoses(trans_1, quat_1, requrd_rot2, requrd_trans2)
+            trans_2= tuple(pose[:3])
+            quat_2= tuple(pose[3:])
+            self.broadcast.sendTransform(trans_2, quat_2,
+                                    rospy.Time.now(),
+                                    "Fingertip_3_open_rot",
+                                    "root")
+
+        # if self.listen.frameExists("/root") and self.listen.frameExists("/Fingertip_3_open_rot"):
+        #     print ('we have the frame')
+        #     t = self.listen.getLatestCommonTime("/root", "/Fingertip_3_open_rot")
+        #     translation, quaternion = self.listen.lookupTransform("/root", "/Fingertip_3_open_rot", rospy.Time(0))
+        #
+        #     # Identity matrix. Set the requ rot n trans wrt obj frame
+        #
+        #
+        #     self.broadcast.sendTransform(trans_1, quat_1,
+        #                             rospy.Time.now(),
+        #                             "Fignertip_3_close",
+        #                             "root")
+        #
 
 if __name__ == '__main__':
     rospy.init_node("grasp_generator")

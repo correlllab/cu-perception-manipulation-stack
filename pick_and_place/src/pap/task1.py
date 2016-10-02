@@ -192,6 +192,7 @@ class pick_peas_class(object):
         self.velocity_pub.publish(msg)
             # rate.sleep()
 
+
     def searchSpoon(self):
         if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
             # print ("we are in the search spoon fucntion")
@@ -202,15 +203,12 @@ class pick_peas_class(object):
             counter=0
             rate=rospy.Rate(100)
             while not self.obj_det:
-                #   print ("we are in the search spoon fucntion")
                   counter = counter + 1
                   if(counter < 200):
-                    print('forward')
                     cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T) #change in y->x, z->y, x->z
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   else:
-                    print('backwards')
                     cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmd_CartesianVelocity(cart_velocities + [0,0,0,1])
@@ -218,10 +216,37 @@ class pick_peas_class(object):
                   if(counter >400):
                      counter=0
 
+    def scoopSpoon(self):
+        while not (self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/Fingertip_3_open_rot")):
+            pass
+
+        print ("Publishing transform of figner wrt endEffector frame")
+        p.listen.waitForTransform('/j2n6a300_end_effector','/Fingertip_3_open_rot',rospy.Time(),rospy.Duration(100.0))
+        t = self.listen.getLatestCommonTime("/j2n6a300_end_effector", "/Fingertip_3_open_rot")
+        translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector", "/Fingertip_3_open_rot", t)
+        # print (translation)
+        matrix2 = self.listen.fromTranslationRotation(translation, quaternion)
+        # print (matrix2)
+        # required_cartvelo = [0,0,0,0.1,0,0]
+        quaternion = pose_action_client.EulerXYZ2Quaternion([0.2,0,0]) # set rot angle HERE (deg)
+        matrix1 = self.listen.fromTranslationRotation([0,0,0], quaternion)
+        # print (matrix1)
+        matrix3 = np.dot(matrix2,matrix1)
+        scale, shear, rpy_angles, trans, perps = tf.transformations.decompose_matrix(matrix3)
+        trans = list(trans.tolist())
+        rpy_angles = list(rpy_angles)
+        # euler = pose_action_client.Quaternion2EulerXYZ(quat_1)
+        pose = trans + rpy_angles
+        return pose
+
 if __name__ == '__main__':
     rospy.init_node("task_1")
+    rate = rospy.Rate(100)
     # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
+    # p.cmmnd_FingerPosition([0, 100, 100])
+    p.j.home()
+    p.cmmnd_FingerPosition([0, 100, 100])
 
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
         pass
@@ -230,13 +255,26 @@ if __name__ == '__main__':
     p.pick_spoon()
 
     print ("Searching spoon. . .\n")
-    # p.searchSpoon()
+    p.searchSpoon()
 
-    print ("Spoon found yay!!")
-    print ("trying to Lift the spoon now. . .\n")
+    print ("trying to touch the spoon now. . .\n")
+    print (p.r_touch)
+    while not p.r_touch == False:
+        p.cmmd_CartesianVelocity([0,0,0,0.1,0,0])
+        rate.sleep()
+    print ("Spoon touched. Yay!!")
 
-    # p.cmmd_CartesianVelocity([0,0.1,0,0,0,0,1])
-    # p.cmmnd_CartesianPosition([0.01, 0, 0, 0, 0, 0, 1])
+    # p.cmmd_CartesianVelocity([0,0,0,0.1,0,0])
+
+    # pose = p.scoopSpoon()
+    # print (p.m_touch)
+    # print ('scooping the spoon')
+    # while not p.m_touch == False:
+    #     p.cmmd_CartesianVelocity(pose)
+    #     rate.sleep()
+
+    # print ('Lifting the spoon')
+    # p.cmmnd_CartesianPosition([0.01, 0, 0, 0, 0, 0, 1],0)
 
     # print ("Going to bowl. . .\n")
     # # p.goto_bowl()
