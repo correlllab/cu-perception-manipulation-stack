@@ -22,38 +22,26 @@ class pick_peas_class(object):
         self.current_joint_angles = [0]*6
 
 
-        # self.sub3 = rospy.Subscriber('/sensor_values', Int32MultiArray,
-        #                              self.callback_1, queue_size=1)
-
-        self.cart_vel_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
-                                                            PoseVelocity, queue_size=1)
+        self.velocity_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
+                                            PoseVelocity, queue_size=1)
 
         self.obj_det_sub = rospy.Subscriber('/finger_sensor/obj_detected',
-                                            Bool,
-                                            self.set_obj_det)
+                                            Bool, self.set_obj_det)
 
         self.finger_m_touch_sub = rospy.Subscriber('/finger_sensor_middle/touch',
-                                                    Bool,
-                                                    self.set_m_touch)
+                                                    Bool, self.set_m_touch)
 
         self.finger_r_touch_sub = rospy.Subscriber('/finger_sensor_right/touch',
-                                            Bool,
-                                            self.set_r_touch)
+                                                    Bool, self.set_r_touch)
+
+        self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
+                                                JointAngles, self.callback)
+
         self.obj_det = False
         self.m_touch = False
         self.r_touch = False
 
-        self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
-                                                                JointAngles, self.callback)
 
-
-        # self.touch_r_sub = rospy.Subscriber("/finger_sensor_right/touch",
-        #                                 Bool,
-        #                                 queue_size=1)
-        #
-        # self.touch_l_sub = rospy.Subscriber("/finger_sensor_left/touch",
-        #                                 Bool,
-        #                                 queue_size=1)
 
     def set_obj_det(self,msg):
         self.obj_det = msg.data
@@ -65,7 +53,7 @@ class pick_peas_class(object):
         self.r_touch = msg.data
 
     def callback(self,data):
-        self.current_joint_angles[0] = data.joint1
+        # self.current_joint_angles[0] = data.joint1
         self.current_joint_angles[1] = data.joint2
         self.current_joint_angles[2] = data.joint3
         self.current_joint_angles[3] = data.joint4
@@ -74,7 +62,7 @@ class pick_peas_class(object):
         # print (self.current_joint_angles)
 
 
-    def move_cartcmmd(self, pose_value, relative):
+    def cmmnd_CartesianPosition(self, pose_value, relative):
         pose_action_client.getcurrentCartesianCommand('j2n6a300_')
         pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, relative)
         poses = [float(n) for n in pose_mq]
@@ -86,7 +74,7 @@ class pick_peas_class(object):
         except rospy.ROSInterruptException:
             print ("program interrupted before completion")
 
-    def move_fingercmmd(self, finger_value):
+    def cmmnd_FingerPosition(self, finger_value):
         fingers_action_client.getCurrentFingerPosition('j2n6a300_')
 
         finger_turn, finger_meter, finger_percent = fingers_action_client.unitParser('percent', finger_value, '-r')
@@ -126,7 +114,7 @@ class pick_peas_class(object):
 
             # self.j.gripper.open()
             #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.move_cartcmmd(pose_value, 0)
+            self.cmmnd_CartesianPosition(pose_value, 0)
 
             # self.j.gripper.close()
 
@@ -144,7 +132,7 @@ class pick_peas_class(object):
             quaternion = list(quaternion)
             pose_value = translation + quaternion
             #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.move_cartcmmd(pose_value, 0)
+            self.cmmnd_CartesianPosition(pose_value, 0)
         else:
             print ("we DONT have the bowl frame")
 
@@ -160,12 +148,12 @@ class pick_peas_class(object):
             quaternion = [0.8678189045198146, 0.0003956789257977804, -0.4968799802988633, 0.0006910675928639343]
             pose_value = translation + quaternion
             #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.move_cartcmmd(pose_value, 0)
+            self.cmmnd_CartesianPosition(pose_value, 0)
 
         else:
             print ("we DONT have the bowl frame")
 
-    def move_joints(self,joints_cmd):
+    def cmmnd_JointAngles(self,joints_cmd):
         jointangles = [0]*6
         current_joint_angles = [0]*6
         while current_joint_angles == [0]*6:
@@ -182,16 +170,16 @@ class pick_peas_class(object):
     def lift_spoon(self):
         # self.move_fingercmmd([0, 0, 0])
         while self.r_touch != True:
-            self.cmmd_cart_velo([0.02,0,0,0,0,0,1])
+            self.cmmd_cartvelo([0.02,0,0,0,0,0,1])
         self.r_touch = False
         while not(self.m_touch and self.r_touch):
-            self.cmmd_cart_velo([0.02,0,0,0,0,0,1])
+            self.cmmd_cartvelo([0.02,0,0,0,0,0,1])
             # self.move_joints([0,0,0,0,0,-5])
 
         self.move_fingercmmd([100, 100, 100])
 
 
-    def cmmd_cart_velo(self,cart_velo):
+    def cmmd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
             twist_linear_x=cart_velo[0],
             twist_linear_y=cart_velo[1],
@@ -199,9 +187,10 @@ class pick_peas_class(object):
             twist_angular_x=cart_velo[3],
             twist_angular_y=cart_velo[4],
             twist_angular_z=cart_velo[5])
-
-        self.j.kinematic_control(msg)
-
+        # rate = rospy.Rate(100)
+        # while not rospy.is_shutdown():
+        self.velocity_pub.publish(msg)
+            # rate.sleep()
 
     def searchSpoon(self):
         if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
@@ -219,12 +208,12 @@ class pick_peas_class(object):
                     print('forward')
                     cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T) #change in y->x, z->y, x->z
                     cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmd_cart_velo(cart_velocities + [0,0,0,1])
+                    self.cmmd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   else:
                     print('backwards')
                     cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
                     cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmd_cart_velo(cart_velocities + [0,0,0,1])
+                    self.cmmd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   rate.sleep()
                   if(counter >400):
                      counter=0
@@ -233,34 +222,29 @@ if __name__ == '__main__':
     rospy.init_node("task_1")
     # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
-    # p.j.gripper.set_position([0,100,100])
-    # p.move_fingercmmd((0, 0, 0))
-    #
+
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
         pass
 
     print ("Starting task. . .\n")
-    # p.pick_spoon()
+    p.pick_spoon()
 
     print ("Searching spoon. . .\n")
     # p.searchSpoon()
 
-    print ("Spoon found yay!!\n")
-    print ("Lifitng the spoon. . .\n")
-    # p.lift_spoon()
-    # # self.cmmd_cart_velo([0,0.1,0,0,0,0,1])
-    #
-    #
-    p.move_cartcmmd([0,-0.1,0,0,0,0,1],'-r')
-    #
+    print ("Spoon found yay!!")
+    print ("trying to Lift the spoon now. . .\n")
+
+    # p.cmmd_CartesianVelocity([0,0.1,0,0,0,0,1])
+    # p.cmmnd_CartesianPosition([0.01, 0, 0, 0, 0, 0, 1])
+
     # print ("Going to bowl. . .\n")
     # # p.goto_bowl()
     # print ("Bowl reached. . .\n")
     #
     # print ("Scooping the peas. . .")
-    #
-    # # print(joints)
-    # # p.move_joints([0,0,0,0,0,-80])
+    # # p.cmmnd_JointAngles([0,0,0,0,0,-80])
     # print ("scooping done. . .")
+
     # # p.goto_plate()
     # rospy.spin()

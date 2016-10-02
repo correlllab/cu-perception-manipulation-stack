@@ -71,10 +71,10 @@ class SignalDetector():
 
     def sair_detect_change(self,msg):
         # print(msg.data)
-        if msg.data > 32200 and self.objectDet == False:
+        if msg.data > 32300 and self.objectDet == False:
             self.object_det_pub.publish(True)
             self.objectDet = True
-        elif msg.data < 32200 and self.objectDet == True:
+        elif msg.data < 32300 and self.objectDet == True:
             self.object_det_pub.publish(False)
             self.objectDet = False
 
