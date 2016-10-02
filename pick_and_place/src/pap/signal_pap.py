@@ -21,9 +21,9 @@ class SignalDetector():
                                         Float64,
                                         self.faim_detect_change)
 
-        self.sail_sub = rospy.Subscriber("/finger_sensor/sair",
+        self.saim_sub = rospy.Subscriber("/finger_sensor/saim",
                                         Float64,
-                                        self.sair_detect_change)
+                                        self.saim_detect_change)
 
         self.object_det_pub = rospy.Publisher("/finger_sensor/obj_detected",
                                         Bool,
@@ -69,12 +69,12 @@ class SignalDetector():
              self.touch_m_pub.publish(False)
              self.prev_val_m = False
 
-    def sair_detect_change(self,msg):
+    def saim_detect_change(self,msg):
         # print(msg.data)
-        if msg.data > 32500 and self.objectDet == False:
+        if msg.data > 25800 and self.objectDet == False:
             self.object_det_pub.publish(True)
             self.objectDet = True
-        elif msg.data < 32500 and self.objectDet == True:
+        elif msg.data < 25800 and self.objectDet == True:
             self.object_det_pub.publish(False)
             self.objectDet = False
 
