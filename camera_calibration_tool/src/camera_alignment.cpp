@@ -47,7 +47,7 @@ public:
   {
     ROS_INFO_STREAM_NAMED("constructor","starting CameraAlignmentTester...");
 
-    qr_marker_ = "ar_marker_2";
+    qr_marker_ = "ar_marker_4";
     camera_cf_ = "camera_link";
     base_cf_ = "root";
 
@@ -104,14 +104,14 @@ public:
   {
     ROS_DEBUG_STREAM_NAMED("rcp","refining camera pose...");
     tf::StampedTransform qr_transform;
-    Eigen::Affine3d qr_marker_poses[25];
+    Eigen::Affine3d qr_marker_poses[100];
     Eigen::Matrix4d avg_pose = Eigen::Matrix4d::Zero();
 
     // compute average qr pose over 25 readings...
 
-    for (std::size_t i = 0; i < 25; i++)
+    for (std::size_t i = 0; i < 100; i++)
     {
-      ROS_DEBUG_STREAM_NAMED("rcp","getting frame " << i << " of 25");
+      ROS_DEBUG_STREAM_NAMED("rcp","getting frame " << i << " of 100");
       tf_listener_.waitForTransform(qr_marker_, camera_cf_, ros::Time(0), ros::Duration(1.0));
       try
       {
@@ -128,11 +128,11 @@ public:
       ros::Duration(0.1).sleep();
     }
 
-    for (std::size_t i = 0; i < 25; i++)
+    for (std::size_t i = 0; i < 100; i++)
     {
       avg_pose += qr_marker_poses[i].matrix();
     }
-    avg_pose /= 25;
+    avg_pose /= 100;
 
     Eigen::Affine3d qr_pose;
     qr_pose.matrix() = avg_pose; // qr pose in w.r.t. camera frame
@@ -151,8 +151,8 @@ public:
     tf::transformTFToEigen(rh_transform, rh_pose);
 
     // location of qr tag on laser cut plate
-    rh_to_qr.translation()[0] += 0.081559;
-    rh_to_qr.translation()[2] -= 0.00966;
+    rh_to_qr.translation()[0] += 0.09625;//0.081559;
+    rh_to_qr.translation()[2] -= 0.009;
     Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-M_PI / 2.0, Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitZ()));
     qr_location =  rh_pose * (rh_to_qr * qr_rotation);
     visual_tools_->publishAxisLabeled(qr_location, "qr_location");

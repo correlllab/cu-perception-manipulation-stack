@@ -102,7 +102,7 @@ class PickAndPlaceNode(Manager):
         self.show_options()
         self.perceive = False
         # self.robot.home()
-        self.move_calib_position()
+        # self.move_calib_position()
 
 
     def move_calib_position(self):

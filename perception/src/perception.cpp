@@ -306,7 +306,7 @@ public:
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     // SI units
     //ec.setClusterTolerance(0.02);//original before rebecca came
-    ec.setClusterTolerance(0.05);
+    ec.setClusterTolerance(0.06);
     /* From experiments:
      * - Tiny wood cubes have about 300 points
      * - Cubeletes have about 800 points
@@ -319,7 +319,7 @@ public:
      * Idea: filter known objects and use RANSAC to find a match. Others, do more processing on
      *  -start to save objects
      */
-    ec.setMinClusterSize(200);  // less than a wood cube
+    ec.setMinClusterSize(185);  // less than a wood cube
     ec.setMaxClusterSize(15000);  // a plate is lots
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
@@ -402,7 +402,7 @@ public:
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
       object_pose.translation() = object_centroid;
       local_poses.push_back(object_pose);
-      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points");
+      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points" << '\n');
 
       ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
 
