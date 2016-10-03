@@ -9,7 +9,6 @@ import rospy
 from std_msgs.msg import Int32MultiArray, Header
 from geometry_msgs.msg import Vector3, Vector3Stamped
 from keyboard.msg import Key
-from teleop_interface.msg import object as ob
 
 from pap.robot import Baxter, Jaco
 from pap.manager import PickAndPlaceNode

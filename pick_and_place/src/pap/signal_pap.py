@@ -8,6 +8,13 @@ class SignalDetector():
     def __init__(self):
         self.objectDet = False
 
+        self.object_det_calibrated_pub = rospy.Publisher("/finger_sensor/obj_det_calibrated",
+                                            Bool,
+                                            queue_size=1)
+
+        self.calibrate_obj_det_sub = rospy.Subscriber("/finger_sensor/calibrate_obj_det",
+                                            Bool,
+                                            self.set_calibrate)
 
         self.fail_sub = rospy.Subscriber("/finger_sensor/fail",
                                         Float64,
@@ -41,9 +48,17 @@ class SignalDetector():
                                         Bool,
                                         queue_size=1)
 
+        self.object_det_calibrated_pub.publish(False)
+        self.saim_calibration = None
         self.prev_val_l = False
         self.prev_val_r = False
         self.prev_val_m = False
+        self.current_saim_val = None
+        self.calibrate = False
+        self.calibrate_vals = deque(maxlen=100)
+
+    def set_calibrate(self,msg):
+        self.calibrate = msg.data
 
     def fail_detect_change(self,msg):
         if msg.data > 1000.0 and self.prev_val_l == False:
@@ -70,14 +85,24 @@ class SignalDetector():
              self.prev_val_m = False
 
     def saim_detect_change(self,msg):
-        # print(msg.data)
-        if msg.data > 25800 and self.objectDet == False:
-            self.object_det_pub.publish(True)
-            self.objectDet = True
-        elif msg.data < 25800 and self.objectDet == True:
-            self.object_det_pub.publish(False)
-            self.objectDet = False
-
+        if self.calibrate == False:
+            if self.saim_calibration != None:
+                if msg.data > self.saim_calibration and self.objectDet == False:
+                    self.object_det_pub.publish(True)
+                    self.objectDet = True
+                elif msg.data < self.saim_calibration and self.objectDet == True:
+                    self.object_det_pub.publish(False)
+                    self.objectDet = False
+        else:
+            if self.calibrate_vals.maxlen == len(self.calibrate_vals):
+                self.object_det_calibrated_pub
+                self.saim_calibration = max(self.calibrate_vals) + 150
+                print (self.saim_calibration)
+                self.calibrate_vals.clear()
+                self.object_det_calibrated_pub
+                self.object_det_calibrated_pub.publish(True)
+            else:
+                self.calibrate_vals.append(msg.data)
 
 
 

@@ -15,7 +15,7 @@
   <node name="perception" pkg="perception" type="perception" output="screen"/>
 
   <!-- Moveit Visualizations -->
-   <param name="robot_description_semantic" textfile="$(find baxter_moveit_config)/config/baxter.srdf"/> 
+   <param name="robot_description_semantic" textfile="$(find jaco_moveit_config)/config/jaco.srdf"/> 
   <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 /world /base 100" />
   <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_1" args="0 0 0 0 0 0 /world /root 100" />
 

@@ -37,9 +37,18 @@ class pick_peas_class(object):
         self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
                                                 JointAngles, self.callback)
 
+        self.calibrate_obj_det_pub = rospy.Publisher("/finger_sensor/calibrate_obj_det",
+                                                    Bool,
+                                                    queue_size=1)
+
+        self.calibrate_obj_det_sub = rospy.Subscriber("/finger_sensor/obj_det_calibrated",
+                                                    Bool,
+                                                    self.set_calibrated)
+
         self.obj_det = False
         self.m_touch = False
         self.r_touch = False
+        self.calibrated = False
 
 
 
@@ -99,7 +108,20 @@ class pick_peas_class(object):
         except rospy.ROSInterruptException:
             print('program interrupted before completion')
 
+    def set_calibrated(self,msg):
+        self.calibrated = msg.data
+
     def pick_spoon(self):
+
+        self.calibrate_obj_det_pub.publish(True)
+
+        while self.calibrated == False:
+            pass
+
+        self.calibrate_obj_det_pub.publish(False)
+
+        print("Finger Sensors calibrated")
+
         if self.listen.frameExists("/root") and self.listen.frameExists("/spoon_position"):
             print ("we have the spoon frame")
             self.listen.waitForTransform('/root','/spoon_position',rospy.Time(),rospy.Duration(100.0))
@@ -250,13 +272,11 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
-    p.j.home()
-
-    p.cmmnd_FingerPosition([0, 0, 0])
     p.cmmnd_FingerPosition([0, 0, 100])
 
-
-
+    p.j.home()
+    # p.move_fingercmmd((0, 0, 0))
+    #
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
         pass
 
@@ -295,12 +315,12 @@ if __name__ == '__main__':
     #
 
     # print ("Going to bowl. . .\n")
-    # # p.goto_bowl()
+    p.goto_bowl()
     # print ("Bowl reached. . .\n")
     #
     # print ("Scooping the peas. . .")
     # # p.cmmnd_JointAngles([0,0,0,0,0,-80])
     # print ("scooping done. . .")
 
-    # # p.goto_plate()
+    p.goto_plate()
     # rospy.spin()

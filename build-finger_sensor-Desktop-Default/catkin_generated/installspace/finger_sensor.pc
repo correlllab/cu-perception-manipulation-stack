@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: finger_sensor
+Description: Description of finger_sensor
+Version: 0.0.0
+Cflags: 
+Libs: -L/usr/local/lib 
+Requires: 
