@@ -3,7 +3,7 @@
   <!-- launch qr tracking for camera pose estimation -->
   <arg name="marker_size" default="5.6" />
   <arg name="max_new_marker_error" default="0.08" />
-  <arg name="max_track_error" default="0.05" />
+  <arg name="max_track_error" default="0.2" />
 
   <arg name="cam_image_topic" default="/camera/depth_registered/points" />
   <arg name="cam_info_topic" default="/camera/rgb/camera_info" />
@@ -15,11 +15,11 @@
   <node name="perception" pkg="perception" type="perception" output="screen"/>
 
   <!-- Moveit Visualizations -->
-<<<<<<< Updated upstream
-   <param name="robot_description_semantic" textfile="$(find jaco_moveit_config)/config/jaco.srdf"/> 
-=======
+<!-- <<<<<<< Updated upstream -->
+   <!-- <param name="robot_description_semantic" textfile="$(find jaco_moveit_config)/config/jaco.srdf"/> -->
+<!-- ======= -->
    <param name="robot_description_semantic" textfile="$(find baxter_moveit_config)/config/baxter.srdf"/>
->>>>>>> Stashed changes
+<!-- >>>>>>> Stashed changes -->
   <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 /world /base 100" />
   <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_1" args="0 0 0 0 0 0 /world /root 100" />
 
