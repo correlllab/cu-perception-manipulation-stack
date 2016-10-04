@@ -7,6 +7,13 @@ from std_msgs.msg import Int32MultiArray, Float64, Bool
 class SignalDetector():
     def __init__(self):
         self.objectDet = False
+        self.saim_calibration = None
+        self.prev_val_l = False
+        self.prev_val_r = False
+        self.prev_val_m = False
+        self.current_saim_val = None
+        self.calibrate = False
+        self.calibrate_vals = deque(maxlen=100)
 
         self.object_det_calibrated_pub = rospy.Publisher("/finger_sensor/obj_det_calibrated",
                                             Bool,
@@ -47,15 +54,9 @@ class SignalDetector():
         self.touch_m_pub = rospy.Publisher("/finger_sensor_middle/touch",
                                         Bool,
                                         queue_size=1)
-
         self.object_det_calibrated_pub.publish(False)
-        self.saim_calibration = None
-        self.prev_val_l = False
-        self.prev_val_r = False
-        self.prev_val_m = False
-        self.current_saim_val = None
-        self.calibrate = False
-        self.calibrate_vals = deque(maxlen=100)
+
+
 
     def set_calibrate(self,msg):
         self.calibrate = msg.data

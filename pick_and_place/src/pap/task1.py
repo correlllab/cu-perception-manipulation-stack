@@ -12,6 +12,7 @@ import numpy as np
 
 import pose_action_client
 import fingers_action_client
+import joints_action_client
 
 import tf
 
@@ -175,19 +176,18 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the bowl frame")
 
-    def cmmnd_JointAngles(self,joints_cmd):
-        jointangles = [0]*6
-        current_joint_angles = [0]*6
-        while current_joint_angles == [0]*6:
-            current_joint_angles = self.current_joint_angles
-        print(current_joint_angles)
-        for i in range(6):
-            jointangles[i] = current_joint_angles[i] + joints_cmd[i]
+    def cmmnd_JointAngles(self,joints_cmd, relative):
+        joints_action_client.getcurrentJointCommand('j2n6a300_')
+        joint_degree, joint_radian = joints_action_client.unitParser('degree', joints_cmd, relative)
+
 
         try:
-            self.j.move_joints(jointangles)
+            # print("dafuq")
+            positions = [float(n) for n in joint_degree]
+            result = joints_action_client.joint_angle_client(positions)
         except rospy.ROSInterruptException:
             print('program interrupted before completion')
+
 
     def lift_spoon(self):
         rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
@@ -263,64 +263,42 @@ class pick_peas_class(object):
         trans = list(trans.tolist())
         rpy_angles = list(rpy_angles)
         # euler = pose_action_client.Quaternion2EulerXYZ(quat_1)
-        pose = trans + rpy_angles
+        # pose = trans + rpy_angles
         return pose
         # return translation, quaternion
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
-    # n = PickAndPlaceNode(Jaco)
     p = pick_peas_class()
+    p.j.home()
+    p.cmmnd_FingerPosition((0, 0, 0))
     p.cmmnd_FingerPosition([0, 0, 100])
 
-    p.j.home()
-    # p.move_fingercmmd((0, 0, 0))
-    #
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
         pass
 
     print ("Starting task. . .\n")
     p.pick_spoon()
 
-    # p.j.home()
-
-
     print ("Searching spoon. . .\n")
     p.searchSpoon()
 
     print ("trying to touch the spoon now. . .\n")
-    # print (p.r_touch)
-    # while not(p.r_touch and p.m_touch):
-    #     p.cmmd_CartesianVelocity([0.1,0,0,0,0,0])
-    #     rate.sleep()
-    # print ("Spoon touched. Yay!!")
     p.lift_spoon()
 
-
-    # p.cmmd_CartesianVelocity([0.1,0,0,0,0,0])
-
-    # pose = p.scoopSpoon()
-    # # euler=pose_action_client.Quaternion2EulerXYZ(quaternion)
-    # # translation = list(translation)
-    # # euler = list(euler)
-    # # pose = translation+euler
-    # print (p.m_touch)
-    # print ('scooping the spoon')
-    # while (p.m_touch == False:
-    #     p.cmmd_CartesianVelocity([])
-    #     rate.sleep()
-
-    # print ('Lifting the spoon')
-    #
-
-    # print ("Going to bowl. . .\n")
+    print ("Going to bowl. . .\n")
     p.goto_bowl()
-    # print ("Bowl reached. . .\n")
+    print ("Bowl reached. . .\n")
     #
-    # print ("Scooping the peas. . .")
-    # # p.cmmnd_JointAngles([0,0,0,0,0,-80])
-    # print ("scooping done. . .")
+    print ("Scooping the peas. . .")
+    p.cmmnd_JointAngles([0,0,0,0,0,-30], '-r')
+    p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0.05,0,0,0,0,0,1], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,-45], '-r')
+    p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1], '-r')
+    print ("scooping done. . .")
 
+    print ("dumping in the plate. . .")
     p.goto_plate()
     # rospy.spin()

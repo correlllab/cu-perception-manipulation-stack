@@ -4,7 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /RawCloud1
+        - /TF1
         - /TF1/Frames1
       Splitter Ratio: 0.636943
     Tree Height: 716
@@ -20,13 +20,14 @@ Panels:
   - Class: rviz/Views
     Expanded:
       - /Current View1
+      - /Current View1/Focal Point1
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: RawCloud
 Visualization Manager:
   Class: ""
   Displays:
@@ -60,7 +61,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -77,13 +78,14 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /ARmarker_points
       Name: Marker
       Namespaces:
-        {}
+        3dpts: true
+        arrow: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -91,8 +93,22 @@ Visualization Manager:
       Frame Timeout: 3
       Frames:
         All Enabled: false
+        Fingertip_3_open_rot:
+          Value: false
+        ar_marker_0:
+          Value: true
+        ar_marker_255:
+          Value: true
+        ar_marker_4:
+          Value: true
         base:
           Value: false
+        bowl_0:
+          Value: true
+        bowl_1:
+          Value: true
+        bowl_position:
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
@@ -104,7 +120,7 @@ Visualization Manager:
         camera_rgb_optical_frame:
           Value: true
         j2n6a300_end_effector:
-          Value: true
+          Value: false
         j2n6a300_link_1:
           Value: false
         j2n6a300_link_2:
@@ -131,9 +147,21 @@ Visualization Manager:
           Value: false
         j2n6a300_link_finger_tip_3:
           Value: false
+        plate_position:
+          Value: true
         qr_location:
           Value: false
         root:
+          Value: true
+        spoon_position:
+          Value: true
+        unknown_0:
+          Value: false
+        unknown_1:
+          Value: false
+        unknown_2:
+          Value: true
+        unknown_3:
           Value: true
         world:
           Value: false
@@ -145,15 +173,35 @@ Visualization Manager:
       Tree:
         world:
           base:
-            {}
+            bowl_0:
+              {}
+            bowl_1:
+              {}
+            unknown_0:
+              {}
+            unknown_1:
+              {}
+            unknown_2:
+              {}
+            unknown_3:
+              {}
           root:
+            Fingertip_3_open_rot:
+              {}
+            bowl_position:
+              {}
             camera_link:
               camera_depth_frame:
                 camera_depth_optical_frame:
                   {}
               camera_rgb_frame:
                 camera_rgb_optical_frame:
-                  {}
+                  ar_marker_0:
+                    {}
+                  ar_marker_255:
+                    {}
+                  ar_marker_4:
+                    {}
             j2n6a300_link_base:
               j2n6a300_link_1:
                 j2n6a300_link_2:
@@ -172,7 +220,11 @@ Visualization Manager:
                           j2n6a300_link_finger_3:
                             j2n6a300_link_finger_tip_3:
                               {}
+            plate_position:
+              {}
             qr_location:
+              {}
+            spoon_position:
               {}
       Update Interval: 0
       Value: true
@@ -316,22 +368,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.32867
+      Distance: 3.33106
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.226298
-        Y: -0.227746
-        Z: 0.17207
+        X: 0.235928
+        Y: -0.446815
+        Z: 0.238414
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.525204
+      Pitch: 0.190002
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.87089
+      Yaw: 0.944983
     Saved: ~
 Window Geometry:
   Displays:
