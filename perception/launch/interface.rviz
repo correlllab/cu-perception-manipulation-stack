@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /RawCloud1
         - /TF1
         - /TF1/Frames1
       Splitter Ratio: 0.636943
@@ -27,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: RawCloud
 Visualization Manager:
   Class: ""
   Displays:
@@ -72,8 +73,8 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 2
-      Size (m): 0.01
-      Style: Points
+      Size (m): 0.003
+      Style: Spheres
       Topic: /camera/depth_registered/points
       Unreliable: false
       Use Fixed Frame: true
@@ -84,7 +85,8 @@ Visualization Manager:
       Marker Topic: /ARmarker_points
       Name: Marker
       Namespaces:
-        {}
+        3dpts: true
+        arrow: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -92,8 +94,22 @@ Visualization Manager:
       Frame Timeout: 3
       Frames:
         All Enabled: false
+        Fingertip_3_open_rot:
+          Value: false
+        ar_marker_0:
+          Value: true
+        ar_marker_255:
+          Value: true
+        ar_marker_4:
+          Value: true
         base:
           Value: false
+        bowl_0:
+          Value: true
+        bowl_1:
+          Value: true
+        bowl_position:
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
@@ -132,9 +148,23 @@ Visualization Manager:
           Value: false
         j2n6a300_link_finger_tip_3:
           Value: false
+        plate_position:
+          Value: true
         qr_location:
           Value: false
         root:
+          Value: true
+        spoon_position:
+          Value: true
+        stir_position:
+          Value: true
+        unknown_0:
+          Value: true
+        unknown_1:
+          Value: true
+        unknown_2:
+          Value: true
+        unknown_3:
           Value: true
         world:
           Value: false
@@ -146,15 +176,35 @@ Visualization Manager:
       Tree:
         world:
           base:
-            {}
+            bowl_0:
+              {}
+            bowl_1:
+              {}
+            unknown_0:
+              {}
+            unknown_1:
+              {}
+            unknown_2:
+              {}
+            unknown_3:
+              {}
           root:
+            Fingertip_3_open_rot:
+              {}
+            bowl_position:
+              {}
             camera_link:
               camera_depth_frame:
                 camera_depth_optical_frame:
                   {}
               camera_rgb_frame:
                 camera_rgb_optical_frame:
-                  {}
+                  ar_marker_0:
+                    {}
+                  ar_marker_255:
+                    {}
+                  ar_marker_4:
+                    {}
             j2n6a300_link_base:
               j2n6a300_link_1:
                 j2n6a300_link_2:
@@ -173,7 +223,13 @@ Visualization Manager:
                           j2n6a300_link_finger_3:
                             j2n6a300_link_finger_tip_3:
                               {}
+            plate_position:
+              {}
             qr_location:
+              {}
+            spoon_position:
+              {}
+            stir_position:
               {}
       Update Interval: 0
       Value: true
@@ -317,30 +373,30 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.33106
+      Distance: 0.933054
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.235928
-        Y: -0.446815
-        Z: 0.238414
+        X: 0.257475
+        Y: -0.415336
+        Z: -0.0075092
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.190002
+      Pitch: 0.714798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.944983
+      Yaw: 0.494976
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
+    collapsed: true
   Height: 1028
-  Hide Left Dock: false
+  Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd0000000400000000000001790000035dfc0200000008fb000000100044006900730070006c00610079007301000000430000035d000000df00fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006600fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000035dfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000430000035d000000b800fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000778000000ddfc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003c90000003efc0100000002fb0000000800540069006d00650100000000000003c90000022a00fffffffb0000000800540069006d006501000000000000045000000000000000000000024a0000035d00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001790000035dfc0200000008fb000000100044006900730070006c00610079007300000000430000035d000000df00fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006600fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000035dfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000430000035d000000b800fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000778000000ddfc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003c90000003efc0100000002fb0000000800540069006d00650100000000000003c90000022a00fffffffb0000000800540069006d00650100000000000004500000000000000000000003c90000035d00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -350,5 +406,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 969
-  X: 8
-  Y: 46
+  X: 980
+  Y: 38
