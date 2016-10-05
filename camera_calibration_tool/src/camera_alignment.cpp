@@ -104,14 +104,14 @@ public:
   {
     ROS_DEBUG_STREAM_NAMED("rcp","refining camera pose...");
     tf::StampedTransform qr_transform;
-    Eigen::Affine3d qr_marker_poses[100];
+    Eigen::Affine3d qr_marker_poses[25];
     Eigen::Matrix4d avg_pose = Eigen::Matrix4d::Zero();
 
     // compute average qr pose over 25 readings...
 
-    for (std::size_t i = 0; i < 100; i++)
+    for (std::size_t i = 0; i < 25; i++)
     {
-      ROS_DEBUG_STREAM_NAMED("rcp","getting frame " << i << " of 100");
+      ROS_DEBUG_STREAM_NAMED("rcp","getting frame " << i << " of 25");
       tf_listener_.waitForTransform(qr_marker_, camera_cf_, ros::Time(0), ros::Duration(4.0));
       try
       {
@@ -128,11 +128,11 @@ public:
       ros::Duration(0.1).sleep();
     }
 
-    for (std::size_t i = 0; i < 100; i++)
+    for (std::size_t i = 0; i < 25; i++)
     {
       avg_pose += qr_marker_poses[i].matrix();
     }
-    avg_pose /= 100;
+    avg_pose /= 25;
 
     Eigen::Affine3d qr_pose;
     qr_pose.matrix() = avg_pose; // qr pose in w.r.t. camera frame
@@ -152,9 +152,9 @@ public:
 
     // location of qr tag on laser cut plate
     rh_to_qr.translation()[0] += 0.09625;//0.081559;
-    rh_to_qr.translation()[2] -= 0.009;
-    //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(-M_PI/4, Eigen::Vector3d::UnitZ()));
-    Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(0.261799, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(-M_PI/4, Eigen::Vector3d::UnitZ()));
+    rh_to_qr.translation()[2] -= 0.00966;
+    //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
+    Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-0.115192, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
     qr_location =  rh_pose * (rh_to_qr * qr_rotation);
     visual_tools_->publishAxisLabeled(qr_location, "qr_location");
 

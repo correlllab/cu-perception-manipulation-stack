@@ -290,15 +290,17 @@ if __name__ == '__main__':
     print ("Going to bowl. . .\n")
     p.goto_bowl()
     print ("Bowl reached. . .\n")
-    #
+    # #
     print ("Scooping the peas. . .")
     p.cmmnd_JointAngles([0,0,0,0,0,-30], '-r')
     p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1], '-r')
     p.cmmnd_CartesianPosition([0.05,0,0,0,0,0,1], '-r')
     p.cmmnd_JointAngles([0,0,0,0,0,-45], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0,0.13,0,0,0,1], '-r')
     print ("scooping done. . .")
 
     print ("dumping in the plate. . .")
-    p.goto_plate()
+    p.cmmnd_CartesianPosition([0,0.3,-0.12,0,0,0,1], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,40], '-r')
+    # p.goto_plate()
     # rospy.spin()

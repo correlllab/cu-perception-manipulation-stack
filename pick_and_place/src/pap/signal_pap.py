@@ -97,7 +97,7 @@ class SignalDetector():
         else:
             if self.calibrate_vals.maxlen == len(self.calibrate_vals):
                 self.object_det_calibrated_pub
-                self.saim_calibration = max(self.calibrate_vals) + 150
+                self.saim_calibration = max(self.calibrate_vals) + 300
                 print (self.saim_calibration)
                 self.calibrate_vals.clear()
                 self.object_det_calibrated_pub
