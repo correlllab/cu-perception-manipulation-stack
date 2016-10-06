@@ -109,73 +109,6 @@ class pick_peas_class(object):
         except rospy.ROSInterruptException:
             print('program interrupted before completion')
 
-    def set_calibrated(self,msg):
-        self.calibrated = msg.data
-
-    def pick_spoon(self):
-
-        self.calibrate_obj_det_pub.publish(True)
-
-        while self.calibrated == False:
-            pass
-
-        self.calibrate_obj_det_pub.publish(False)
-
-        print("Finger Sensors calibrated")
-
-        if self.listen.frameExists("/root") and self.listen.frameExists("/spoon_position"):
-            print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/spoon_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/spoon_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/spoon_position", t)
-
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-            # print (quaternion)
-            orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
-
-            # self.j.gripper.open()
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-
-            # self.j.gripper.close()
-
-        else:
-            print ("we DONT have the frame")
-
-    def goto_bowl(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_position"):
-            self.listen.waitForTransform('/root','/bowl_position',rospy.Time(),rospy.Duration(100.0))
-            # print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/bowl_position", rospy.Time(0))
-
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-        else:
-            print ("we DONT have the bowl frame")
-
-
-    def goto_plate(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
-            self.listen.waitForTransform('/root','/plate_position',rospy.Time(),rospy.Duration(100.0))
-            print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
-
-            translation =  list(translation)
-            quaternion = [0.8678189045198146, 0.0003956789257977804, -0.4968799802988633, 0.0006910675928639343]
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-
-        else:
-            print ("we DONT have the bowl frame")
-
     def cmmnd_JointAngles(self,joints_cmd, relative):
         joints_action_client.getcurrentJointCommand('j2n6a300_')
         joint_degree, joint_radian = joints_action_client.unitParser('degree', joints_cmd, relative)
@@ -187,24 +120,6 @@ class pick_peas_class(object):
             result = joints_action_client.joint_angle_client(positions)
         except rospy.ROSInterruptException:
             print('program interrupted before completion')
-
-
-    def lift_spoon(self):
-        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
-        # self.move_fingercmmd([0, 0, 0])
-        while self.m_touch != True:
-            self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
-            rate.sleep()
-        self.r_touch = False
-        # while not(self.m_touch and self.r_touch):
-        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
-            # self.move_joints([0,0,0,0,0,-5])
-            # rate.sleep()
-
-        self.cmmnd_FingerPosition([100, 00, 100])
-        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
-        self.cmmnd_FingerPosition([100, 100, 100])
-
 
     def cmmnd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
@@ -219,8 +134,53 @@ class pick_peas_class(object):
         self.velocity_pub.publish(msg)
             # rate.sleep()
 
+    def set_calibrated(self,msg):
+        self.calibrated = msg.data
 
-    def searchSpoon(self):
+    def goto_USBlight(self):
+
+        self.calibrate_obj_det_pub.publish(True)
+
+        while self.calibrated == False:
+            pass
+
+        self.calibrate_obj_det_pub.publish(False)
+
+        print("Finger Sensors calibrated")
+
+        if self.listen.frameExists("/root") and self.listen.frameExists("/USBlight_position"):
+            print ("we have the spoon frame")
+            self.listen.waitForTransform('/root','/USBlight_position',rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/root", "/USBlight_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/USBlight_position", t)
+
+            translation =  list(translation)
+            quaternion = list(quaternion)
+            pose_value = translation + quaternion
+
+            orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
+
+            self.cmmnd_CartesianPosition(pose_value, 0)
+
+        else:
+            print ("we DONT have the frame")
+
+    def goto_light(self):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/light_position"):
+            self.listen.waitForTransform('/root','/light_position',rospy.Time(),rospy.Duration(100.0))
+            # print ("we have the bowl frame")
+            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/light_position", rospy.Time(0))
+
+            translation =  list(translation)
+            quaternion = list(quaternion)
+            pose_value = translation + quaternion
+            #second arg=0 (absolute movement), arg = '-r' (relative movement)
+            self.cmmnd_CartesianPosition(pose_value, 0)
+        else:
+            print ("we DONT have the bowl frame")
+
+    def search_USBlight(self):
         if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
             # print ("we are in the search spoon fucntion")
             self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
@@ -243,64 +203,54 @@ class pick_peas_class(object):
                   if(counter >400):
                      counter=0
 
-    def scoopSpoon(self):
-        while not (self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/j2n6a300_link_finger_tip_3")):
-            pass
+    def lift_USBlight(self):
+        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
+        # self.move_fingercmmd([0, 0, 0])
+        while self.m_touch != True:
+            self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            rate.sleep()
+        # self.r_touch = False
+        # while not(self.m_touch and self.r_touch):
+        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            # self.move_joints([0,0,0,0,0,-5])
+            # rate.sleep()
 
-        print ("Publishing transform of figner wrt endEffector frame")
-        p.listen.waitForTransform('/j2n6a300_end_effector','/j2n6a300_link_finger_tip_3',rospy.Time(),rospy.Duration(100.0))
-        t = self.listen.getLatestCommonTime("/j2n6a300_end_effector", "/j2n6a300_link_finger_tip_3")
-        translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector", "/j2n6a300_link_finger_tip_3", t)
-        # print (translation)
-        matrix2 = self.listen.fromTranslationRotation(translation, quaternion)
-        # print (matrix2)
-        # required_cartvelo = [0,0,0,0.1,0,0]
-        quaternion = pose_action_client.EulerXYZ2Quaternion([0.15,0,0]) # set rot angle HERE (deg)
-        matrix1 = self.listen.fromTranslationRotation([0,0,0], quaternion)
-        # print (matrix1)
-        matrix3 = np.dot(matrix2,matrix1)
-        scale, shear, rpy_angles, trans, perps = tf.transformations.decompose_matrix(matrix3)
-        trans = list(trans.tolist())
-        rpy_angles = list(rpy_angles)
-        # euler = pose_action_client.Quaternion2EulerXYZ(quat_1)
-        # pose = trans + rpy_angles
-        return pose
-        # return translation, quaternion
+        self.cmmnd_FingerPosition([100, 00, 100])
+        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
+        self.cmmnd_FingerPosition([100, 100, 100])
+
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
-    p.j.home()
-    p.cmmnd_FingerPosition((0, 0, 0))
-    p.cmmnd_FingerPosition([0, 0, 100])
+    # p.j.home()
+    # # p.cmmnd_FingerPosition((0, 0, 0))
+    # p.cmmnd_FingerPosition([0, 0, 100])
+    #
+    # while not (p.listen.frameExists("/root") and p.listen.frameExists("/light_position")) and p.listen.frameExists("USBlight_position"):
+    #     pass
+    #
+    # print ("Starting task. . .\n")
+    # p.goto_USBlight()
+    #
+    # print ("Searching spoon. . .\n")
+    # p.search_USBlight()
+    #
+    # print ("Grab the USB light. . .\n")
+    # p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
+    # p.cmmnd_FingerPosition([100 ,100, 100])
+    # # p.cmmnd_FingerPosition([100 ,100, 100])
+    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    # # p.lift_USBlight()
+    #
+    # print ("Drop the USB light..\n")
+    # p.cmmnd_JointAngles([0,0,0,-30,0,0], '-r')
+    # rospy.sleep(2)
+    # p.cmmnd_FingerPosition([00 ,00, 00])
+    # # p.cmmnd_JointAngles([0,0,0,20,0,0], '-r')
 
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
-        pass
-
-    print ("Starting task. . .\n")
-    p.pick_spoon()
-
-    print ("Searching spoon. . .\n")
-    p.searchSpoon()
-
-    print ("trying to touch the spoon now. . .\n")
-    p.lift_spoon()
-
-    print ("Going to bowl. . .\n")
-    p.goto_bowl()
-    print ("Bowl reached. . .\n")
-    # #
-    print ("Scooping the peas. . .")
-    p.cmmnd_JointAngles([0,0,0,0,0,-30], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0.05,0,0,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,-45], '-r')
-    p.cmmnd_CartesianPosition([0,0,0.13,0,0,0,1], '-r')
-    print ("scooping done. . .")
-
-    print ("dumping in the plate. . .")
-    p.cmmnd_CartesianPosition([0,0.3,-0.12,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,40], '-r')
-    # p.goto_plate()
-    # rospy.spin()
+    print ("Going to pick up light. . .\n")
+    # p.goto_light()
+    # p.cmmnd_FingerPosition([100 ,100, 100])
+    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
