@@ -40,14 +40,14 @@ class grasp_generator(object):
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
         # print ('we have the frame')
-        if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_1"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_4"):
             # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/bowl_1")
-            translation, quaternion = self.listen.lookupTransform("/root", "/bowl_1", rospy.Time(0))
+            t = self.listen.getLatestCommonTime("/root", "/unknown_4")
+            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_4", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (2.2,0,0) # in radians
-            requrd_trans = (0,0,0.03)
+            requrd_rot = (2,0,0.6) # in radians
+            requrd_trans = (0.02,-0.05,0.07)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -58,13 +58,13 @@ class grasp_generator(object):
                                     "shaker_position",
                                     "root")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_1"):
-            t = self.listen.getLatestCommonTime("/root", "/unknown_1")
-            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_1", rospy.Time(0))
+        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_0"):
+            t = self.listen.getLatestCommonTime("/root", "/unknown_0")
+            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_0", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.5,0,0) # in radians
-            requrd_trans = (0,0,0.07)
+            requrd_rot = (1.5708,2,0) # in radians
+            requrd_trans = (0,0,0.2)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])

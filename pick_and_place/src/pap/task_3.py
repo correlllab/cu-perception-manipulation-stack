@@ -45,6 +45,20 @@ class pick_peas_class(object):
         self.calibrated = False
 
 
+    def lift_shaker(self):
+        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
+        # self.move_fingercmmd([0, 0, 0])
+        while self.m_touch != True:
+            self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            rate.sleep()
+        self.r_touch = False
+        # while not(self.m_touch and self.r_touch):
+        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            # self.move_joints([0,0,0,0,0,-5])
+            # rate.sleep()
+
+
+
 
     def set_obj_det(self,msg):
         self.obj_det = msg.data
@@ -144,6 +158,23 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the bowl frame")
 
+    def goto_plate(self):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
+            self.listen.waitForTransform('/root','/plate_position',rospy.Time(),rospy.Duration(100.0))
+            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
+
+            translation =  list(translation)
+            quaternion = list(quaternion)
+            #quaternion = [0.8678189045198146, 0.0003956789257977804, -0.4968799802988633, 0.0006910675928639343]
+            #quaternion = [0]*4
+            pose_value = translation + quaternion
+            #second arg=0 (absolute movement), arg = '-r' (relative movement)
+            self.cmmnd_CartesianPosition(pose_value, 0)
+
+        else:
+            print ("we DONT have the bowl frame")
+
 
 
 if __name__ == '__main__':
@@ -152,10 +183,32 @@ if __name__ == '__main__':
     p = pick_peas_class()
     p.j.home()
 
+    # p.cmmnd_JointAngles([0,0,0,20,0,0],'-r')
+
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/shaker_position")): # p.listen.frameExists("bowl_position"):
         pass
 
     print ("Starting task. . .\n")
     p.pick_shaker()
-    p.cmmnd_FingerPosition([80,80, 80])
+    # p.lift_shaker()
+    p.cmmnd_FingerPosition([30, 30, 30])
+    p.cmmnd_FingerPosition([90,90, 90])
     p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
+
+    p.goto_plate()
+
+    for i in range(5):
+        for i in xrange(8):
+            if i < 3:
+                p.cmmnd_JointAngles([0,0,0,0,0,-25],'-r')
+            else:
+                p.cmmnd_JointAngles([0,0,0,0,0,25],'-r')
+
+    for i in range(5):
+        for i in xrange(8):
+            if i < 3:
+                p.cmmnd_JointAngles([0,0,0,0,0,25],'-r')
+            else:
+                p.cmmnd_JointAngles([0,0,0,0,0,-25],'-r')
+
+        # rate.sleep()
