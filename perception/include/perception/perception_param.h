@@ -6,7 +6,7 @@
 
 namespace perception
 {
-  enum task_running { TASK0 = 0, TASK1 = 1} task;
+  enum task_running { TASK1 = 0, TASK2 = 1, TASK3 = 2} task;
 
   //cup with spoon
   double cws_height_min;
@@ -32,13 +32,27 @@ namespace perception
   double bowl_xy_max;
   int bowl_objects = 0;
 
+  //cup
+  double cup_height_min;
+  double cup_height_max;
+  double cup_xy_min;
+  double cup_xy_max;
+  int cup_objects = 0;
+
+  //shaker
+  double shaker_height_min;
+  double shaker_height_max;
+  double shaker_xy_min;
+  double shaker_xy_max;
+  int shaker_objects = 0;
+
   //published labels
   const std::string cws_label = "cup_with_spoon";
   const std::string cup_label = "cup";
   const std::string spoon_label = "spoon";
   const std::string bowl_label = "bowl";
   const std::string plate_label = "plate";
-  const std::string hammer_label = "hammer";
+  const std::string shaker_label = "shaker";
   const std::string unknown_label = "unknown";
   int unknown_objects = 0;
 

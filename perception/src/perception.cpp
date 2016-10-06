@@ -49,7 +49,7 @@
 
 namespace perception
 {
-void callback(teleop_interface::perception_paramConfig &config, uint32_t level)
+void callback(perception::perception_paramConfig &config, uint32_t level)
 {
   std::ostringstream ss;
   ss << "Reconfigure request, min_cup_height: " << config.min_cws_height << ", max_cup_height: " << config.max_cws_height;
@@ -72,6 +72,18 @@ void callback(teleop_interface::perception_paramConfig &config, uint32_t level)
   bowl_height_max = config.max_bowl_height;
   bowl_xy_min = config.min_bowl_xy;
   bowl_xy_max = config.max_bowl_xy;
+
+  //cup
+  cup_height_min = config.min_cup_height;
+  cup_height_max = config.max_cup_height;
+  cup_xy_min = config.min_cup_xy;
+  cup_xy_max = config.max_cup_xy;
+
+  //shaker
+  shaker_height_min = config.min_shaker_height;
+  shaker_height_max = config.max_shaker_height;
+  shaker_xy_min = config.min_shaker_xy;
+  shaker_xy_max = config.max_shaker_xy;
 
   task = static_cast<task_running>(config.task);
 }
@@ -119,8 +131,8 @@ public:
     objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/objects_cloud", 1);
     number_of_objects_pub_ = nh_.advertise<std_msgs::Int64>("/num_objects", 1);
 
-    dynamic_reconfigure::Server<teleop_interface::perception_paramConfig> srv;
-    dynamic_reconfigure::Server<teleop_interface::perception_paramConfig>::CallbackType f;
+    dynamic_reconfigure::Server<perception::perception_paramConfig> srv;
+    dynamic_reconfigure::Server<perception::perception_paramConfig>::CallbackType f;
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
@@ -467,10 +479,12 @@ public:
     {
     case TASK1:
       return task_1_object_id(object_pose, depth, width, height, index);
-    case TASK0:
+    case TASK2:
+      return task_2_object_id(object_pose, depth, width, height, index);
+    case TASK3:
+      return task_3_object_id(object_pose, depth, width, height, index);
     default:
       return task_1_object_id(object_pose, depth, width, height, index);
-      break;
     }
 
   }
@@ -493,6 +507,68 @@ public:
     {
       ss << bowl_label << "_" << bowl_objects;
       bowl_objects++;
+      color = rviz_visual_tools::RED;
+    }
+    else if((plate_height_min < height) && (height < plate_height_max)
+            && (plate_xy_min < width) && (width < plate_xy_max)
+            && (plate_xy_min < depth) && (depth < plate_xy_max))
+    {
+      ss << plate_label << "_" << plate_objects;
+      plate_objects++;
+      color = rviz_visual_tools::RED;
+    }
+    else
+    {
+      ss << unknown_label << "_" << unknown_objects;
+      unknown_objects++;
+      color = rviz_visual_tools::BLUE;
+    }
+    ROS_INFO_STREAM_NAMED("ppc", "Object Identity: " << ss.str());
+    visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
+    return ss.str();
+  }
+
+  std::string task_2_object_id(Eigen::Affine3d object_pose, double depth, double width, double height, int index)
+  {
+    std::ostringstream ss;
+    rviz_visual_tools::colors color;
+    if((cws_height_min < height) && (height < cws_height_max)
+       && (cws_xy_min < width) && (width < cws_xy_max)
+       && (cws_xy_min < depth) && (depth < cws_xy_max) )
+    {
+      ss << cws_label << "_" << cws_objects;
+      cws_objects++;
+      color = rviz_visual_tools::RED;
+    }
+    else if((cup_height_min < height) && (height < cup_height_max)
+            && (cup_xy_min < width) && (width < cup_xy_max)
+            && (cup_xy_min < depth) && (depth < cup_xy_max))
+    {
+      ss << cup_label << "_" << cup_objects;
+      cup_objects++;
+      color = rviz_visual_tools::RED;
+    }
+    else
+    {
+      ss << unknown_label << "_" << unknown_objects;
+      unknown_objects++;
+      color = rviz_visual_tools::BLUE;
+    }
+    ROS_INFO_STREAM_NAMED("ppc", "Object Identity: " << ss.str());
+    visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
+    return ss.str();
+  }
+
+  std::string task_3_object_id(Eigen::Affine3d object_pose, double depth, double width, double height, int index)
+  {
+    std::ostringstream ss;
+    rviz_visual_tools::colors color;
+    if((shaker_height_min < height) && (height < shaker_height_max)
+       && (shaker_xy_min < width) && (width < shaker_xy_max)
+       && (shaker_xy_min < depth) && (depth < shaker_xy_max) )
+    {
+      ss << shaker_label << "_" << shaker_objects;
+      shaker_objects++;
       color = rviz_visual_tools::RED;
     }
     else if((plate_height_min < height) && (height < plate_height_max)
