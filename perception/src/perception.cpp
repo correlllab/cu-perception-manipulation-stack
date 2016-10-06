@@ -10,7 +10,7 @@
 #include <std_msgs/Int64.h>
 #include <std_msgs/Bool.h>
 #include <math.h>
-//#include <rviz_visual_tools/rviz_visual_tools.h>
+#include <rviz_visual_tools/rviz_visual_tools.h>
 #include <rviz_visual_tools/tf_visual_tools.h>
 
 // Eigen and TF
@@ -37,7 +37,6 @@
 #include <pcl/segmentation/extract_polygonal_prism_data.h>
 
 //object identification
-//#include <perception/identified_object.h>
 #include <pcl/common/geometry.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -99,7 +98,7 @@ private:
   rviz_visual_tools::TFVisualTools tf_visualizer_;
   tf::TransformListener tf_listener_;
 
-  //rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
+  rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
 public:
   PerceptionTester(int test)
     : nh_("~")
@@ -120,15 +119,13 @@ public:
     objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/objects_cloud", 1);
     number_of_objects_pub_ = nh_.advertise<std_msgs::Int64>("/num_objects", 1);
 
-    //identified_objects_ = nh_.advertise<perception::identified_object>("/identified_objects", 1);
-
     dynamic_reconfigure::Server<teleop_interface::perception_paramConfig> srv;
     dynamic_reconfigure::Server<teleop_interface::perception_paramConfig>::CallbackType f;
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
-    //visual_tools_->enableBatchPublishing();
-
+    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("base","/bounding_boxes"));
+    visual_tools_->enableBatchPublishing();
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
 
@@ -342,7 +339,7 @@ public:
     Eigen::Vector3d object_centroid;
     tf::StampedTransform qr_transform;
     Eigen::Affine3d object_pose;
-    //visual_tools_->deleteAllMarkers();
+    visual_tools_->deleteAllMarkers();
 
     tf_listener_.waitForTransform("base", "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
     try
@@ -434,7 +431,7 @@ public:
 
         ROS_INFO_STREAM_NAMED("ppc", "Spoon " << idx << " has " << spoon_object->width * spoon_object->height << " points");
         ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
-
+        visual_tools_->publishWireframeCuboid(object_pose, .1, .1, .1, rviz_visual_tools::RAND);
       }
 
       /*******************************END REBECCA'S PERCEPTION ADDITIONS*******************************************************************/
@@ -446,7 +443,7 @@ public:
     }
 
     object_poses_ = local_poses;
-    //visual_tools_->triggerBatchPublish();
+    visual_tools_->triggerBatchPublish();
 
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
   }
@@ -481,12 +478,14 @@ public:
   std::string task_1_object_id(Eigen::Affine3d object_pose, double depth, double width, double height, int index)
   {
     std::ostringstream ss;
+    rviz_visual_tools::colors color;
     if((cws_height_min < height) && (height < cws_height_max)
        && (cws_xy_min < width) && (width < cws_xy_max)
        && (cws_xy_min < depth) && (depth < cws_xy_max) )
     {
       ss << cws_label << "_" << cws_objects;
       cws_objects++;
+      color = rviz_visual_tools::RED;
     }
     else if((bowl_height_min < height) && (height < bowl_height_max)
             && (bowl_xy_min < width) && (width < bowl_xy_max)
@@ -494,6 +493,7 @@ public:
     {
       ss << bowl_label << "_" << bowl_objects;
       bowl_objects++;
+      color = rviz_visual_tools::RED;
     }
     else if((plate_height_min < height) && (height < plate_height_max)
             && (plate_xy_min < width) && (width < plate_xy_max)
@@ -501,13 +501,16 @@ public:
     {
       ss << plate_label << "_" << plate_objects;
       plate_objects++;
+      color = rviz_visual_tools::RED;
     }
     else
     {
       ss << unknown_label << "_" << unknown_objects;
       unknown_objects++;
+      color = rviz_visual_tools::BLUE;
     }
     ROS_INFO_STREAM_NAMED("ppc", "Object Identity: " << ss.str());
+    visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
     return ss.str();
   }
 
