@@ -59,18 +59,20 @@ Assuming you were able to compile, you will need to source your packages to be a
 ```
 gedit ~/.bashrc
 ```
-.bashrc lines to add:
+.bashrc lines to add. modify ip and username in <>:
 ```
 # Sourcing ROS and your workspace(s)
 source /opt/ros/indigo/setup.bash 
 source ~/ros/jaco_ws/devel/setup.bash
 
+# roscore on this machine
 export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
-# Local ROS
-#export HOSTNAME=localhost
-#export BRICK_IP=128.138.244.28  #brick's IP
-export HOSTNAME=correlllab-GB-BSi7-6500.local
-export ROS_MASTER_URI=http://$HOSTNAME:11311
+
+# roscore on the gigabyte
+export ROS_MASTER_URI=http://128.138.244.28:11311
+
+# local host
+export ROS_HOSTNAME=<your ip>
 
 # ROS Workspaces
 function rosPackagePath()
@@ -78,7 +80,7 @@ function rosPackagePath()
     arr=$(echo $CMAKE_PREFIX_PATH | tr ":" "\n")
     for x in $arr
     do
-	rootpath1="/home/<your_account>/ros/"
+	rootpath1="/home/<username>/ros/"
 	rootpath2="/opt/ros/"
 	x=${x#${rootpath1}}
 	echo " " ${x#${rootpath2}}
