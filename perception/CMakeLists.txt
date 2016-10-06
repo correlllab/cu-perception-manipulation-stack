@@ -167,7 +167,7 @@ target_link_libraries(perception
   ${catkin_LIBRARIES}
 )
 add_dependencies(perception perception_generate_messages_cpp)
-add_dependencies(perception teleop_interface_gencfg)
+add_dependencies(perception perception_gencfg)
 
 #############
 ## Install ##
