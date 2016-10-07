@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf_conversions
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +73,9 @@ find_package(catkin REQUIRED COMPONENTS
 #   DEPENDENCIES
 #   std_msgs
 # )
+generate_dynamic_reconfigure_options(
+  cfg/trans_param.cfg
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -139,7 +143,7 @@ include_directories(
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(camera_calibration_node
-#   ${catkin_LIBRARIES}
+#   ${catkin_LIBRARIES}/
 # )
 add_executable(camera_alignment
   src/camera_alignment.cpp
@@ -147,7 +151,7 @@ add_executable(camera_alignment
 target_link_libraries(camera_alignment
   ${catkin_LIBRARIES}
 )
-
+add_dependencies(camera_alignment camera_calibration_tool_gencfg)
 
 #############
 ## Install ##

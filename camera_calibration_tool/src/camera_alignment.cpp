@@ -15,9 +15,18 @@
 #include <tf_conversions/tf_eigen.h>
 
 #include <Eigen/Core>
+//dynamic reconfiguration of variables during runtime
+#include <dynamic_reconfigure/server.h>
+#include <camera_calibration_tool/trans_paramConfig.h>
 
 namespace camera_alignment
 {
+
+double euler_offset;
+void callback(camera_calibration_tool::trans_paramConfig &config, uint32_t level)
+{
+  euler_offset = config.euler_offset;
+}
 
 class CameraAlignmentTester
 {
@@ -155,6 +164,8 @@ public:
     rh_to_qr.translation()[2] -= 0.00966;
     Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
     //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-0.115192, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
+    //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
+    //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(euler_offset, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
     qr_location =  rh_pose * (rh_to_qr * qr_rotation);
     visual_tools_->publishAxisLabeled(qr_location, "qr_location");
 
