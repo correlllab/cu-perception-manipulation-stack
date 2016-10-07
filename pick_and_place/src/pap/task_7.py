@@ -139,7 +139,7 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def goto_USBlight(self):
+    def goto_straw(self):
 
         self.calibrate_obj_det_pub.publish(True)
 
@@ -150,11 +150,11 @@ class pick_peas_class(object):
 
         print("Finger Sensors calibrated")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/USBlight_position"):
-            # print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/USBlight_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/USBlight_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/USBlight_position", t)
+        if self.listen.frameExists("/root") and self.listen.frameExists("/straw_position"):
+            print ("we have the straw frame")
+            self.listen.waitForTransform('/root','/straw_position',rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/root", "/straw_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/straw_position", t)
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -165,14 +165,14 @@ class pick_peas_class(object):
             self.cmmnd_CartesianPosition(pose_value, 0)
 
         else:
-            print ("we DONT have the frame")
+            print ("We DONT have the frame")
 
-    def goto_light(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/light_position"):
-            self.listen.waitForTransform('/root','/light_position',rospy.Time(),rospy.Duration(100.0))
-            # print ("we have the bowl frame")
+    def goto_cup(self):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/cup_position"):
+            self.listen.waitForTransform('/root','/cup_position',rospy.Time(),rospy.Duration(100.0))
+            print ("we have the cup frame")
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/light_position", rospy.Time(0))
+            translation, quaternion = self.listen.lookupTransform("/root", "/cup_position", rospy.Time(0))
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -182,7 +182,7 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the bowl frame")
 
-    def search_USBlight(self):
+    def search_straw(self):
         if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
             # print ("we are in the search spoon fucntion")
             self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
@@ -228,31 +228,23 @@ if __name__ == '__main__':
     p = pick_peas_class()
     p.j.home()
     commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
-    p.cmmnd_FingerPosition([0, 100, 100])
+    p.cmmnd_FingerPosition([0, 0, 100])
 
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/light_position")) and p.listen.frameExists("USBlight_position"):
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("/straw_position")) and p.listen.frameExists("cup_position"):
         pass
 
     print ("Starting task. . .\n")
-    p.goto_USBlight()
+    p.goto_straw()
 
-    print ("Searching spoon. . .\n")
-    p.search_USBlight()
+    print ("Searching straw. . .\n")
+    p.search_straw()
+    print ("Grab the straw. . .\n")
 
-    print ("Grab the USB light. . .\n")
-    p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0.03,0,0,0,0,1], '-r')
     p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_FingerPosition([100 ,100, 100])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-    # p.cmmnd_CartesianPosition([0,0,-0.22,0,0,0,1], '-r')
-    # p.lift_USBlight()
+    p.cmmnd_CartesianPosition([0,0,0.25,0,0,0,1], '-r')
 
-    print ("Drop the USB light..\n")
-    p.cmmnd_JointAngles([0,0,0,-20,0,0], '-r')
-    commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
-
-
-    print ("Going to pick up light. . .\n")
-    p.goto_light()
-    p.cmmnd_FingerPosition([100,100,00])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    print ("Dump the straw into the cup..\n")
+    p.goto_cup()
+    p.cmmnd_CartesianPosition([0,0,-0.15,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([0,0,0])

@@ -151,7 +151,7 @@ class pick_peas_class(object):
         print("Finger Sensors calibrated")
 
         if self.listen.frameExists("/root") and self.listen.frameExists("/USBlight_position"):
-            # print ("we have the spoon frame")
+            print ("we have the spoon frame")
             self.listen.waitForTransform('/root','/USBlight_position',rospy.Time(),rospy.Duration(100.0))
             t = self.listen.getLatestCommonTime("/root", "/USBlight_position")
             translation, quaternion = self.listen.lookupTransform("/root", "/USBlight_position", t)
@@ -167,12 +167,12 @@ class pick_peas_class(object):
         else:
             print ("we DONT have the frame")
 
-    def goto_light(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/light_position"):
-            self.listen.waitForTransform('/root','/light_position',rospy.Time(),rospy.Duration(100.0))
+    def goto_scissor(self):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/scissor_position"):
+            self.listen.waitForTransform('/root','/scissor_position',rospy.Time(),rospy.Duration(100.0))
             # print ("we have the bowl frame")
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/light_position", rospy.Time(0))
+            translation, quaternion = self.listen.lookupTransform("/root", "/scissor_position", rospy.Time(0))
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -227,32 +227,44 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
-    p.cmmnd_FingerPosition([0, 100, 100])
+    p.cmmnd_FingerPosition([71, 71, 0])
 
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/light_position")) and p.listen.frameExists("USBlight_position"):
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("/scissor_position")):# and p.listen.frameExists("USBlight_position"):
         pass
 
     print ("Starting task. . .\n")
-    p.goto_USBlight()
-
-    print ("Searching spoon. . .\n")
-    p.search_USBlight()
-
-    print ("Grab the USB light. . .\n")
-    p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_FingerPosition([100 ,100, 100])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-    # p.cmmnd_CartesianPosition([0,0,-0.22,0,0,0,1], '-r')
-    # p.lift_USBlight()
-
-    print ("Drop the USB light..\n")
-    p.cmmnd_JointAngles([0,0,0,-20,0,0], '-r')
-    commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
+    p.goto_scissor()
+    p.cmmnd_JointAngles([0,0,0,0,0,90], '-r')
 
 
-    print ("Going to pick up light. . .\n")
-    p.goto_light()
-    p.cmmnd_FingerPosition([100,100,00])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0,-0.085,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([100, 100, 0])
+    p.cmmnd_CartesianPosition([0,0,0.015,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([100, 100, 100])
+    p.j.home()
+    p.cmmnd_JointAngles([0,0,0,0,0,90], '-r')
+    p.cmmnd_FingerPosition([100, 50, 100])
+    p.cmmnd_FingerPosition([45, 50, 100])
+    p.cmmnd_FingerPosition([100, 50, 100])
+    p.cmmnd_FingerPosition([45, 50, 100])
+
+    # print ("Searching spoon. . .\n")
+    # p.search_USBlight()
+    #
+    # print ("Grab the USB light. . .\n")
+    # p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
+    # p.cmmnd_FingerPosition([100,100,100])
+    # # p.cmmnd_FingerPosition([100 ,100, 100])
+    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    # # p.cmmnd_CartesianPosition([0,0,-0.22,0,0,0,1], '-r')
+    # # p.lift_USBlight()
+    #
+    # print ("Drop the USB light..\n")
+    # p.cmmnd_JointAngles([0,0,0,-20,0,0], '-r')
+    # commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
+    #
+    #
+    # print ("Going to pick up light. . .\n")
+    # p.goto_light()
+    # p.cmmnd_FingerPosition([100,100,00])
+    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')

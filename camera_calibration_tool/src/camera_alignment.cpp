@@ -153,8 +153,8 @@ public:
     // location of qr tag on laser cut plate
     rh_to_qr.translation()[0] += 0.09625;//0.081559;
     rh_to_qr.translation()[2] -= 0.00966;
-    //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
-    Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-0.115192, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
+    Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
+    //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-0.115192, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
     qr_location =  rh_pose * (rh_to_qr * qr_rotation);
     visual_tools_->publishAxisLabeled(qr_location, "qr_location");
 

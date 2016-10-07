@@ -13,6 +13,7 @@ import numpy as np
 import pose_action_client
 import fingers_action_client
 import joints_action_client
+import commands
 
 import tf
 
@@ -92,29 +93,7 @@ class pick_peas_class(object):
             print ("program interrupted before completion")
 
     def cmmnd_FingerPosition(self, finger_value):
-        fingers_action_client.getCurrentFingerPosition('j2n6a300_')
-
-        finger_turn, finger_meter, finger_percent = fingers_action_client.unitParser('percent', finger_value, '-r')
-        finger_number = 3
-        finger_maxDist = 18.9/2/1000  # max distance for one finger in meter
-        finger_maxTurn = 6800  # max thread turn for one finger
-
-        try:
-            if finger_number == 0:
-                print('Finger number is 0, check with "-h" to see how to use this node.')
-                positions = []  # Get rid of static analysis warning that doesn't see the exit()
-                exit()
-            else:
-                positions_temp1 = [max(0.0, n) for n in finger_turn]
-                positions_temp2 = [min(n, finger_maxTurn) for n in positions_temp1]
-                positions = [float(n) for n in positions_temp2]
-
-            print('Sending finger position ...')
-            result = fingers_action_client.gripper_client(positions)
-            print('Finger position sent!')
-
-        except rospy.ROSInterruptException:
-            print('program interrupted before completion')
+        commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
 
     def cmmnd_JointAngles(self,joints_cmd, relative):
         joints_action_client.getcurrentJointCommand('j2n6a300_')
@@ -183,7 +162,7 @@ if __name__ == '__main__':
     p = pick_peas_class()
     p.j.home()
 
-    # p.cmmnd_JointAngles([0,0,0,20,0,0],'-r')
+    p.cmmnd_FingerPosition([0,0,0])
 
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/shaker_position")): # p.listen.frameExists("bowl_position"):
         pass
@@ -197,18 +176,15 @@ if __name__ == '__main__':
 
     p.goto_plate()
 
-    for i in range(5):
+    for i in range(10):
         for i in xrange(8):
             if i < 3:
                 p.cmmnd_JointAngles([0,0,0,0,0,-25],'-r')
+                p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
+                p.cmmnd_CartesianPosition([0,0,0-.15,0,0,0,1], '-r')
             else:
                 p.cmmnd_JointAngles([0,0,0,0,0,25],'-r')
+                p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
+                p.cmmnd_CartesianPosition([0,0,0-.15,0,0,0,1], '-r')
 
-    for i in range(5):
-        for i in xrange(8):
-            if i < 3:
-                p.cmmnd_JointAngles([0,0,0,0,0,25],'-r')
-            else:
-                p.cmmnd_JointAngles([0,0,0,0,0,-25],'-r')
-
-        # rate.sleep()
+            rate.sleep()
