@@ -91,7 +91,7 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def pick_Towel(self):
+    def pick_spoon(self):
         self.calibrate_obj_det_pub.publish(True)
 
         while self.calibrated == False:
@@ -101,11 +101,11 @@ class pick_peas_class(object):
 
         print("Finger Sensors calibrated")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/Towel_position"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/spoon_position"):
             print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/Towel_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/Towel_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/Towel_position", t)
+            self.listen.waitForTransform('/root','/spoon_position',rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/root", "/spoon_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/spoon_position", t)
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -119,12 +119,12 @@ class pick_peas_class(object):
 
             # self.j.gripper.close()
 
-    def goto_hangTowel(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/hangTowel"):
-            self.listen.waitForTransform('/root','/hangTowel',rospy.Time(),rospy.Duration(100.0))
+    def goto_stirCup(self):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/stir_position"):
+            self.listen.waitForTransform('/root','/stir_position',rospy.Time(),rospy.Duration(100.0))
             # print ("we have the bowl frame")
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/hangTowel", rospy.Time(0))
+            translation, quaternion = self.listen.lookupTransform("/root", "/stir_position", rospy.Time(0))
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -147,6 +147,22 @@ class pick_peas_class(object):
             print('program interrupted before completion')
 
 
+    def lift_spoon(self):
+        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
+        # self.move_fingercmmd([0, 0, 0])
+        while self.m_touch != True:
+            self.cmmnd_CartesianVelocity([0,0.025,0,0,0,0,1])
+            rate.sleep()
+        self.r_touch = False
+        # while not(self.m_touch and self.r_touch):
+        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            # self.move_joints([0,0,0,0,0,-5])
+            # rate.sleep()
+
+        self.cmmnd_FingerPosition([100, 00, 100])
+        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
+        self.cmmnd_FingerPosition([100, 100, 100])
+
 
     def cmmnd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
@@ -160,6 +176,17 @@ class pick_peas_class(object):
         # while not rospy.is_shutdown():
         self.velocity_pub.publish(msg)
             # rate.sleep()
+
+    def stir_cup(self):
+        for i in range(3):
+            self.cmmnd_CartesianPosition([0.02, 0, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([0.01, -0.01, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([0, -0.02, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([-0.01, -0.01, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([-0.02, 0, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([-0.01, 0.01, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([0, 0.02, 0, 0, 0, 0, 1], '-r')
+            self.cmmnd_CartesianPosition([0.01, 0.01, 0, 0, 0, 0, 1], '-r')
 
 
     def searchSpoon(self):
@@ -185,22 +212,56 @@ class pick_peas_class(object):
                   if(counter >400):
                      counter=0
 
+    def scoopSpoon(self):
+        while not (self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/j2n6a300_link_finger_tip_3")):
+            pass
+
+        print ("Publishing transform of figner wrt endEffector frame")
+        p.listen.waitForTransform('/j2n6a300_end_effector','/j2n6a300_link_finger_tip_3',rospy.Time(),rospy.Duration(100.0))
+        t = self.listen.getLatestCommonTime("/j2n6a300_end_effector", "/j2n6a300_link_finger_tip_3")
+        translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector", "/j2n6a300_link_finger_tip_3", t)
+        # print (translation)
+        matrix2 = self.listen.fromTranslationRotation(translation, quaternion)
+        # print (matrix2)
+        # required_cartvelo = [0,0,0,0.1,0,0]
+        quaternion = pose_action_client.EulerXYZ2Quaternion([0.15,0,0]) # set rot angle HERE (deg)
+        matrix1 = self.listen.fromTranslationRotation([0,0,0], quaternion)
+        # print (matrix1)
+        matrix3 = np.dot(matrix2,matrix1)
+        scale, shear, rpy_angles, trans, perps = tf.transformations.decompose_matrix(matrix3)
+        trans = list(trans.tolist())
+        rpy_angles = list(rpy_angles)
+        # euler = pose_action_client.Quaternion2EulerXYZ(quat_1)
+        # pose = trans + rpy_angles
+        return pose
+        # return translation, quaternion
+
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    # p.cmmnd_FingerPosition([0, 0, 100])
-    #
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/Towel_position")): # p.listen.frameExists("bowl_position"):
-        pass
-    #
-    print ("Starting task. . .\n")
-    p.pick_Towel()
-    p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100, 100, 100])
-    p.cmmnd_CartesianPosition([0,0,0.4,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([0, 0, 100])
 
-    print ("Going to hang the towel. . .\n")
-    p.cmmnd_CartesianPosition([-0.15,-0.4,0,0,0,0,1],'-r')
-    p.cmmnd_FingerPosition([0, 0, 0])
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
+        pass
+
+    print ("Starting task. . .\n")
+    p.pick_spoon()
+
+    print ("Searching spoon. . .\n")
+    p.searchSpoon()
+    p.cmmnd_CartesianPosition([0.01,0,0,0,0,0,1], '-r')
+
+
+    print ("trying to touch the spoon now. . .\n")
+    p.cmmnd_FingerPosition([100, 00, 100])
+    p.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
+    p.cmmnd_FingerPosition([100, 100, 100])
+
+    p.cmmnd_CartesianPosition([-.02,0,0,0,0,0,1],'-r')
+    print ("Going to stir bowl. . .\n")
+    p.goto_stirCup()
+    p.cmmnd_CartesianPosition([0,0,-0.085,0,0,0,1],'-r')
+    p.stir_cup()
+    # print ("Bowl reached. . .\n")

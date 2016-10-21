@@ -194,11 +194,11 @@ class pick_peas_class(object):
             while not self.obj_det:
                   counter = counter + 1
                   if(counter < 200):
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T) #change in y->x, z->y, x->z
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   else:
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,-0.05])[np.newaxis].T)
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   rate.sleep()
@@ -227,8 +227,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
-    p.cmmnd_FingerPosition([0, 100, 100])
+    p.cmmnd_FingerPosition([0, 0, 0])
 
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/light_position")) and p.listen.frameExists("USBlight_position"):
         pass
@@ -236,23 +235,22 @@ if __name__ == '__main__':
     print ("Starting task. . .\n")
     p.goto_USBlight()
 
-    print ("Searching spoon. . .\n")
-    p.search_USBlight()
+    print ("Searching USBlight. . .\n")
+    # p.search_USBlight()
 
     print ("Grab the USB light. . .\n")
-    p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_FingerPosition([100 ,100, 100])
+    # p.cmmnd_CartesianPosition([0,0.03,0,0,0,0,1], '-r')
+    # p.cmmnd_CartesianPosition([-0.015,0,0,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([200,200,200])
     p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-    # p.cmmnd_CartesianPosition([0,0,-0.22,0,0,0,1], '-r')
-    # p.lift_USBlight()
 
     print ("Drop the USB light..\n")
-    p.cmmnd_JointAngles([0,0,0,-20,0,0], '-r')
-    commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
-
+    p.cmmnd_CartesianPosition([0,-0.05,0,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([0,0,0])
+    p.cmmnd_CartesianPosition([0,0.05,0,0,0,0,1], '-r')
 
     print ("Going to pick up light. . .\n")
     p.goto_light()
-    p.cmmnd_FingerPosition([100,100,00])
+    p.cmmnd_CartesianPosition([0,0,-0.09,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([100,100,100])
     p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')

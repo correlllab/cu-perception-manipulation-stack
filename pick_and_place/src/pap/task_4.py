@@ -169,22 +169,24 @@ if __name__ == '__main__':
 
     print ("Starting task. . .\n")
     p.pick_shaker()
+    # p.cmmnd_JointAngles([0,0,0,0,20,-15],'-r')
+    # p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,0], '-r')
+
+    p.cmmnd_FingerPosition([100,100,100])
+
     # p.lift_shaker()
-    p.cmmnd_FingerPosition([30, 30, 30])
-    p.cmmnd_FingerPosition([90,90, 90])
+    # p.cmmnd_FingerPosition([30, 30, 30])
+    # p.cmmnd_FingerPosition([90,90, 90])
     p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
-
+    #
     p.goto_plate()
+    #
+    p.cmmnd_JointAngles([0,0,0,0,0,45],'-r')
 
-    for i in range(10):
-        for i in xrange(8):
-            if i < 3:
-                p.cmmnd_JointAngles([0,0,0,0,0,-25],'-r')
-                p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
-                p.cmmnd_CartesianPosition([0,0,0-.15,0,0,0,1], '-r')
-            else:
-                p.cmmnd_JointAngles([0,0,0,0,0,25],'-r')
-                p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
-                p.cmmnd_CartesianPosition([0,0,0-.15,0,0,0,1], '-r')
-
-            rate.sleep()
+    for i in range(250):
+        p.cmmnd_JointAngles([0,0,0,0,0,-180],'-r')
+        # p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
+        # p.cmmnd_CartesianPosition([0,0,0-.15,0,0,0,1], '-r')
+        p.cmmnd_JointAngles([0,0,0,0,0,180],'-r')
+        # p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
+        # p.cmmnd_CartesianPosition([0,0,0-.15,0,0,0,1], '-r')

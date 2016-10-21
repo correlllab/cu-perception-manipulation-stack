@@ -91,7 +91,7 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def pick_Towel(self):
+    def pick_driver(self):
         self.calibrate_obj_det_pub.publish(True)
 
         while self.calibrated == False:
@@ -101,11 +101,11 @@ class pick_peas_class(object):
 
         print("Finger Sensors calibrated")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/Towel_position"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/driver_position"):
             print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/Towel_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/Towel_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/Towel_position", t)
+            self.listen.waitForTransform('/root','/driver_position',rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/root", "/driver_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/driver_position", t)
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -119,7 +119,7 @@ class pick_peas_class(object):
 
             # self.j.gripper.close()
 
-    def goto_hangTowel(self):
+    def goto_nut(self):
         if self.listen.frameExists("/root") and self.listen.frameExists("/hangTowel"):
             self.listen.waitForTransform('/root','/hangTowel',rospy.Time(),rospy.Duration(100.0))
             # print ("we have the bowl frame")
@@ -162,7 +162,7 @@ class pick_peas_class(object):
             # rate.sleep()
 
 
-    def searchSpoon(self):
+    def searchdriver(self):
         if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
             # print ("we are in the search spoon fucntion")
             self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
@@ -185,22 +185,46 @@ class pick_peas_class(object):
                   if(counter >400):
                      counter=0
 
+    def lift_driver(self):
+        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
+        # self.move_fingercmmd([0, 0, 0])
+        while self.m_touch != True:
+            self.cmmnd_CartesianVelocity([0.025,0,0,0,0,0,1])
+            rate.sleep()
+        self.r_touch = False
+        # while not(self.m_touch and self.r_touch):
+        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            # self.move_joints([0,0,0,0,0,-5])
+            # rate.sleep()
+
+        self.cmmnd_FingerPosition([100, 00, 100])
+        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
+        self.cmmnd_FingerPosition([100, 100, 100])
+
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
-    p.j.home()
-    # p.cmmnd_FingerPosition([0, 0, 100])
+    # p.j.home()
+    p.cmmnd_FingerPosition([0, 100, 100])
     #
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/Towel_position")): # p.listen.frameExists("bowl_position"):
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("/driver_position")): # p.listen.frameExists("bowl_position"):
         pass
-    #
-    print ("Starting task. . .\n")
-    p.pick_Towel()
-    p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1], '-r')
+    # print ("Starting task. . .\n")
+    p.pick_driver()
+    # # p.cmmnd_JointAngles([0,0,0,0,0,-9],'-r')
+    p.cmmnd_CartesianPosition([0,0,-0.18,0,0,0,1], '-r')
     p.cmmnd_FingerPosition([100, 100, 100])
-    p.cmmnd_CartesianPosition([0,0,0.4,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0,0.1,0,0,0,1], '-r')
 
-    print ("Going to hang the towel. . .\n")
-    p.cmmnd_CartesianPosition([-0.15,-0.4,0,0,0,0,1],'-r')
-    p.cmmnd_FingerPosition([0, 0, 0])
+
+    # p.cmmnd_FingerPosition([90,100,100])
+    # # p.cmmnd_FingerPosition([100,0,100])
+    # p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1], '-r')
+    # # p.cmmnd_FingerPosition([100,100,100])
+    # p.cmmnd_CartesianPosition([0,-0.075,0,0,0,0,1], '-r')
+    # p.cmmnd_CartesianPosition([0.07,0,0,0,0,0,1], '-r')
+
+    # print ("Going to hang the towel. . .\n")
+    # p.cmmnd_CartesianPosition([-0.15,-0.4,0,0,0,0,1],'-r')
+    # p.cmmnd_FingerPosition([0, 0, 0])

@@ -46,8 +46,8 @@ class grasp_generator(object):
             translation, quaternion = self.listen.lookupTransform("/root", "/unknown_2", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.57,0,0) # in radians
-            requrd_trans = (-0.03,0,0.14)
+            requrd_rot = (1.57,0,1.4) # in radians
+            requrd_trans = (-0.06,-0.095,0.1)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
