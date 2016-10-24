@@ -37,7 +37,6 @@ def gripper_client(finger_positions):
         goal.fingers.finger3 = 0.0
     else:
         goal.fingers.finger3 = float(finger_positions[2])
-        print (goal)
     client.send_goal(goal)
     if client.wait_for_result(rospy.Duration(5.0)):
         return client.get_result()

@@ -6,6 +6,8 @@ import actionlib
 from geometry_msgs.msg import Point, Quaternion, Pose, PoseStamped
 from std_msgs.msg import Header, Int64, Bool
 import numpy as np
+from finger_sensor_msgs.msg import FingerTouch
+
 
 class JacoGripper(object):
     def __init__(self, robot_type='j2n6a300'):
@@ -14,31 +16,46 @@ class JacoGripper(object):
         self.finger_maxDist = 18.9/2/1000  # max distance for one finger
         self.finger_maxTurn = 7400  # max thread rotation for one finger
         self.currentFingerPercent = [0.0, 0.0, 0.0]
-        self.finger_pos_sub = rospy.Subscriber('/{}_driver/out/finger_position'.format(robot_type),
-                                                kinova_msgs.msg.FingerPosition,
-                                                self.setCurrentFingerPercent)
+        # self.finger_pos_sub = rospy.Subscriber('/{}_driver/out/finger_position'.format(robot_type),
+        #                                         kinova_msgs.msg.FingerPosition,
+        #                                         self.setCurrentFingerPercent)
+        self.action_address = ('/{}_driver/fingers_action/'
+                          'finger_positions'.format(self.robot_type))
+
+        self.client = actionlib.SimpleActionClient(self.action_address,
+                                            kinova_msgs.msg.SetFingersPositionAction)
+
+        self.client.wait_for_server()
+        self.finger_touch = np.array([False, False, False])
+        self.finger_touch_sub = rospy.Subscriber('/finger_sensor/touch',
+                                                FingerTouch,
+                                                self.set_finger_touch)
+
+
+    def set_finger_touch(self,msg):
+        self.finger_touch[0] = msg.finger1
+        self.finger_touch[1] = msg.finger2
+        self.finger_touch[2] = msg.finger3
+
     def set_position(self, position):
         """Accept position from 0 (open) to 100 (closed)."""
-        action_address = ('/{}_driver/fingers_action/'
-                          'finger_positions'.format(self.robot_type))
-        client = actionlib.SimpleActionClient(
-            action_address,
-            kinova_msgs.msg.SetFingersPositionAction)
-        client.wait_for_server()
-        position_turns = np.clip(position, 0, 100) / 100 * self.finger_maxTurn
+        position_turns = self.parse_percent_to_turn(position)
         goal = kinova_msgs.msg.SetFingersPositionGoal()
         goal.fingers.finger1 = float(position_turns[0])
         goal.fingers.finger2 = float(position_turns[1])
-        if len(position) < 3:
-            goal.fingers.finger3 = 0.0
-        else:
+        if len(position)==3:
             goal.fingers.finger3 = float(position_turns[2])
-        client.send_goal(goal)
-        if client.wait_for_result(rospy.Duration(5.0)):
-            return client.get_result()
         else:
-            client.cancel_all_goals()
+            goal.fingers.finger3 = 0.0
+
+        self.client.send_goal(goal)
+
+        if self.client.wait_for_result(rospy.Duration(5.0)):
+            return self.client.get_result()
+        else:
+            self.client.cancel_all_goals()
             rospy.logwarn('        the gripper action timed-out')
+            return None
 
     def open(self):
         self.set_position([0, 0, 0])
@@ -46,17 +63,55 @@ class JacoGripper(object):
     def close(self):
         self.set_position([100, 100, 100])
 
-    def close_with_feedback(self, fingers):
-        return 0
+    def parse_percent_to_turn(self,percent):
+        return np.clip(percent, 0.0, 100.0) / 100.0 * self.finger_maxTurn
 
-    def setCurrentFingerPercent(self,msg):
-        finger_value = [0.0, 0.0, 0.0]
-        finger_value[0] = msg.finger1
-        finger_value[1] = msg.finger2
-        finger_value[2] = msg.finger3
-        #finger_turn = [x / 100.0 * self.finger_maxTurn for x in finger_value]
-        finger_percent = [x / self.finger_maxTurn * 100.0 for x in finger_value]
-        self.currentFingerPercent = finger_percent
+    def close_with_feedback(self,start,three_fingers=True):
+        self.set_position(start)
+        percent = np.array(start)
+        percent_change = np.array([1.0]*3)
+
+        if three_fingers:
+            f = 3
+        else:
+            f = 2
+
+        while np.all(percent[:f] < 100.0) and np.any(self.finger_touch[:f]==False):
+            percent += percent_change * np.logical_not(self.finger_touch)
+            position_turns = self.parse_percent_to_turn(percent)
+            goal = kinova_msgs.msg.SetFingersPositionGoal()
+            goal.fingers.finger1 = float(position_turns[0])
+            goal.fingers.finger2 = float(position_turns[1])
+            if three_fingers:
+                goal.fingers.finger3 = float(position_turns[2])
+            else:
+                goal.fingers.finger3 = 0.0
+
+            self.client.send_goal(goal)
+
+            if self.client.wait_for_result(rospy.Duration(5.0)):
+                self.client.get_result()
+            else:
+                self.client.cancel_all_goals()
+                rospy.logwarn('        the gripper action timed-out')
+
+        print('Gripped')
+        self.set_position(percent[:f]+[5])
+
+
+
+
+
+
+
+
+    # def setCurrentFingerPercent(self,msg):
+    #     finger_value = [0.0, 0.0, 0.0]
+    #     finger_value[0] = msg.finger1
+    #     finger_value[1] = msg.finger2
+    #     finger_value[2] = msg.finger3
+    #     finger_percent = [x / self.finger_maxTurn * 100.0 for x in finger_value]
+    #     self.currentFingerPercent = finger_percent
 
 class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):

@@ -1,3 +1,3 @@
-bool Finger1
-bool Finger2
-bool Finger3
+bool finger1
+bool finger2
+bool finger3
