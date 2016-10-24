@@ -11,14 +11,12 @@
 
   <!-- <node name="image_view" pkg="image_view" type="image_view" args="image:=/camera/rgb/image_raw" output="screen" /> -->
 
-  <!-- Start camera calibration for Jaco -->
-  <include file="$(find camera_calibration_tool)/launch/calibration.launch"/>
-
-
   <!-- Start perception -->
   <include file="$(find perception)/launch/interface.launch"/>
   <!-- </include> -->
 
+  <!-- Start camera calibration for Jaco -->
+  <include file="$(find camera_calibration_tool)/launch/calibration.launch"/> -->
 
 
 

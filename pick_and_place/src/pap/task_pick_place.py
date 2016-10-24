@@ -86,26 +86,19 @@ class pick_peas_class(object):
             print ("program interrupted before completion")
 
     def cmmnd_FingerPosition(self, finger_value):
-        commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
+        commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 mm -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
 
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def pick_Towel(self):
-        self.calibrate_obj_det_pub.publish(True)
+    def goto_syringe(self):
+        print ("we are in fuctn")
 
-        while self.calibrated == False:
-            pass
-
-        self.calibrate_obj_det_pub.publish(False)
-
-        print("Finger Sensors calibrated")
-
-        if self.listen.frameExists("/root") and self.listen.frameExists("/Towel_position"):
-            print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/Towel_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/Towel_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/Towel_position", t)
+        if self.listen.frameExists("/root") and self.listen.frameExists("/syringe_position"):
+            print ("we have the syringe_position frame")
+            self.listen.waitForTransform('/root','/syringe_position',rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/root", "/syringe_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/syringe_position", t)
 
             translation =  list(translation)
             quaternion = list(quaternion)
@@ -119,20 +112,20 @@ class pick_peas_class(object):
 
             # self.j.gripper.close()
 
-    def goto_hangTowel(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/hangTowel"):
-            self.listen.waitForTransform('/root','/hangTowel',rospy.Time(),rospy.Duration(100.0))
-            # print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/hangTowel", rospy.Time(0))
-
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-        else:
-            print ("we DONT have the bowl frame")
+    # def goto_hangTowel(self):
+    #     if self.listen.frameExists("/root") and self.listen.frameExists("/hangTowel"):
+    #         self.listen.waitForTransform('/root','/hangTowel',rospy.Time(),rospy.Duration(100.0))
+    #         # print ("we have the bowl frame")
+    #         # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
+    #         translation, quaternion = self.listen.lookupTransform("/root", "/hangTowel", rospy.Time(0))
+    #
+    #         translation =  list(translation)
+    #         quaternion = list(quaternion)
+    #         pose_value = translation + quaternion
+    #         #second arg=0 (absolute movement), arg = '-r' (relative movement)
+    #         self.cmmnd_CartesianPosition(pose_value, 0)
+    #     else:
+    #         print ("we DONT have the bowl frame")
 
     def cmmnd_JointAngles(self,joints_cmd, relative):
         joints_action_client.getcurrentJointCommand('j2n6a300_')
@@ -161,46 +154,21 @@ class pick_peas_class(object):
         self.velocity_pub.publish(msg)
             # rate.sleep()
 
-
-    def searchSpoon(self):
-        if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
-            # print ("we are in the search spoon fucntion")
-            self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/j2n6a300_end_effector","/root")
-            translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector","/root",t)
-            matrix1=self.listen.fromTranslationRotation(translation,quaternion)
-            counter=0
-            rate=rospy.Rate(100)
-            while not self.obj_det:
-                  counter = counter + 1
-                  if(counter < 200):
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
-                    cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
-                  else:
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,-0.05])[np.newaxis].T)
-                    cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
-                  rate.sleep()
-                  if(counter >400):
-                     counter=0
-
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    # p.cmmnd_FingerPosition([0, 0, 100])
+    p.cmmnd_FingerPosition([0, 0, 0])
+
     #
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/Towel_position")): # p.listen.frameExists("bowl_position"):
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("/syringe_position")): # p.listen.frameExists("bowl_position"):
         pass
     #
     print ("Starting task. . .\n")
-    p.pick_Towel()
-    p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1], '-r')
+    # print ("Going to hang the towel. . .\n")
+    # p.cmmnd_CartesianPosition([-0.15,-0.4,0,0,0,0,1],'-r')
+    # p.cmmnd_FingerPosition([0, 0, 0])
+    p.goto_syringe()
     p.cmmnd_FingerPosition([100, 100, 100])
-    p.cmmnd_CartesianPosition([0,0,0.4,0,0,0,1], '-r')
-
-    print ("Going to hang the towel. . .\n")
-    p.cmmnd_CartesianPosition([-0.15,-0.4,0,0,0,0,1],'-r')
-    p.cmmnd_FingerPosition([0, 0, 0])
+    # p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1],'-r')

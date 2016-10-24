@@ -40,14 +40,14 @@ class grasp_generator(object):
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
         # print ('we have the frame')
-        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_2"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_0"):
             # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/unknown_2")
-            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_2", rospy.Time(0))
+            t = self.listen.getLatestCommonTime("/root", "/unknown_0")
+            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_0", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (3.2,0,0) # in radians
-            requrd_trans = (0,0.0,0.1)
+            requrd_rot = (np.pi,0,0) # in radians
+            requrd_trans = (-0.1,-0.09,0.11)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -55,16 +55,17 @@ class grasp_generator(object):
 
             self.broadcast.sendTransform(trans_1, quat_1,
                                     rospy.Time.now(),
-                                    "light_position",
+                                    "syringe_position",
                                     "root")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_2"):
-            t = self.listen.getLatestCommonTime("/root", "/unknown_2")
-            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_2", rospy.Time(0))
+        if self.listen.frameExists("/root") and self.listen.frameExists("/world"):
+            # print ('we have the frame')
+            t = self.listen.getLatestCommonTime("/root", "/world")
+            translation, quaternion = self.listen.lookupTransform("/root", "/world", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.5708,0,0) # in radians
-            requrd_trans = (-0.01,-0.1,0.07)
+            requrd_rot = (np.pi/2,0,0) # in radians
+            requrd_trans = (0.2,-0.4,0.1)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -72,8 +73,25 @@ class grasp_generator(object):
 
             self.broadcast.sendTransform(trans_1, quat_1,
                                     rospy.Time.now(),
-                                    "USBlight_position",
-                                    "/root")
+                                    "chip_place_position",
+                                    "root")
+
+        # if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_2"):
+        #     t = self.listen.getLatestCommonTime("/root", "/unknown_2")
+        #     translation, quaternion = self.listen.lookupTransform("/root", "/unknown_2", rospy.Time(0))
+        #
+        #     # Identity matrix. Set the requ rot n trans wrt obj frame
+        #     requrd_rot = (1.57,0,1.4) # in radians
+        #     requrd_trans = (-0.02,-0.04,0.23)
+        #     # calculate and get an offset frame w/o ref to objct frame
+        #     pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
+        #     trans_1= tuple(pose[:3])
+        #     quat_1= tuple(pose[3:])
+        #
+        #     self.broadcast.sendTransform(trans_1, quat_1,
+        #                             rospy.Time.now(),
+        #                             "hangTowel_position",
+        #                             "/root")
 
 
 

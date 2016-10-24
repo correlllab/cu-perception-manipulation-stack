@@ -194,31 +194,31 @@ class pick_peas_class(object):
             while not self.obj_det:
                   counter = counter + 1
                   if(counter < 200):
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T) #change in y->x, z->y, x->z
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([00,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   else:
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0.0,0,-.05])[np.newaxis].T)
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   rate.sleep()
                   if(counter >400):
                      counter=0
 
-    def lift_USBlight(self):
+    def lift_straw(self):
         rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
         # self.move_fingercmmd([0, 0, 0])
-        while self.m_touch != True:
-            self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
-            rate.sleep()
+        # while self.m_touch != True:
+        #     self.cmmnd_CartesianVelocity([0,0.025,0,0,0,0,1])
+        #     rate.sleep()
         # self.r_touch = False
         # while not(self.m_touch and self.r_touch):
         #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
             # self.move_joints([0,0,0,0,0,-5])
             # rate.sleep()
-
+        self.cmmnd_CartesianPosition([0, 0.03, 0, 0, 0, 0, 1],'-r')
         self.cmmnd_FingerPosition([100, 00, 100])
-        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
+        self.cmmnd_CartesianPosition([0, 0, 0.20, 0, 0, 0, 1],'-r')
         self.cmmnd_FingerPosition([100, 100, 100])
 
 
@@ -227,7 +227,6 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
     p.cmmnd_FingerPosition([0, 0, 100])
 
     while not (p.listen.frameExists("/root") and p.listen.frameExists("/straw_position")) and p.listen.frameExists("cup_position"):
@@ -235,16 +234,22 @@ if __name__ == '__main__':
 
     print ("Starting task. . .\n")
     p.goto_straw()
+    p.cmmnd_JointAngles([0,0,0,0,0,-15],'-r')
 
     print ("Searching straw. . .\n")
     p.search_straw()
     print ("Grab the straw. . .\n")
+    p.lift_straw()
+    p.cmmnd_JointAngles([0,0,0,0,0,15],'-r')
 
-    p.cmmnd_CartesianPosition([0,0.03,0,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_CartesianPosition([0,0,0.25,0,0,0,1], '-r')
 
-    print ("Dump the straw into the cup..\n")
-    p.goto_cup()
-    p.cmmnd_CartesianPosition([0,0,-0.15,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([0,0,0])
+
+    p.cmmnd_CartesianPosition([-.055,.20,0,0,0,0,1], '-r')
+    # p.cmmnd_CartesianPosition([0,0,-.10,0,0,0,1], '-r')
+
+
+
+    # print ("Dump the straw into the cup..\n")
+    # p.goto_cup()
+    # p.cmmnd_CartesianPosition([0,0,-0.15,0,0,0,1], '-r')
+    # p.cmmnd_FingerPosition([0,0,0])

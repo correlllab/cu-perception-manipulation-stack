@@ -15,6 +15,7 @@ import fingers_action_client
 import joints_action_client
 
 import tf
+import commands
 
 class pick_peas_class(object):
     def __init__(self):
@@ -85,29 +86,30 @@ class pick_peas_class(object):
             print ("program interrupted before completion")
 
     def cmmnd_FingerPosition(self, finger_value):
-        fingers_action_client.getCurrentFingerPosition('j2n6a300_')
-
-        finger_turn, finger_meter, finger_percent = fingers_action_client.unitParser('percent', finger_value, '-r')
-        finger_number = 3
-        finger_maxDist = 18.9/2/1000  # max distance for one finger in meter
-        finger_maxTurn = 6800  # max thread turn for one finger
-
-        try:
-            if finger_number == 0:
-                print('Finger number is 0, check with "-h" to see how to use this node.')
-                positions = []  # Get rid of static analysis warning that doesn't see the exit()
-                exit()
-            else:
-                positions_temp1 = [max(0.0, n) for n in finger_turn]
-                positions_temp2 = [min(n, finger_maxTurn) for n in positions_temp1]
-                positions = [float(n) for n in positions_temp2]
-
-            print('Sending finger position ...')
-            result = fingers_action_client.gripper_client(positions)
-            print('Finger position sent!')
-
-        except rospy.ROSInterruptException:
-            print('program interrupted before completion')
+        commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
+        # fingers_action_client.getCurrentFingerPosition('j2n6a300_')
+        #
+        # finger_turn, finger_meter, finger_percent = fingers_action_client.unitParser('percent', finger_value, '-r')
+        # finger_number = 3
+        # finger_maxDist = 18.9/2/1000  # max distance for one finger in meter
+        # finger_maxTurn = 6800  # max thread turn for one finger
+        #
+        # try:
+        #     if finger_number == 0:
+        #         print('Finger number is 0, check with "-h" to see how to use this node.')
+        #         positions = []  # Get rid of static analysis warning that doesn't see the exit()
+        #         exit()
+        #     else:
+        #         positions_temp1 = [max(0.0, n) for n in finger_turn]
+        #         positions_temp2 = [min(n, finger_maxTurn) for n in positions_temp1]
+        #         positions = [float(n) for n in positions_temp2]
+        #
+        #     print('Sending finger position ...')
+        #     result = fingers_action_client.gripper_client(positions)
+        #     print('Finger position sent!')
+        #
+        # except rospy.ROSInterruptException:
+        #     print('program interrupted before completion')
 
     def cmmnd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
@@ -203,7 +205,7 @@ class pick_peas_class(object):
         rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
         # self.move_fingercmmd([0, 0, 0])
         while self.m_touch != True:
-            self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
+            self.cmmnd_CartesianVelocity([0,0.025,0,0,0,0,1])
             rate.sleep()
         self.r_touch = False
         # while not(self.m_touch and self.r_touch):
@@ -228,11 +230,11 @@ class pick_peas_class(object):
             while not self.obj_det:
                   counter = counter + 1
                   if(counter < 200):
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T) #change in y->x, z->y, x->z
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   else:
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
+                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,-0.05])[np.newaxis].T)
                     cart_velocities = cart_velocities.T[0].tolist()
                     self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
                   rate.sleep()
@@ -268,10 +270,9 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition((0, 0, 0))
     p.cmmnd_FingerPosition([0, 0, 100])
 
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")): # p.listen.frameExists("bowl_position"):
+    while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")) and p.listen.frameExists("bowl_position"):
         pass
 
     print ("Starting task. . .\n")
@@ -279,6 +280,7 @@ if __name__ == '__main__':
 
     print ("Searching spoon. . .\n")
     p.searchSpoon()
+    p.cmmnd_CartesianPosition([0.01,0,0,0,0,0,1], '-r')
 
     print ("trying to touch the spoon now. . .\n")
     p.lift_spoon()
@@ -286,17 +288,15 @@ if __name__ == '__main__':
     print ("Going to bowl. . .\n")
     p.goto_bowl()
     print ("Bowl reached. . .\n")
-    # #
+    #
     print ("Scooping the peas. . .")
-    p.cmmnd_JointAngles([0,0,0,0,0,-30], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0.05,0,0,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,-45], '-r')
-    p.cmmnd_CartesianPosition([0,0,0.13,0,0,0,1], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,-25], '-r')
+    p.cmmnd_CartesianPosition([0,0,-0.135,0,0,0,1], '-r')
+    # p.cmmnd_CartesianPosition([0,0.04,0,0,0,0,1], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,-40], '-r')
+    p.cmmnd_CartesianPosition([0,0,0.135,0,0,0,1], '-r')
     print ("scooping done. . .")
-
+    #
     print ("dumping in the plate. . .")
-    p.cmmnd_CartesianPosition([0,0.3,-0.12,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0.25,-0.12,0,0,0,1], '-r')
     p.cmmnd_JointAngles([0,0,0,0,0,40], '-r')
-    # p.goto_plate()
-    # rospy.spin()
