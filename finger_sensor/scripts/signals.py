@@ -10,6 +10,7 @@ from scipy import signal
 import rospy
 
 from std_msgs.msg import Int32MultiArray, Float64
+from finger_sensor_msgs.msg import FingerSAI, FingerFAI
 from keyboard.msg import Key
 from sensor_msgs.msg import Imu
 
@@ -35,31 +36,14 @@ class FilterSignal(object):
                                        self.keyboard_cb, queue_size=10)
 
         # Visualising the below pulished signals in rqt_plot is recommended
-        self.sair_pub = rospy.Publisher(
-            '/finger_sensor/sair',
-            Float64,
-            queue_size=5)
-        self.sail_pub = rospy.Publisher(
-            '/finger_sensor/sail',
-            Float64,
-            queue_size=5)
-        self.saim_pub = rospy.Publisher(
-            '/finger_sensor/saim',
-            Float64,
-            queue_size=5)
-        self.fair_pub = rospy.Publisher(
-            '/finger_sensor/fair',
-            Float64,
+        self.sai_pub = rospy.Publisher(
+            '/finger_sensor/sai',
+            FingerSAI,
             queue_size=5)
 
-        self.fail_pub = rospy.Publisher(
-            '/finger_sensor/fail',
-            Float64,
-            queue_size=5)
-
-        self.faim_pub = rospy.Publisher(
-            '/finger_sensor/faim',
-            Float64,
+        self.fai_pub = rospy.Publisher(
+            '/finger_sensor/fai',
+            FingerFAI,
             queue_size=5)
 
         self.faii_pub = rospy.Publisher(
@@ -67,10 +51,6 @@ class FilterSignal(object):
             Float64,
             queue_size=5)
 
-        # print ("does it SAVE??")
-        # Every queue should hold about 4 seconds of data
-        # self.sensor_t = []
-        # self.sensor_t = deque(maxlen=80)
         self.sensor_values = []
         self.sensor_values = deque(maxlen=80)
 
@@ -114,12 +94,14 @@ class FilterSignal(object):
 
     def compute_sai(self):
         # Skipping the front tip sensor (idx 7 and 15)
-        right = sum(self.sensor_values[-1][2:4])
-        left = sum(self.sensor_values[-1][0:2])
-        middle = sum(self.sensor_values[-1][4:6])
-        self.sair_pub.publish(Float64(right))
-        self.sail_pub.publish(Float64(left))
-        self.saim_pub.publish(Float64(middle))
+        finger2 = sum(self.sensor_values[-1][2:4])
+        finger1 = sum(self.sensor_values[-1][0:2])
+        finger3 = sum(self.sensor_values[-1][4:6])
+        msg = FingerSAI()
+        msg.finger1 = float(finger1)
+        msg.finger2 = float(finger2)
+        msg.finger3 = float(finger3)
+        self.sai_pub.publish(msg)
         if self.recording:
             t = time()
             self.data['sair'].append((t, right))
@@ -131,15 +113,14 @@ class FilterSignal(object):
         filtered_values = signal.lfilter(self.b, self.a,
                                          self.sensor_values, axis=0)
         # print shape()
-        self.fail = filtered_values[-1][:2].sum()
-        self.fair = filtered_values[-1][2:4].sum()
-        self.faim = filtered_values[-1][4:6].sum()
-        right = self.fair
-        left = self.fail
-        middle = self.faim
-        self.fair_pub.publish(Float64(right))
-        self.fail_pub.publish(Float64(left))
-        self.faim_pub.publish(Float64(middle))
+        finger1 = filtered_values[-1][:2].sum()
+        finger2 = filtered_values[-1][2:4].sum()
+        finger3 = filtered_values[-1][4:6].sum()
+        msg = FingerSAI()
+        msg.finger1 = float(finger1)
+        msg.finger2 = float(finger2)
+        msg.finger3 = float(finger3)
+        self.fai_pub.publish(msg)
         if self.recording:
             t = time()
             self.data['fair'].append((t, right))

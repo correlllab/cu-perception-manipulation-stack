@@ -73,9 +73,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   DEPENDENCIES
 #   std_msgs
 # )
-generate_dynamic_reconfigure_options(
-  cfg/trans_param.cfg
-)
+
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -151,7 +149,7 @@ add_executable(camera_alignment
 target_link_libraries(camera_alignment
   ${catkin_LIBRARIES}
 )
-add_dependencies(camera_alignment camera_calibration_tool_gencfg)
+
 
 #############
 ## Install ##

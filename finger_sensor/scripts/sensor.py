@@ -16,7 +16,7 @@ def collect_data(port='/dev/ttyACM0'):
             data.append(ser.read(ser.inWaiting()))
             rospy.loginfo("Waiting for {} s more".format(N-i))
             rospy.sleep(1)
-        print('\n'.join(filter(None, data)))
+        # print('\n'.join(filter(None, data)))
         buffer = []
         r = rospy.Rate(100)
         while not rospy.is_shutdown():

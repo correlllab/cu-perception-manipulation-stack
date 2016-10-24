@@ -9,34 +9,35 @@ import numpy as np
 
 class JacoGripper(object):
     def __init__(self, robot_type='j2n6a300'):
+        self.tol = 1.0
         self.robot_type = robot_type
-        action_address = ('/{}_driver/fingers_action/'
-                          'finger_positions'.format(robot_type))
-        self.client = actionlib.SimpleActionClient(
-            action_address,
-            kinova_msgs.msg.SetFingersPositionAction)
-        self.client.wait_for_server()
-
         self.finger_maxDist = 18.9/2/1000  # max distance for one finger
-        self.finger_maxTurn = 6800  # max thread rotation for one finger
-
+        self.finger_maxTurn = 7400  # max thread rotation for one finger
+        self.currentFingerPercent = [0.0, 0.0, 0.0]
+        self.finger_pos_sub = rospy.Subscriber('/{}_driver/out/finger_position'.format(robot_type),
+                                                kinova_msgs.msg.FingerPosition,
+                                                self.setCurrentFingerPercent)
     def set_position(self, position):
         """Accept position from 0 (open) to 100 (closed)."""
+        action_address = ('/{}_driver/fingers_action/'
+                          'finger_positions'.format(self.robot_type))
+        client = actionlib.SimpleActionClient(
+            action_address,
+            kinova_msgs.msg.SetFingersPositionAction)
+        client.wait_for_server()
         position_turns = np.clip(position, 0, 100) / 100 * self.finger_maxTurn
         goal = kinova_msgs.msg.SetFingersPositionGoal()
         goal.fingers.finger1 = float(position_turns[0])
         goal.fingers.finger2 = float(position_turns[1])
-        # The MICO arm has only two fingers, but the same action
-        # definition is used
         if len(position) < 3:
             goal.fingers.finger3 = 0.0
         else:
             goal.fingers.finger3 = float(position_turns[2])
-        self.client.send_goal(goal)
-        if self.client.wait_for_result(rospy.Duration(5.0)):
-            return self.client.get_result()
+        client.send_goal(goal)
+        if client.wait_for_result(rospy.Duration(5.0)):
+            return client.get_result()
         else:
-            self.client.cancel_all_goals()
+            client.cancel_all_goals()
             rospy.logwarn('        the gripper action timed-out')
 
     def open(self):
@@ -45,6 +46,17 @@ class JacoGripper(object):
     def close(self):
         self.set_position([100, 100, 100])
 
+    def close_with_feedback(self, fingers):
+        return 0
+
+    def setCurrentFingerPercent(self,msg):
+        finger_value = [0.0, 0.0, 0.0]
+        finger_value[0] = msg.finger1
+        finger_value[1] = msg.finger2
+        finger_value[2] = msg.finger3
+        #finger_turn = [x / 100.0 * self.finger_maxTurn for x in finger_value]
+        finger_percent = [x / self.finger_maxTurn * 100.0 for x in finger_value]
+        self.currentFingerPercent = finger_percent
 
 class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):

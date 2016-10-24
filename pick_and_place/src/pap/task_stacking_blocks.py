@@ -17,10 +17,10 @@ import joints_action_client
 import tf
 import commands
 
-class pick_peas_class(object):
+class PickPlaceClass(object):
     def __init__(self):
         self.j = Jaco()
-        self.listen = tf.TransformListener()
+        self.listener = tf.TransformListener()
         self.current_joint_angles = [0]*6
 
 
@@ -139,132 +139,10 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def goto_USBlight(self):
-
-        self.calibrate_obj_det_pub.publish(True)
-
-        while self.calibrated == False:
-            pass
-
-        self.calibrate_obj_det_pub.publish(False)
-
-        print("Finger Sensors calibrated")
-
-        if self.listen.frameExists("/root") and self.listen.frameExists("/USBlight_position"):
-            print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/USBlight_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/USBlight_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/USBlight_position", t)
-
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-
-            orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
-
-            self.cmmnd_CartesianPosition(pose_value, 0)
-
-        else:
-            print ("we DONT have the frame")
-
-    def goto_scissor(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/scissor_position"):
-            self.listen.waitForTransform('/root','/scissor_position',rospy.Time(),rospy.Duration(100.0))
-            # print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/scissor_position", rospy.Time(0))
-
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-        else:
-            print ("we DONT have the bowl frame")
-
-    def search_USBlight(self):
-        if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
-            # print ("we are in the search spoon fucntion")
-            self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/j2n6a300_end_effector","/root")
-            translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector","/root",t)
-            matrix1=self.listen.fromTranslationRotation(translation,quaternion)
-            counter=0
-            rate=rospy.Rate(100)
-            while not self.obj_det:
-                  counter = counter + 1
-                  if(counter < 200):
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0.05,0,0])[np.newaxis].T) #change in y->x, z->y, x->z
-                    cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
-                  else:
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([-0.05,0,0])[np.newaxis].T)
-                    cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
-                  rate.sleep()
-                  if(counter >400):
-                     counter=0
-
-    def lift_USBlight(self):
-        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
-        # self.move_fingercmmd([0, 0, 0])
-        while self.m_touch != True:
-            self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
-            rate.sleep()
-        # self.r_touch = False
-        # while not(self.m_touch and self.r_touch):
-        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
-            # self.move_joints([0,0,0,0,0,-5])
-            # rate.sleep()
-
-        self.cmmnd_FingerPosition([100, 00, 100])
-        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
-        self.cmmnd_FingerPosition([100, 100, 100])
-
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
-    p = pick_peas_class()
-    p.j.home()
-    p.cmmnd_FingerPosition([71, 71, 0])
-
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/scissor_position")):# and p.listen.frameExists("USBlight_position"):
-        pass
-
-    print ("Starting task. . .\n")
-    p.goto_scissor()
-    p.cmmnd_JointAngles([0,0,0,0,0,90], '-r')
-
-
-    p.cmmnd_CartesianPosition([0,0,-0.085,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100, 100, 0])
-    p.cmmnd_CartesianPosition([0,0,0.015,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100, 100, 100])
-    p.j.home()
-    p.cmmnd_JointAngles([0,0,0,0,0,90], '-r')
-    p.cmmnd_FingerPosition([100, 50, 100])
-    p.cmmnd_FingerPosition([45, 50, 100])
-    p.cmmnd_FingerPosition([100, 50, 100])
-    p.cmmnd_FingerPosition([45, 50, 100])
-
-    # print ("Searching spoon. . .\n")
-    # p.search_USBlight()
-    #
-    # print ("Grab the USB light. . .\n")
-    # p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
-    # p.cmmnd_FingerPosition([100,100,100])
-    # # p.cmmnd_FingerPosition([100 ,100, 100])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-    # # p.cmmnd_CartesianPosition([0,0,-0.22,0,0,0,1], '-r')
-    # # p.lift_USBlight()
-    #
-    # print ("Drop the USB light..\n")
-    # p.cmmnd_JointAngles([0,0,0,-20,0,0], '-r')
-    # commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- 00 00 00')
-    #
-    #
-    # print ("Going to pick up light. . .\n")
-    # p.goto_light()
-    # p.cmmnd_FingerPosition([100,100,00])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    p = PickPlaceClass()
+    print (p.listener.getFrameStrings())
+    rospy.spin()

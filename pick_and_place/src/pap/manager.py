@@ -60,7 +60,7 @@ class PickAndPlaceNode(Manager):
             'initial': {'c': self._calibrate, 'q': self._perceive,
                         's': self._preplace},
             'calibrate': {'q': self._perceive, 'c': self._calibrate},
-            'perceive': {'p': self._post_perceive, 'q': self._perceive, 's': self._stop_perceive},
+            'perceive': {'p': self._post_perceive, 'q': self._perceive, 's': self._stop_perceive, 'c': self._calibrate},
             'post_perceive': _post_perceive_trans,
             'postpick': {'1': self._level, '2': self._level, '9': self._level},
             'level': _preplace,

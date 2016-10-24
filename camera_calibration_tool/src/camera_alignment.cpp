@@ -17,17 +17,11 @@
 #include <Eigen/Core>
 //dynamic reconfiguration of variables during runtime
 #include <dynamic_reconfigure/server.h>
-#include <camera_calibration_tool/trans_paramConfig.h>
 
 namespace camera_alignment
 {
 
 double euler_offset;
-void callback(camera_calibration_tool::trans_paramConfig &config, uint32_t level)
-{
-  euler_offset = config.euler_offset;
-}
-
 class CameraAlignmentTester
 {
 private:
