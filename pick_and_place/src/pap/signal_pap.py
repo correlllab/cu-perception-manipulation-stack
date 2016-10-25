@@ -7,12 +7,11 @@ from finger_sensor_msgs.msg import FingerSAI, FingerFAI, FingerTouch, FingerDete
 
 class SignalDetector():
     def __init__(self):
-        self.objectDet = False
-        self.saim_calibration = None
+        self.objectDet = [False] * 3
+        self.sai_calibration = [None] * 3
         self.current_fingers_touch = [False]*3
-        self.current_saim_val = None
         self.calibrate = False
-        self.calibrate_vals = deque(maxlen=100)
+        self.calibrate_vals = [deque(maxlen=100),deque(maxlen=100),deque(maxlen=100)]
 
         self.object_det_calibrated_pub = rospy.Publisher("/finger_sensor/obj_det_calibrated",
                                             Bool,
@@ -26,10 +25,9 @@ class SignalDetector():
                                         FingerFAI,
                                         self.detect_touch)
 
-        #
-        # self.sai_sub = rospy.Subscriber("/finger_sensor/sai",
-        #                                 FingerSAI,
-        #                                 self.saim_detect_change)
+        self.sai_sub = rospy.Subscriber("/finger_sensor/sai",
+                                        FingerSAI,
+                                        self.detect_object)
 
         self.object_det_pub = rospy.Publisher("/finger_sensor/obj_detected",
                                         FingerDetect,
@@ -64,29 +62,36 @@ class SignalDetector():
             self.touch_pub.publish(touch_msg)
 
 
-    # def saim_detect_change(self,msg):
-    #     if self.calibrate == False:
-    #         if self.saim_calibration != None:
-    #             if msg.data > self.saim_calibration and self.objectDet == False:
-    #                 self.object_det_pub.publish(True)
-    #                 self.objectDet = True
-    #             elif msg.data < self.saim_calibration and self.objectDet == True:
-    #                 self.object_det_pub.publish(False)
-    #                 self.objectDet = False
-    #     else:
-    #         if self.calibrate_vals.maxlen == len(self.calibrate_vals):
-    #             self.object_det_calibrated_pub
-    #             self.saim_calibration = max(self.calibrate_vals) + 340 #340 for spoon
-    #             print (self.saim_calibration)
-    #             self.calibrate_vals.clear()
-    #             self.object_det_calibrated_pub
-    #             self.object_det_calibrated_pub.publish(True)
-    #         else:
-    #             self.calibrate_vals.append(msg.data)
-    #
-    #
+    def detect_object(self,msg):
+        detect_msg = FingerDetect()
+        detected = self.objectDet[:]
+        sai = [msg.finger1, msg.finger2, msg.finger3]
+        for finger in range(3):
+            if self.calibrate == False:
+                if self.sai_calibration[finger] != [None]*3:
+                    if sai[finger] > self.sai_calibration[finger] and self.objectDet[finger] == False:
+                        detected[finger] = True
+                        self.objectDet[finger] = True
+                    elif sai[finger] < self.sai_calibration[finger] and self.objectDet[finger] == True:
+                        detected[finger] = False
+                        self.objectDet[finger] = False
+            else:
+                if np.all(np.array(self.sai_calibration) != np.array([None]*3)):
+                    self.calibrate=False
+                elif self.calibrate_vals[finger].maxlen == len(self.calibrate_vals[finger]):
+                    self.sai_calibration[finger] = max(self.calibrate_vals[finger]) + 300 #340 for spoon
+                    self.calibrate_vals[finger].clear()
+                    self.object_det_calibrated_pub.publish(True)
+                else:
+                    self.object_det_calibrated_pub.publish(False)
+                    self.calibrate_vals[finger].append(sai[finger])
 
-
+        # if np.any(np.array(self.objectDet) != np.array(detected)):
+        self.objectDet = detected
+        detect_msg.finger1 = detected[0]
+        detect_msg.finger2 = detected[1]
+        detect_msg.finger3 = detected[2]
+        self.object_det_pub.publish(detect_msg)
 
 if __name__=='__main__':
     rospy.init_node('signal_detector')
