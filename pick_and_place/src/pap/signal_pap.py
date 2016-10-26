@@ -92,7 +92,8 @@ class SignalDetector():
         detect_msg.finger2 = detected[1]
         detect_msg.finger3 = detected[2]
         self.object_det_pub.publish(detect_msg)
-
+        #wut  up
+        
 if __name__=='__main__':
     rospy.init_node('signal_detector')
     sd = SignalDetector()
