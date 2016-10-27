@@ -121,6 +121,7 @@ class pick_peas_class(object):
             twist_angular_z=cart_velo[5])
         # rate = rospy.Rate(100)
         # while not rospy.is_shutdown():
+        # sup
         self.velocity_pub.publish(msg)
             # rate.sleep()
 
