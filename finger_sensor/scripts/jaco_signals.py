@@ -22,8 +22,6 @@ class SignalDetector():
 
     def set_calibrate(self,msg):
         self.calibrate = msg.data
-        if msg.data == True:
-            print('Calibrating Fingers...')
 
     def detect_touch(self,msg):
         touch = self.current_fingers_touch[:]
@@ -48,15 +46,15 @@ class SignalDetector():
                     elif sai[finger] < self.sai_calibration[finger] and self.objectDet[finger] == True:
                         detected[finger] = False
             else:
-                self.calibrate_fingers(sai,finger)
+                self.calibrate_fingers(sai,finger,400)
 
         self.objectDet = self.send_finger_msg(self.object_det_pub,FingerDetect,detected,self.objectDet)
 
-    def calibrate_fingers(self,data,finger):
+    def calibrate_fingers(self,data,finger,tolerance):
         if np.all(np.array(self.sai_calibration) != np.array([None]*3)):
             self.calibrate=False
         elif self.calibrate_vals[finger].maxlen == len(self.calibrate_vals[finger]):
-            self.sai_calibration[finger] = max(self.calibrate_vals[finger]) + 100 #340 for spoon
+            self.sai_calibration[finger] = max(self.calibrate_vals[finger]) + tolerance #340 for spoon
             self.calibrate_vals[finger].clear()
             self.object_det_calibrated_pub.publish(True)
         else:

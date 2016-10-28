@@ -31,9 +31,9 @@ class FilterSignal(object):
             Int32MultiArray,
             self.handle_sensor)
 
-        self.kb_sub = rospy.Subscriber('/keyboard/keyup',
-                                       Key,
-                                       self.keyboard_cb, queue_size=10)
+        # self.kb_sub = rospy.Subscriber('/keyboard/keyup',
+        #                                Key,
+        #                                self.keyboard_cb, queue_size=10)
 
         # Visualising the below pulished signals in rqt_plot is recommended
         self.sai_pub = rospy.Publisher(

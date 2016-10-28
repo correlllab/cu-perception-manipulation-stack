@@ -1,0 +1,10 @@
+<launch>
+
+  <!-- kinova_robot.launch -->
+  <include file="$(find kinova_bringup)/launch/kinova_robot.launch" />
+
+  <include file="$(find openni2_launch)/launch/openni2.launch" />
+
+  <include file="$(find finger_sensor)/launch/jaco_fingers.launch"/> -->
+
+</launch>

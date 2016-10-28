@@ -44,15 +44,8 @@ def cfp(finger_value):
 if __name__ == '__main__':
     rospy.init_node("test")
     jg = JacoGripper()
-    jg.set_position([50,50,50])
-    #jg.close_with_feedback([0,0,0],three_fingers=False)
-    calibrate_obj_det_pub = rospy.Publisher("/finger_sensor/calibrate_obj_det",
-                                        Bool,
-                                        queue_size=1)
-
-    calibrate_obj_det_pub.publish(True)
-
-
+    jg.set_position([50,50,0])
+    jg.close_with_feedback([50,50,0],three_fingers=False)
     # jg.open()
     # cfp([0,0,0])
     # cfp([50,50,50])

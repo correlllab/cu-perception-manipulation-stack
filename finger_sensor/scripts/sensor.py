@@ -14,7 +14,6 @@ def collect_data(port='/dev/ttyACM0'):
         N = 1
         for i in range(N):
             data.append(ser.read(ser.inWaiting()))
-            rospy.loginfo("Waiting for {} s more".format(N-i))
             rospy.sleep(1)
         # print('\n'.join(filter(None, data)))
         buffer = []
@@ -30,7 +29,6 @@ def collect_data(port='/dev/ttyACM0'):
             try:
                 values = [int(i) for i in last_full_line.split()]
                 if len(values) == 6:        # CHANGE this to no. of sensor values read
-                    rospy.loginfo(values)   # from serialport(just the values)
                     yield values
             except ValueError:
                 rospy.loginfo(last_full_line)
