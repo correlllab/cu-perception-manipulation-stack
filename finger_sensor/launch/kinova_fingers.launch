@@ -1,0 +1,11 @@
+<launch>
+  <!-- Sensor Server -->
+  <node name="sensor" type="sensor.py" pkg="finger_sensor" output="screen"/>
+
+  <!-- Signal Server -->
+  <node name="signals" type="signals.py" pkg="finger_sensor" output="screen"/>
+
+  <!-- Sensor Server -->
+  <node name="jaco_signals" type="jaco_signals.py" pkg="finger_sensor" output="screen"/>
+
+</launch>
