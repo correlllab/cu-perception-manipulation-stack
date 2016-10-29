@@ -98,21 +98,6 @@ class JacoGripper(object):
         print('Gripped')
         self.set_position(percent[:f]+[5])
 
-
-
-
-
-
-
-
-    # def setCurrentFingerPercent(self,msg):
-    #     finger_value = [0.0, 0.0, 0.0]
-    #     finger_value[0] = msg.finger1
-    #     finger_value[1] = msg.finger2
-    #     finger_value[2] = msg.finger3
-    #     finger_percent = [x / self.finger_maxTurn * 100.0 for x in finger_value]
-    #     self.currentFingerPercent = finger_percent
-
 class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):
         super(Jaco, self).__init__(base='root')

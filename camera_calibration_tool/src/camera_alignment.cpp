@@ -21,7 +21,6 @@
 namespace camera_alignment
 {
 
-double euler_offset;
 class CameraAlignmentTester
 {
 private:
@@ -50,7 +49,7 @@ public:
   {
     ROS_INFO_STREAM_NAMED("constructor","starting CameraAlignmentTester...");
 
-    qr_marker_ = "ar_marker_4";
+    qr_marker_ = "ar_marker_67";
     camera_cf_ = "camera_link";
     base_cf_ = "root";
 
@@ -154,7 +153,7 @@ public:
     tf::transformTFToEigen(rh_transform, rh_pose);
 
     // location of qr tag on laser cut plate
-    rh_to_qr.translation()[0] += 0.09625;//0.081559;
+    rh_to_qr.translation()[0] += 0.081559; //0.09625;
     rh_to_qr.translation()[2] -= 0.00966;
     Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
     //Eigen::Affine3d qr_rotation = Eigen::Affine3d(Eigen::AngleAxisd(-0.115192, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((-M_PI / 2.0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd((M_PI / 2.0), Eigen::Vector3d::UnitZ()));
