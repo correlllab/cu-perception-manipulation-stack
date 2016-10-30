@@ -1,8 +1,8 @@
 <launch>
 
   <!-- launch qr tracking for camera pose estimation -->
-  <arg name="marker_size" default="4.5" />
-  <arg name="max_new_marker_error" default="0.08" />
+  <arg name="marker_size" default="5.3" />
+  <arg name="max_new_marker_error" default="0.05" />
   <arg name="max_track_error" default="0.2" />
 
   <arg name="cam_image_topic" default="/camera/depth_registered/points" />
