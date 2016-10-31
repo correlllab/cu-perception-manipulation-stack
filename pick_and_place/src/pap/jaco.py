@@ -189,4 +189,3 @@ class Jaco(Robot):
 
     def kinematic_control(self,msg):
         self.velocity_pub.publish(msg)
-            # r.sleep()

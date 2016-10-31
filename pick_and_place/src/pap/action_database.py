@@ -2,17 +2,14 @@
 from __future__ import division, print_function, absolute_import
 import sys
 import rospy
-from pap.jaco import Jaco
+from pap.jaco import Jaco, JacoGripper
 from pap.manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
+from finger_sensor_msgs.msg import FingerDetect, FingerTouch
 
 from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import numpy as np
-
-import pose_action_client
-import fingers_action_client
-import joints_action_client
 
 import commands
 import tf
@@ -51,3 +48,51 @@ class GotoObject(smach.State):
         msg.pose.orientation.y = orientation[1]
         msg.pose.orientation.z = orientation[2]
         return msg
+
+class SearchObject(smach.State):
+    def __init__(self,detect_goal):
+        smach.State.__init__(self, outcomes=['found', 'not_found'])
+        self.finger_detect_sub = rospy.Subscriber('/finger_sensor/obj_detected',
+                                                FingerDetect,
+                                                self.set_finger_detect)
+        self.finger_detect = [None, None, None]
+        self.jn = Jaco()
+        self.detect_goal = detect_goal
+
+    def set_finger_detect(self,msg):
+        self.finger_detect[0] = msg.finger1
+        self.finger_detect[1] = msg.finger2
+        self.finger_detect[2] = msg.finger3
+
+    def create_pose_velocity_msg(self,cart_velo):
+        msg = PoseVelocity(
+            twist_linear_x=cart_velo[0],
+            twist_linear_y=cart_velo[1],
+            twist_linear_z=cart_velo[2],
+            twist_angular_x=cart_velo[3],
+            twist_angular_y=cart_velo[4],
+            twist_angular_z=cart_velo[5])
+        return msg
+
+    def execute(self,userdata):
+        if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+            return 'found'
+        else:
+            found = self.back_forth_search_xy()
+            return found
+
+    def back_forth_search_xy(self):
+        rate = rospy.Rate(100)
+        msg = self.create_pose_velocity_msg([.05,0.0,0.0,0.0,0.0,0.0])
+        for i in range(100):
+            self.jn.kinematic_control(msg)
+            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+                return 'found'
+            rate.sleep()
+        msg = self.create_pose_velocity_msg([-.05,0.0,0.0,0.0,0.0,0.0])
+        for i in range(100):
+            self.jn.kinematic_control(msg)
+            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+                return 'found'
+            rate.sleep()
+        return 'not_found'
