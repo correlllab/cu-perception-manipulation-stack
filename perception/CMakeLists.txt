@@ -8,11 +8,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   eigen_conversions
   pcl_ros
+  pcl_conversions
   rviz_visual_tools
   std_msgs
   tf
   dynamic_reconfigure
 )
+
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -51,13 +54,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  identified_object.msg #rebecca's addin
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
-  geometry_msgs
 )
 
 generate_dynamic_reconfigure_options(
@@ -163,11 +164,23 @@ include_directories(
 add_executable(perception
   src/perception.cpp
 )
+add_executable(object_recognition
+  src/correspondence_grouping.cpp
+)
+
 target_link_libraries(perception
   ${catkin_LIBRARIES}
 )
-add_dependencies(perception perception_generate_messages_cpp)
+
+target_link_libraries(object_recognition
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES} libvtkCommon.so libvtkFiltering.so
+)
+
 add_dependencies(perception perception_gencfg)
+
+
+
 
 #############
 ## Install ##

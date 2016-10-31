@@ -46,6 +46,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <perception/perception_paramConfig.h>
 #include <perception/perception_param.h>
+#include <perception/correspondence_grouping.h>
 
 namespace perception
 {
@@ -54,36 +55,6 @@ void callback(perception::perception_paramConfig &config, uint32_t level)
   std::ostringstream ss;
   ss << "Reconfigure request, min_cup_height: " << config.min_cws_height << ", max_cup_height: " << config.max_cws_height;
   ROS_INFO_STREAM_NAMED("ppc",ss.str());
-  //cup with spoon
-  cws_height_min = config.min_cws_height;
-  cws_height_max = config.max_cws_height;
-  cws_xy_min = config.min_cws_xy;
-  cws_xy_max = config.max_cws_xy;
-  cup_height = config.cup_height;
-
-  //plate
-  plate_height_min = config.min_plate_height;
-  plate_height_max = config.max_plate_height;
-  plate_xy_min = config.min_plate_xy;
-  plate_xy_max = config.max_plate_xy;
-
-  //bowl
-  bowl_height_min = config.min_bowl_height;
-  bowl_height_max = config.max_bowl_height;
-  bowl_xy_min = config.min_bowl_xy;
-  bowl_xy_max = config.max_bowl_xy;
-
-  //cup
-  cup_height_min = config.min_cup_height;
-  cup_height_max = config.max_cup_height;
-  cup_xy_min = config.min_cup_xy;
-  cup_xy_max = config.max_cup_xy;
-
-  //shaker
-  shaker_height_min = config.min_shaker_height;
-  shaker_height_max = config.max_shaker_height;
-  shaker_xy_min = config.min_shaker_xy;
-  shaker_xy_max = config.max_shaker_xy;
 
   task = static_cast<task_running>(config.task);
 }
@@ -91,6 +62,7 @@ void callback(perception::perception_paramConfig &config, uint32_t level)
 class PerceptionTester
 {
 private:
+  ObjectDetection recognizer;
   ros::NodeHandle nh_;
 
   ros::Subscriber raw_cloud_sub_;
@@ -100,7 +72,6 @@ private:
   ros::Publisher roi_cloud_pub_;
   ros::Publisher objects_cloud_pub_;
   ros::Publisher number_of_objects_pub_;
-  ros::Publisher identified_objects_; //rebecca
 
   bool objects_detected_;
   std::vector<Eigen::Affine3d> object_poses_;
@@ -116,7 +87,7 @@ public:
     : nh_("~")
   {
     ROS_INFO_STREAM_NAMED("constructor","starting PerceptionTester...");
-
+    //recognizer = new ObjectDetection();
     image_processing_enabled_ = false;
 
     // point clouds
@@ -416,37 +387,15 @@ public:
       ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
+      bool is_cup = recognizer.is_cup(single_object);
+      //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
+      std::ostringstream ss;
+      if(is_cup)
+        ss << "cup";
+      else
+        ss << "unknown_" << idx;
+      object_labels.push_back(ss.str());
 
-      std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
-      object_labels.push_back(object_identity);
-      if(object_identity == "cup_with_spoon_0")
-      {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr spoon_object (new pcl::PointCloud<pcl::PointXYZRGB>);
-        ROS_INFO_STREAM_NAMED("ppc", "object point cloud size: " << single_object_transformed->points.size());
-
-        for (int pit = 0;
-             pit < single_object_transformed->points.size();
-             ++pit)
-        {
-          if(single_object_transformed->points[pit].z > cup_min_z+cup_height)
-            spoon_object->points.push_back(single_object_transformed->points[pit]);
-        }
-        ROS_INFO_STREAM_NAMED("ppc", "object point cloud size: " << spoon_object->points.size());
-        object_labels.push_back(spoon_label);
-
-        object_pose = Eigen::Affine3d::Identity();
-        pcl::compute3DCentroid(*spoon_object, useless_centroid);
-        object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
-        object_pose.translation() = object_centroid;
-
-        local_poses.push_back(object_pose);
-
-        ROS_INFO_STREAM_NAMED("ppc", "Spoon " << idx << " has " << spoon_object->width * spoon_object->height << " points");
-        ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
-        visual_tools_->publishWireframeCuboid(object_pose, .1, .1, .1, rviz_visual_tools::RAND);
-      }
-
-      /*******************************END REBECCA'S PERCEPTION ADDITIONS*******************************************************************/
 
       objects_cloud_pub_.publish(single_object);
 
