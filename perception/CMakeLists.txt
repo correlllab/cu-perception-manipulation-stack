@@ -56,10 +56,10 @@ add_message_files(
   FILES
 )
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
+#generate_messages(
+#  DEPENDENCIES
+#  std_msgs
+#)
 
 generate_dynamic_reconfigure_options(
   cfg/perception_param.cfg
@@ -163,19 +163,14 @@ include_directories(
 
 add_executable(perception
   src/perception.cpp
-)
-add_executable(object_recognition
   src/correspondence_grouping.cpp
 )
 
 target_link_libraries(perception
   ${catkin_LIBRARIES}
-)
-
-target_link_libraries(object_recognition
-  ${catkin_LIBRARIES}
   ${PCL_LIBRARIES} libvtkCommon.so libvtkFiltering.so
 )
+
 
 add_dependencies(perception perception_gencfg)
 

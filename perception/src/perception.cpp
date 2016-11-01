@@ -62,7 +62,7 @@ void callback(perception::perception_paramConfig &config, uint32_t level)
 class PerceptionTester
 {
 private:
-  ObjectDetection recognizer;
+  boost::shared_ptr<object_detection::ObjectDetection> ObjectDetectionPtr;
   ros::NodeHandle nh_;
 
   ros::Subscriber raw_cloud_sub_;
@@ -87,7 +87,7 @@ public:
     : nh_("~")
   {
     ROS_INFO_STREAM_NAMED("constructor","starting PerceptionTester...");
-    //recognizer = new ObjectDetection();
+    ObjectDetectionPtr.reset(new object_detection::ObjectDetection());
     image_processing_enabled_ = false;
 
     // point clouds
@@ -387,7 +387,7 @@ public:
       ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
-      bool is_cup = recognizer.is_cup(single_object);
+      bool is_cup = ObjectDetectionPtr->is_cup(single_object);
       //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
       std::ostringstream ss;
       if(is_cup)

@@ -1,16 +1,33 @@
 
 #include <perception/correspondence_grouping.h>
 
-namespace perception
+namespace object_detection
 {
+bool show_keypoints_ (false);
+bool use_hough_ (true);
+float model_ss_ (0.02f);
+float scene_ss_ (0.02f);
+float rf_rad_ (0.015f);
+float descr_rad_ (0.02f);
+float cg_size_ (0.01f);
+float cg_thresh_ (5.0f);
+int icp_max_iter_ (5);
+float icp_corr_distance_ (0.005f);
+float hv_clutter_reg_ (5.0f);
+float hv_inlier_th_ (0.005f);
+float hv_occlusion_th_ (0.01f);
+float hv_rad_clutter_ (0.03f);
+float hv_regularizer_ (3.0f);
+float hv_rad_normals_ (0.05);
+bool hv_detect_clutter_ (true);
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
   {
-    ROS_INFO_STREAM_NAMED("constructor","starting ObjectDetection...");
+    /*ROS_INFO_STREAM_NAMED("constructor","starting ObjectDetection...");
     show_keypoints_ = true;
     use_hough_ = true;
-    found_match_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/correspondence_keypoints", 10);
+    //found_match_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/correspondence_keypoints", 10);
     if(true) //tabletop detection
     {
       pcl::PointCloud<PointType>::Ptr temp ( new pcl::PointCloud<PointType> ());
@@ -26,7 +43,7 @@ ObjectDetection::ObjectDetection()
       cup_loaded = true;
       /**
        * Compute Normals
-       */
+       *
       pcl::NormalEstimationOMP<PointType, NormalType> norm_est;
       norm_est.setKSearch (10);
       norm_est.setInputCloud (temp);
@@ -34,7 +51,7 @@ ObjectDetection::ObjectDetection()
 
       /**
        *  Downsample Clouds to Extract keypoints
-       */
+       *
       pcl::UniformSampling<PointType> uniform_sampling;
       uniform_sampling.setInputCloud (temp);
       uniform_sampling.setRadiusSearch (model_ss_);
@@ -46,7 +63,7 @@ ObjectDetection::ObjectDetection()
 
       /**
        *  Compute Descriptor for keypoints
-       */
+       *
       pcl::SHOTEstimationOMP<PointType, NormalType, DescriptorType> descr_est;
       descr_est.setRadiusSearch (descr_rad_);
 
@@ -58,11 +75,11 @@ ObjectDetection::ObjectDetection()
       cup = temp;
       cup_keypoints = temp_keypoints;
       cup_normals = temp_normals;
-      cup_descriptors = temp_descriptors;
+      cup_descriptors = temp_descriptors;*/
     }
 
-  }
-bool ObjectDetection::is_cup(pcl::PointCloud<pcl::PointXYZRGB>::Ptr unknown)
+
+bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > unknown)
   {
     pcl::PointCloud<PointType>::Ptr unknown_keypoints (new pcl::PointCloud<PointType> ());
     pcl::PointCloud<NormalType>::Ptr unknown_normals (new pcl::PointCloud<NormalType> ());
@@ -201,7 +218,7 @@ bool ObjectDetection::is_cup(pcl::PointCloud<pcl::PointXYZRGB>::Ptr unknown)
         pcl::PointCloud<PointType>::Ptr rotated_model (new pcl::PointCloud<PointType> ());
         pcl::transformPointCloud (*cup, *rotated_model, rototranslations[i]);
         //instances.push_back (rotated_model);
-        found_match_cloud_pub_.publish(rotated_model);
+        //found_match_cloud_pub_.publish(rotated_model);
       }
 
       return true;
@@ -354,17 +371,6 @@ bool identify_objects(pcl::PointCloud<PointType>::Ptr unknown)
   }
 }*/
 
-} // end namespace perception
+} // end namespace object_detection
 
-int main(int argc, char *argv[])
-{
-  ros::init(argc, argv, "object_detection");
-  ros::AsyncSpinner spinner(1);
-  spinner.start();
-
-  int test = 1;
-  perception::ObjectDetection tester;
-
-  return 0;
-}
 

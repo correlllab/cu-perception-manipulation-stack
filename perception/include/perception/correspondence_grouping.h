@@ -1,4 +1,7 @@
 
+#ifndef CORRESPONDENCE_GROUPING_H
+#define CORRESPONDENCE_GROUPING_H
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/correspondence.h>
@@ -18,13 +21,13 @@
 //#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl_ros/point_cloud.h>
 
-namespace perception
+namespace object_detection
 {
 typedef pcl::PointXYZRGB PointType;
 typedef pcl::Normal NormalType;
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::SHOT352 DescriptorType;
-
+/*
 struct CloudStyle
 {
     double r;
@@ -49,25 +52,9 @@ CloudStyle style_red (255.0, 0.0, 0.0, 3.0);
 CloudStyle style_green (0.0, 255.0, 0.0, 5.0);
 CloudStyle style_cyan (93.0, 200.0, 217.0, 4.0);
 CloudStyle style_violet (255.0, 0.0, 255.0, 8.0);
-
+*/
 //Algorithm params
-bool show_keypoints_ (false);
-bool use_hough_ (true);
-float model_ss_ (0.02f);
-float scene_ss_ (0.02f);
-float rf_rad_ (0.015f);
-float descr_rad_ (0.02f);
-float cg_size_ (0.01f);
-float cg_thresh_ (5.0f);
-int icp_max_iter_ (5);
-float icp_corr_distance_ (0.005f);
-float hv_clutter_reg_ (5.0f);
-float hv_inlier_th_ (0.005f);
-float hv_occlusion_th_ (0.01f);
-float hv_rad_clutter_ (0.03f);
-float hv_regularizer_ (3.0f);
-float hv_rad_normals_ (0.05);
-bool hv_detect_clutter_ (true);
+
 
 class ObjectDetection
 {
@@ -77,17 +64,22 @@ private:
   pcl::PointCloud<PointType>::Ptr cup_keypoints;
   pcl::PointCloud<NormalType>::Ptr cup_normals;
   pcl::PointCloud<DescriptorType>::Ptr cup_descriptors;
-  ros::NodeHandle nh_;
-  ros::Publisher found_match_cloud_pub_;
+
 
 public:
-  ObjectDetection();
+  explicit ObjectDetection();
 
-  bool is_cup(pcl::PointCloud<pcl::PointXYZRGB>::Ptr unknown);
+  bool is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > unknown);
 
+protected:
+  ros::NodeHandle nh_;
+  ros::Publisher found_match_cloud_pub_;
 
 };
 
 
 
 }
+
+
+#endif //CORRESPONDENCE_GROUPING_H
