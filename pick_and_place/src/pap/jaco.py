@@ -95,8 +95,8 @@ class JacoGripper(object):
                 self.client.cancel_all_goals()
                 rospy.logwarn('        the gripper action timed-out')
 
-        print('Gripped')
         self.set_position(percent[:f]+[5])
+        return 'done'
 
 class Jaco(Robot):
     def __init__(self, robot_type='j2n6a300', *args, **kwargs):

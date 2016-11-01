@@ -20,8 +20,14 @@ def main():
 
         smach.StateMachine.add('SearchObject1',
                                 action_database.SearchObject([True,True,False]),
-                                transitions={'found':'Done',
+                                transitions={'found':'GraspObject1',
                                             'not_found': 'GotoObject1'})
+
+        smach.StateMachine.add('GraspObject1',
+                        action_database.GraspObject([50.0,50.0,0.0],third_finger=False),
+                        transitions={'grasped':'Done',
+                                    'not_grasped': 'GotoObject1'})
+
 
     outcome = sm.execute()
 

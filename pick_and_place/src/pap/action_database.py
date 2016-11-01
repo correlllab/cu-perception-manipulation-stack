@@ -49,6 +49,29 @@ class GotoObject(smach.State):
         msg.pose.orientation.z = orientation[2]
         return msg
 
+class GraspObject(smach.State):
+    def __init__(self,start,third_finger=True):
+        smach.State.__init__(self, outcomes=['grasped', 'not_grasped'])
+        self.finger_touch_sub = rospy.Subscriber('/finger_sensor/touch',
+                                                FingerTouch,
+                                                self.set_finger_touch)
+        self.finger_touch = [None, None, None]
+        self.jgn = JacoGripper()
+        self.start = start
+        self.third_finger = third_finger
+
+    def set_finger_touch(self,msg):
+        self.finger_touch[0] = msg.finger1
+        self.finger_touch[1] = msg.finger2
+        self.finger_touch[2] = msg.finger3
+
+    def execute(self,userdata):
+        status = self.jgn.close_with_feedback(self.start,self.third_finger)
+        if np.any(np.array(self.finger_touch) == True) and status == 'done':
+            return 'grasped'
+        else:
+            return 'not_grasped'
+
 class SearchObject(smach.State):
     def __init__(self,detect_goal):
         smach.State.__init__(self, outcomes=['found', 'not_found'])
@@ -58,6 +81,8 @@ class SearchObject(smach.State):
         self.finger_detect = [None, None, None]
         self.jn = Jaco()
         self.detect_goal = detect_goal
+        self.listen = tf.TransformListener()
+        self.transformer = tf.TransformerROS()
 
     def set_finger_detect(self,msg):
         self.finger_detect[0] = msg.finger1
@@ -65,9 +90,15 @@ class SearchObject(smach.State):
         self.finger_detect[2] = msg.finger3
 
     def create_pose_velocity_msg(self,cart_velo):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/j2n6a300_end_effector"):
+            self.listen.waitForTransform('/root',"/j2n6a300_end_effector",rospy.Time(),rospy.Duration(100.0))
+            t = self.listen.getLatestCommonTime("/root", "/j2n6a300_end_effector")
+            translation, quaternion = self.listen.lookupTransform("/root", "/j2n6a300_end_effector", t)
+        transform = self.transformer.fromTranslationRotation(translation, quaternion)
+        cart_velo[0:3] = np.dot(transform,(cart_velo[0:3]+[1.0]))[0:3]
         msg = PoseVelocity(
-            twist_linear_x=cart_velo[0],
-            twist_linear_y=cart_velo[1],
+            twist_linear_x=-cart_velo[0],
+            twist_linear_y=-cart_velo[1],
             twist_linear_z=cart_velo[2],
             twist_angular_x=cart_velo[3],
             twist_angular_y=cart_velo[4],
@@ -82,17 +113,12 @@ class SearchObject(smach.State):
             return found
 
     def back_forth_search_xy(self):
-        rate = rospy.Rate(100)
-        msg = self.create_pose_velocity_msg([.05,0.0,0.0,0.0,0.0,0.0])
-        for i in range(100):
-            self.jn.kinematic_control(msg)
-            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
-                return 'found'
-            rate.sleep()
+        rate = rospy.Rate(10)
         msg = self.create_pose_velocity_msg([-.05,0.0,0.0,0.0,0.0,0.0])
-        for i in range(100):
-            self.jn.kinematic_control(msg)
+        for i in range(25):
             if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
                 return 'found'
+            self.jn.kinematic_control(msg)
             rate.sleep()
+
         return 'not_found'
