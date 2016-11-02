@@ -8,14 +8,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   eigen_conversions
   pcl_ros
-  pcl_conversions
   rviz_visual_tools
   std_msgs
   tf
   dynamic_reconfigure
 )
 
-
+find_package(PCL 1.7 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

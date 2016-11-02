@@ -5,12 +5,14 @@ namespace object_detection
 {
 bool show_keypoints_ (false);
 bool use_hough_ (true);
-float model_ss_ (0.02f);
-float scene_ss_ (0.02f);
-float rf_rad_ (0.015f);
-float descr_rad_ (0.02f);
-float cg_size_ (0.01f);
-float cg_thresh_ (5.0f);
+float model_ss_ (0.01f);
+float scene_ss_ (0.0125f);
+//float model_ss_ (0.01f);
+//float scene_ss_ (0.03f);
+float rf_rad_ (0.08f);
+float descr_rad_ (0.08f);
+float cg_size_ (0.05f);
+float cg_thresh_ (10.0f);
 int icp_max_iter_ (5);
 float icp_corr_distance_ (0.005f);
 float hv_clutter_reg_ (5.0f);
@@ -24,63 +26,72 @@ bool hv_detect_clutter_ (true);
 ObjectDetection::ObjectDetection()
     : nh_("~")
   {
-    /*ROS_INFO_STREAM_NAMED("constructor","starting ObjectDetection...");
+    ROS_INFO_STREAM_NAMED("constructor","starting ObjectDetection...");
     show_keypoints_ = true;
     use_hough_ = true;
-    //found_match_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/correspondence_keypoints", 10);
+    found_match_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/correspondence_keypoints", 10);
     if(true) //tabletop detection
     {
-      pcl::PointCloud<PointType>::Ptr temp ( new pcl::PointCloud<PointType> ());
-      pcl::PointCloud<PointType>::Ptr temp_keypoints (new pcl::PointCloud<PointType> ());
-      pcl::PointCloud<NormalType>::Ptr temp_normals (new pcl::PointCloud<NormalType> ());
-      pcl::PointCloud<DescriptorType>::Ptr temp_descriptors (new pcl::PointCloud<DescriptorType> ());
-
-      if( pcl::io::loadPCDFile ("cup.pcd", *temp) < 0)
-      {
-        std::cout << "Error loading model cloud." << std::endl;
-        return;
-      }
-      cup_loaded = true;
-      /**
-       * Compute Normals
-       *
-      pcl::NormalEstimationOMP<PointType, NormalType> norm_est;
-      norm_est.setKSearch (10);
-      norm_est.setInputCloud (temp);
-      norm_est.compute (*temp_normals);
-
-      /**
-       *  Downsample Clouds to Extract keypoints
-       *
-      pcl::UniformSampling<PointType> uniform_sampling;
-      uniform_sampling.setInputCloud (temp);
-      uniform_sampling.setRadiusSearch (model_ss_);
-      //uniform_sampling.filter (*model_keypoints);
-      pcl::PointCloud<int> keypointIndices1;
-      uniform_sampling.compute(keypointIndices1);
-      pcl::copyPointCloud(*temp, keypointIndices1.points, *temp_keypoints);
-      std::cout << "Model total points: " << temp->size () << "; Selected Keypoints: " << temp_keypoints->size () << std::endl;
-
-      /**
-       *  Compute Descriptor for keypoints
-       *
-      pcl::SHOTEstimationOMP<PointType, NormalType, DescriptorType> descr_est;
-      descr_est.setRadiusSearch (descr_rad_);
-
-      descr_est.setInputCloud (temp_keypoints);
-      descr_est.setInputNormals (temp_normals);
-      descr_est.setSearchSurface (temp);
-      descr_est.compute (*temp_descriptors);
-
-      cup = temp;
-      cup_keypoints = temp_keypoints;
-      cup_normals = temp_normals;
-      cup_descriptors = temp_descriptors;*/
+      compute_cup();
     }
+}
+
+void ObjectDetection::compute_cup()
+{
+  cup.reset(new pcl::PointCloud<PointType>);
+  cup_keypoints.reset(new pcl::PointCloud<PointType>);
+  cup_normals.reset(new pcl::PointCloud<NormalType>);
+  cup_descriptors.reset(new pcl::PointCloud<DescriptorType>);
+
+  if( pcl::io::loadPCDFile ("/home/rebecca/ros/cup.pcd", *cup) < 0)
+  {
+    std::cout << "Error loading model cloud." << std::endl;
+    return;
+  }
+  cup_loaded = true;
+  /**
+   * Compute Normals
+   */
+  pcl::NormalEstimationOMP<PointType, NormalType> norm_est;
+  norm_est.setKSearch (10);
+  norm_est.setInputCloud (cup);
+  norm_est.compute (*cup_normals);
+
+  /**
+   *  Downsample Clouds to Extract keypoints
+   */
+  pcl::UniformSampling<PointType> uniform_sampling;
+  uniform_sampling.setInputCloud (cup);
+  uniform_sampling.setRadiusSearch (model_ss_);
+  //uniform_sampling.filter (*cup_keypoints);
+  pcl::PointCloud<int> keypointIndices1;
+  uniform_sampling.compute(keypointIndices1);
+  pcl::copyPointCloud(*cup, keypointIndices1.points, *cup_keypoints);
+  std::cout << "Model total points: " << cup->size () << "; Selected Keypoints: " << cup_keypoints->size () << std::endl;
+
+  /**
+   *  Compute Descriptor for keypoints
+   */
+  pcl::SHOTEstimationOMP<PointType, NormalType, DescriptorType> descr_est;
+  descr_est.setRadiusSearch (descr_rad_);
+
+  descr_est.setInputCloud (cup_keypoints);
+  descr_est.setInputNormals (cup_normals);
+  descr_est.setSearchSurface (cup);
+  descr_est.compute (*cup_descriptors);
+}
 
 
 bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > unknown)
   {
+    //compute_cup();
+    if(!cup_loaded || !unknown)
+    {
+      std::cout << "Cup model not loaded or empty point cloud object received!" << std::endl;
+      return false;
+    }
+    std::cout << "Model total points: " << cup->size () << "; Selected Keypoints: " << cup_keypoints->size () << std::endl;
+
     pcl::PointCloud<PointType>::Ptr unknown_keypoints (new pcl::PointCloud<PointType> ());
     pcl::PointCloud<NormalType>::Ptr unknown_normals (new pcl::PointCloud<NormalType> ());
     pcl::PointCloud<DescriptorType>::Ptr unknown_descriptors (new pcl::PointCloud<DescriptorType> ());
@@ -103,7 +114,8 @@ bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>
     uniform_sampling.compute(keypointIndices2);
     pcl::copyPointCloud(*unknown, keypointIndices2.points, *unknown_keypoints);
     std::cout << "Unknown total points: " << unknown->size () << "; Selected Keypoints: " << unknown_keypoints->size () << std::endl;
-
+    found_match_cloud_pub_.publish(unknown_keypoints);
+    //found_match_cloud_pub_.publish(cup_keypoints);
     /**
      *  Compute Descriptor for keypoints
      */
@@ -205,6 +217,7 @@ bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>
      */
     if (rototranslations.size () <= 0)
     {
+      std::cout << "No groups found " << std::endl;
       return false;
     }
     else
@@ -218,7 +231,7 @@ bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>
         pcl::PointCloud<PointType>::Ptr rotated_model (new pcl::PointCloud<PointType> ());
         pcl::transformPointCloud (*cup, *rotated_model, rototranslations[i]);
         //instances.push_back (rotated_model);
-        //found_match_cloud_pub_.publish(rotated_model);
+        found_match_cloud_pub_.publish(rotated_model);
       }
 
       return true;

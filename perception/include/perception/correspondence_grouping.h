@@ -68,7 +68,7 @@ private:
 
 public:
   explicit ObjectDetection();
-
+  void compute_cup();
   bool is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > unknown);
 
 protected:

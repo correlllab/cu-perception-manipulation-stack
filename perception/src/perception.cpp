@@ -107,14 +107,14 @@ public:
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
-    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("base","/bounding_boxes"));
+    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("camera_rgb_optical_frame","/bounding_boxes"));
     visual_tools_->enableBatchPublishing();
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
 
     objects_detected_ = false;
 
-    ros::Rate loop_rate(50);
+    ros::Rate loop_rate(500);
     while(ros::ok())
     {
       //ROS_INFO_STREAM_NAMED("PercConstr", "While Loop");
@@ -131,7 +131,7 @@ public:
         {
           // Can't get this to work :S
           // ROS_ERROR(boost::lexical_cast<std::string>(object_poses_.size()));
-          tf_visualizer_.publishTransform(*it, "base", object_labels[idx]);
+          tf_visualizer_.publishTransform(*it, "camera_rgb_optical_frame", object_labels[idx]);
           idx++;
         }
       }
@@ -168,10 +168,10 @@ public:
      * 7) Compute their centroids.
      */
 
-    if (!image_processing_enabled_)
+    /*if (!image_processing_enabled_)
     {
       return;
-    }
+    }*/
 
     // Read raw point cloud
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr raw_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -324,10 +324,10 @@ public:
     Eigen::Affine3d object_pose;
     visual_tools_->deleteAllMarkers();
 
-    tf_listener_.waitForTransform("base", "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
+    tf_listener_.waitForTransform("camera_rgb_optical_frame", "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
     try
     {
-      tf_listener_.lookupTransform("base", "camera_rgb_optical_frame", ros::Time(0), qr_transform);
+      tf_listener_.lookupTransform("camera_rgb_optical_frame", "camera_rgb_optical_frame", ros::Time(0), qr_transform);
     }
     catch (tf::TransformException ex)
     {
@@ -375,7 +375,7 @@ public:
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
       pcl::transformPointCloud (*single_object, *single_object_transformed, object_pose);
       object_pose.translation() = object_centroid;
-      single_object_transformed->header.frame_id = "base";
+      single_object_transformed->header.frame_id = "camera_rgb_optical_frame";
 
       object_pose = Eigen::Affine3d::Identity();
       pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
@@ -391,7 +391,7 @@ public:
       //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
       std::ostringstream ss;
       if(is_cup)
-        ss << "cup";
+        ss << "cup_" << idx;
       else
         ss << "unknown_" << idx;
       object_labels.push_back(ss.str());
