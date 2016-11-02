@@ -15,6 +15,29 @@ import commands
 import tf
 import smach
 
+class CalibrateFingers(smach.State):
+    def __init__(self,finger_pos):
+        smach.State.__init__(self, outcomes=['calibrated','not_calibrated'])
+        self.calibrate_pub = rospy.Publisher('/finger_sensor/calibrate_obj_det',
+                                            Bool,
+                                            queue_size=1)
+        self.calibrated_sub = rospy.Subscriber('/finger_sensor/obj_det_calibrated',
+                                                Bool,
+                                                self.set_calibrated)
+        self.calibrated = None
+        self.finger_pos = finger_pos
+        self.jgn = JacoGripper()
+
+    def set_calibrated(self,msg):
+        self.calibrated = msg.data
+
+    def execute(self,userdata):
+        self.jgn.set_position(self.finger_pos)
+        self.calibrate_pub.publish(True)
+        while self.calibrated == False:
+            pass
+        return 'calibrated'
+
 class GotoObject(smach.State):
     def __init__(self,frame):
         smach.State.__init__(self, outcomes=['there','no_tf_found'])
@@ -73,14 +96,15 @@ class GraspObject(smach.State):
             return 'not_grasped'
 
 class SearchObject(smach.State):
-    def __init__(self,detect_goal):
+    def __init__(self,fingers):
         smach.State.__init__(self, outcomes=['found', 'not_found'])
         self.finger_detect_sub = rospy.Subscriber('/finger_sensor/obj_detected',
                                                 FingerDetect,
                                                 self.set_finger_detect)
         self.finger_detect = [None, None, None]
         self.jn = Jaco()
-        self.detect_goal = detect_goal
+        self.detect_goal = [True] * len(fingers)
+        self.fingers = fingers
         self.listen = tf.TransformListener()
         self.transformer = tf.TransformerROS()
 
@@ -106,7 +130,7 @@ class SearchObject(smach.State):
         return msg
 
     def execute(self,userdata):
-        if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+        if np.all(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
             return 'found'
         else:
             found = self.back_forth_search_xy()
