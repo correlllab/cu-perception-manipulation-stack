@@ -14,9 +14,10 @@ import numpy as np
 import commands
 import tf
 import smach
+import time
 
 class CalibrateFingers(smach.State):
-    def __init__(self,finger_pos):
+    def __init__(self,pos=None):
         smach.State.__init__(self, outcomes=['calibrated','not_calibrated'])
         self.calibrate_pub = rospy.Publisher('/finger_sensor/calibrate_obj_det',
                                             Bool,
@@ -25,15 +26,17 @@ class CalibrateFingers(smach.State):
                                                 Bool,
                                                 self.set_calibrated)
         self.calibrated = None
-        self.finger_pos = finger_pos
+        self.finger_pos = pos
         self.jgn = JacoGripper()
 
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
     def execute(self,userdata):
-        self.jgn.set_position(self.finger_pos)
+        if self.finger_pos:
+            self.jgn.set_position(self.finger_pos)
         self.calibrate_pub.publish(True)
+        time.sleep(5)
         while self.calibrated == False:
             pass
         return 'calibrated'
@@ -96,7 +99,7 @@ class GraspObject(smach.State):
             return 'not_grasped'
 
 class SearchObject(smach.State):
-    def __init__(self,fingers):
+    def __init__(self,fingers,search='back_forth_search_xy'):
         smach.State.__init__(self, outcomes=['found', 'not_found'])
         self.finger_detect_sub = rospy.Subscriber('/finger_sensor/obj_detected',
                                                 FingerDetect,
@@ -107,42 +110,63 @@ class SearchObject(smach.State):
         self.fingers = fingers
         self.listen = tf.TransformListener()
         self.transformer = tf.TransformerROS()
+        searches = {'back_forth_search_xy':self.back_forth_search_xy,
+                    'down_z': self.down_z}
+        self.search_motion = searches[search]
 
     def set_finger_detect(self,msg):
         self.finger_detect[0] = msg.finger1
         self.finger_detect[1] = msg.finger2
         self.finger_detect[2] = msg.finger3
 
-    def create_pose_velocity_msg(self,cart_velo):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/j2n6a300_end_effector"):
-            self.listen.waitForTransform('/root',"/j2n6a300_end_effector",rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/j2n6a300_end_effector")
-            translation, quaternion = self.listen.lookupTransform("/root", "/j2n6a300_end_effector", t)
-        transform = self.transformer.fromTranslationRotation(translation, quaternion)
-        cart_velo[0:3] = np.dot(transform,(cart_velo[0:3]+[1.0]))[0:3]
+    def create_pose_velocity_msg(self,cart_velo,transform=False):
+        if transform:
+            if self.listen.frameExists("/root") and self.listen.frameExists("/j2n6a300_end_effector"):
+                self.listen.waitForTransform('/root',"/j2n6a300_end_effector",rospy.Time(),rospy.Duration(100.0))
+                t = self.listen.getLatestCommonTime("/root", "/j2n6a300_end_effector")
+                translation, quaternion = self.listen.lookupTransform("/root", "/j2n6a300_end_effector", t)
+            transform = self.transformer.fromTranslationRotation(translation, quaternion)
+            transformed_vel = np.dot(transform,(cart_velo[0:3]+[1.0]))
+            print(transformed_vel)
+            cart_velo[0:3] = transformed_vel[0:3]
         msg = PoseVelocity(
-            twist_linear_x=-cart_velo[0],
-            twist_linear_y=-cart_velo[1],
-            twist_linear_z=cart_velo[2],
-            twist_angular_x=cart_velo[3],
-            twist_angular_y=cart_velo[4],
-            twist_angular_z=cart_velo[5])
+        twist_linear_x=cart_velo[0],
+        twist_linear_y=cart_velo[1],
+        twist_linear_z=cart_velo[2],
+        twist_angular_x=cart_velo[3],
+        twist_angular_y=cart_velo[4],
+        twist_angular_z=cart_velo[5])
         return msg
 
     def execute(self,userdata):
         if np.all(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
             return 'found'
         else:
-            found = self.back_forth_search_xy()
+            found = self.search_motion()
             return found
 
     def back_forth_search_xy(self):
-        rate = rospy.Rate(10)
-        msg = self.create_pose_velocity_msg([-.05,0.0,0.0,0.0,0.0,0.0])
-        for i in range(25):
+        rate = rospy.Rate(100)
+        for i in range(100):
             if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
                 return 'found'
+            msg = self.create_pose_velocity_msg([0.0,0.05,0.0,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)
             rate.sleep()
+        for i in range(200):
+            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+                return 'found'
+            msg = self.create_pose_velocity_msg([0.0,-0.05,0.0,0.0,0.0,0.0])
+            self.jn.kinematic_control(msg)
+            rate.sleep()
+        return 'not_found'
 
+    def down_z(self):
+        rate = rospy.Rate(100)
+        for i in range(100):
+            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+                return 'found'
+            msg = self.create_pose_velocity_msg([0.0,0.0,-0.025,0.0,0.0,0.0])
+            self.jn.kinematic_control(msg)
+            rate.sleep()
         return 'not_found'
