@@ -43,7 +43,7 @@ void ObjectDetection::compute_cup()
   cup_normals.reset(new pcl::PointCloud<NormalType>);
   cup_descriptors.reset(new pcl::PointCloud<DescriptorType>);
 
-  if( pcl::io::loadPCDFile ("/home/rebecca/ros/cup.pcd", *cup) < 0)
+  if( pcl::io::loadPCDFile ("/home/rebecca/ros/new_cup.pcd", *cup) < 0)
   {
     std::cout << "Error loading model cloud." << std::endl;
     return;
@@ -68,7 +68,7 @@ void ObjectDetection::compute_cup()
   uniform_sampling.compute(keypointIndices1);
   pcl::copyPointCloud(*cup, keypointIndices1.points, *cup_keypoints);
   std::cout << "Model total points: " << cup->size () << "; Selected Keypoints: " << cup_keypoints->size () << std::endl;
-
+  cup_keypoints->header.frame_id = "camera_rgb_optical_frame";
   /**
    *  Compute Descriptor for keypoints
    */
@@ -164,7 +164,7 @@ bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>
      */
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
     std::vector < pcl::Correspondences > clustered_corrs;
-
+/*
     if (use_hough_)
     {
       pcl::PointCloud<RFType>::Ptr cup_rf (new pcl::PointCloud<RFType> ());
@@ -215,13 +215,15 @@ bool ObjectDetection::is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>
     /**
      * Stop if no instances
      */
-    if (rototranslations.size () <= 0)
+    if (/*rototranslations.size () <= 0 && */(cup_unknown_corrs->size () < 20 ))
     {
       std::cout << "No groups found " << std::endl;
       return false;
     }
     else
     {
+      std::cout << "MAAAAAATCH " << std::endl;
+      return true;
       /**
        * Generates clouds for each instances found
        */

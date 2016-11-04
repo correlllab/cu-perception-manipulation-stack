@@ -37,6 +37,7 @@
 #include <pcl/segmentation/extract_polygonal_prism_data.h>
 
 //object identification
+#include <pcl/io/pcd_io.h> //print pcd to file
 #include <pcl/common/geometry.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -114,7 +115,7 @@ public:
 
     objects_detected_ = false;
 
-    ros::Rate loop_rate(500);
+    ros::Rate loop_rate(50);
     while(ros::ok())
     {
       //ROS_INFO_STREAM_NAMED("PercConstr", "While Loop");
@@ -148,7 +149,7 @@ public:
   {
     image_processing_enabled_ = enabled.data;
   }
-
+  Eigen::Vector3d cup_centroid;
   void processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
     /*
@@ -318,13 +319,14 @@ public:
     int objects_found = cluster_indices.end() - cluster_indices.begin();
     //object_labels->clear();
     //object_labels = new std::string[objects_found+1];
+    object_labels.clear();
     Eigen::Vector4d useless_centroid;
     Eigen::Vector3d object_centroid;
-    tf::StampedTransform qr_transform;
+    //tf::StampedTransform qr_transform;
     Eigen::Affine3d object_pose;
     visual_tools_->deleteAllMarkers();
 
-    tf_listener_.waitForTransform("camera_rgb_optical_frame", "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
+    /*tf_listener_.waitForTransform("camera_rgb_optical_frame", "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
     try
     {
       tf_listener_.lookupTransform("camera_rgb_optical_frame", "camera_rgb_optical_frame", ros::Time(0), qr_transform);
@@ -333,7 +335,7 @@ public:
     {
       ROS_ERROR("%s", ex.what());
       //ros::Duration(1.0).sleep();
-    }
+    }*/
 
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
          it != cluster_indices.end();
@@ -371,38 +373,53 @@ public:
       //pcl::compute3DCentroid(*single_object, useless_centroid);
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
 
-      tf::transformTFToEigen(qr_transform, object_pose);
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
-      pcl::transformPointCloud (*single_object, *single_object_transformed, object_pose);
+      //tf::transformTFToEigen(qr_transform, object_pose);
+      //pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
+      //pcl::transformPointCloud (*single_object, *single_object_transformed, object_pose);
       object_pose.translation() = object_centroid;
-      single_object_transformed->header.frame_id = "camera_rgb_optical_frame";
+      //single_object_transformed->header.frame_id = "camera_rgb_optical_frame";
 
-      object_pose = Eigen::Affine3d::Identity();
-      pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
-      object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
-      object_pose.translation() = object_centroid;
+      //object_pose = Eigen::Affine3d::Identity();
+      //pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
+      //object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
+      //object_pose.translation() = object_centroid;
       local_poses.push_back(object_pose);
-      ROS_INFO_STREAM_NAMED("ppc", "Object " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points" << '\n');
+      //ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
 
-      ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_0: " << useless_centroid(0)<<"1: "<< useless_centroid(1)<<"2: " << useless_centroid(2));
+      ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
       bool is_cup = ObjectDetectionPtr->is_cup(single_object);
+
       //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
       std::ostringstream ss;
+      if(!is_cup)
+      {
+        ROS_INFO_STREAM_NAMED("ppc", "cup centroid: " << cup_centroid[0]<<"1: "<< cup_centroid[1]<<"2: " << cup_centroid[2]);
+        ROS_INFO_STREAM_NAMED("ppc", "difference: " << fabs(cup_centroid[0]-useless_centroid(0))<<",  "<< fabs(cup_centroid[1]-useless_centroid(1))<<", " << fabs(cup_centroid[2]-useless_centroid(2)));
+        if(fabs(cup_centroid[0]-useless_centroid(0)) < .01  && fabs(cup_centroid[1]-useless_centroid(1)) < .01  && fabs(cup_centroid[2]-useless_centroid(2)) < .01 )
+          is_cup = true;
+        else
+          ss << "new_unknown_" << idx;
+      }
       if(is_cup)
-        ss << "cup_" << idx;
-      else
-        ss << "unknown_" << idx;
-      object_labels.push_back(ss.str());
+      {
+        ROS_INFO_STREAM_NAMED("ppc", "cup found! ");
 
+        ss << "cup_" << idx;
+        cup_centroid = object_centroid;
+        visual_tools_->publishWireframeCuboid(object_pose, .1, .1, .1, rviz_visual_tools::RAND);
+
+      }
+      object_labels.push_back(ss.str());
+      //pcl::io::savePCDFileASCII("/home/rebecca/ros/"+ss.str()+".pcd", *single_object);
 
       objects_cloud_pub_.publish(single_object);
-
+      ROS_INFO_STREAM_NAMED("ppc", ss.str() + " published");
       idx++;
-      objects_detected_ = true;
-    }
 
+    }
+    objects_detected_ = true;
     object_poses_ = local_poses;
     visual_tools_->triggerBatchPublish();
 
