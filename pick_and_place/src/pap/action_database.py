@@ -7,7 +7,7 @@ from pap.manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
 from finger_sensor_msgs.msg import FingerDetect, FingerTouch
 
-from std_msgs.msg import Header, Int32MultiArray, Bool
+from std_msgs.msg import Header, Int32MultiArray, Bool, String, Int64
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import numpy as np
 
@@ -15,6 +15,73 @@ import commands
 import tf
 import smach
 import time
+
+class StackingStart(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['Ready'],
+                            input_keys=['tower_size_in'],
+                            output_keys=['tower_size_out'])
+        self.jn = Jaco()
+        self.jgn = JacoGripper()
+
+    def execute(self,userdata):
+        self.jgn.set_position([0.0,0.0,0.0])
+        self.jn.home()
+        userdata.tower_size_out = userdata.tower_size_in + 1
+        return 'Ready'
+
+class PerceiveObjects(smach.State):
+    def __init__(self,object_list,perception_time=2.5):
+        smach.State.__init__(self, outcomes=['objects_found', 'objects_not_found'],
+                            output_keys=['pick_obj_name_out','place_obj_name_out'])
+
+        self.perception_pub = rospy.Publisher("/perception/enabled",
+                                              Bool,
+                                              queue_size=1)
+
+        self.listen = tf.TransformListener()
+        self.perception_time = perception_time
+        self.object_list = object_list
+
+    def execute(self,userdata):
+        time.sleep(1)
+        self.perception_pub.publish(Bool(True))
+        time.sleep(self.perception_time)
+        self.perception_pub.publish(Bool(False))
+        frames = self.listen.getFrameStrings()
+        object_frames = [of for of in frames if of in self.object_list]
+        if object_frames[0] and object_frames[1]:
+            translation1, quaternion1 = self.listen.lookupTransform("/root", object_frames[0], rospy.Time(0))
+            translation2, quaternion2 = self.listen.lookupTransform("/root", object_frames[1], rospy.Time(0))
+            if translation1[2] > translation2[2]:
+                userdata.place_obj_name_out = object_frames[0]
+                userdata.pick_obj_name_out = object_frames[1]
+            else:
+                userdata.place_obj_name_out = object_frames[1]
+                userdata.pick_obj_name_out = object_frames[0]
+            return 'objects_found'
+        else:
+            return 'objects_not_found'
+
+class GenerateCubeGrasp(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['grasp_generated', 'grasp_not_generated'],
+                            input_keys=['pick_obj_name_in','place_obj_name_in','tower_size_in'])
+        self.listen = tf.TransformListener()
+        self.pick_obj_name_pub = rospy.Publisher('/place_frame_name',String,queue_size=1)
+        self.place_obj_name_pub = rospy.Publisher('/pick_frame_name',String,queue_size=1)
+        self.tower_size_pub = rospy.Publisher('/tower_size',Int64,queue_size=1)
+
+
+    def execute(self,userdata):
+        self.tower_size_pub.publish(userdata.tower_size_in)
+        time.sleep(1)
+        self.pick_obj_name_pub.publish(userdata.pick_obj_name_in)
+        self.place_obj_name_pub.publish(userdata.place_obj_name_in)
+        if self.listen.frameExists(userdata.place_obj_name_in) and self.listen.frameExists(userdata.pick_obj_name_in):
+            return 'grasp_generated'
+        else:
+            return 'grasp_not_generated'
 
 class CalibrateFingers(smach.State):
     def __init__(self,pos=None):
@@ -154,7 +221,7 @@ class SearchObject(smach.State):
             self.jn.kinematic_control(msg)
             rate.sleep()
         for i in range(200):
-            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+            if np.all(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
                 return 'found'
             msg = self.create_pose_velocity_msg([0.0,-0.05,0.0,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)
@@ -163,8 +230,8 @@ class SearchObject(smach.State):
 
     def down_z(self):
         rate = rospy.Rate(100)
-        for i in range(100):
-            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
+        while True:
+            if np.any(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
                 return 'found'
             msg = self.create_pose_velocity_msg([0.0,0.0,-0.025,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)

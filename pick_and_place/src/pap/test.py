@@ -1,33 +1,65 @@
 #!/usr/bin/env python
 
+import roslib
 import rospy
-import numpy as np
-import tf
-import action_database
 import smach
-from pap.jaco import JacoGripper, Jaco
-from kinova_msgs.msg import JointAngles, PoseVelocity
+import smach_ros
+
+# define state Foo
+class Foo(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['outcome1','outcome2'],
+                             input_keys=['foo_counter_in'],
+                             output_keys=['foo_counter_out'])
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing state FOO')
+        if userdata.foo_counter_in < 3:
+            userdata.foo_counter_out = userdata.foo_counter_in + 1
+            return 'outcome1'
+        else:
+            return 'outcome2'
+
+
+# define state Bar
+class Bar(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['outcome1'],
+                             input_keys=['bar_counter_in'])
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing state BAR')
+        rospy.loginfo('Counter = %f'%userdata.bar_counter_in)
+        return 'outcome1'
+
+
 
 
 
 def main():
-    rospy.init_node("test")
-    jg = JacoGripper()
-    jg.set_position([50,50,0])
-    j = Jaco()
-    rate = rospy.Rate(100)
-    cart_velo = ([.05,.05,0.0,0.0,0.0,0.0])
-    msg = PoseVelocity(
-        twist_linear_x=cart_velo[0],
-        twist_linear_y=cart_velo[1],
-        twist_linear_z=cart_velo[2],
-        twist_angular_x=cart_velo[3],
-        twist_angular_y=cart_velo[4],
-        twist_angular_z=cart_velo[5])
-    for i in range(100):
-        j.kinematic_control(msg)
-        rate.sleep()
+    rospy.init_node('smach_example_state_machine')
 
+    # Create a SMACH state machine
+    sm = smach.StateMachine(outcomes=['outcome4'])
+    sm.userdata.sm_counter = 0
+
+    # Open the container
+    with sm:
+        # Add states to the container
+        smach.StateMachine.add('FOO', Foo(),
+                               transitions={'outcome1':'BAR',
+                                            'outcome2':'outcome4'},
+                               remapping={'foo_counter_in':'sm_counter',
+                                          'foo_counter_out':'sm_counter'})
+        smach.StateMachine.add('BAR', Bar(),
+                               transitions={'outcome1':'FOO'},
+                               remapping={'bar_counter_in':'sm_counter'})
+
+
+    # Execute SMACH plan
+    outcome = sm.execute()
 
 
 if __name__ == '__main__':
