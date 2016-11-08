@@ -63,7 +63,7 @@ class GraspGeneratorCube(object):
             translation, quaternion = self.listen.lookupTransform("/root", place_obj_name, rospy.Time(0))
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (np.pi,0,0) # in radians
-            requrd_trans = (0,.035,0.0875+translation[2]+self.tower_size*0.05)
+            requrd_trans = (0,.035,0.1+translation[2]+self.tower_size*0.05)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -79,7 +79,7 @@ class GraspGeneratorCube(object):
             translation, quaternion = self.listen.lookupTransform("/root", pick_obj_name, rospy.Time(0))
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (np.pi,0,0) # in radians
-            requrd_trans = (0,.035,0.0875+translation[2])
+            requrd_trans = (0,.035,0.1+translation[2])
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])

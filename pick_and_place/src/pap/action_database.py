@@ -18,7 +18,7 @@ import time
 
 class StackingStart(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['Ready'],
+        smach.State.__init__(self, outcomes=['Ready','Start'],
                             input_keys=['tower_size_in'],
                             output_keys=['tower_size_out'])
         self.jn = Jaco()
@@ -26,9 +26,14 @@ class StackingStart(smach.State):
 
     def execute(self,userdata):
         self.jgn.set_position([0.0,0.0,0.0])
-        self.jn.home()
-        userdata.tower_size_out = userdata.tower_size_in + 1
-        return 'Ready'
+        if userdata.tower_size_in == 0:
+            self.jn.home()
+            userdata.tower_size_out = userdata.tower_size_in + 1
+            return 'Start'
+        else:
+            self.jn.home()
+            userdata.tower_size_out = userdata.tower_size_in + 1
+            return 'Ready'
 
 class PerceiveObjects(smach.State):
     def __init__(self,object_list,perception_time=2.5):
@@ -76,9 +81,9 @@ class GenerateCubeGrasp(smach.State):
     def execute(self,userdata):
         self.tower_size_pub.publish(userdata.tower_size_in)
         time.sleep(1)
-        self.pick_obj_name_pub.publish(userdata.pick_obj_name_in)
-        self.place_obj_name_pub.publish(userdata.place_obj_name_in)
-        if self.listen.frameExists(userdata.place_obj_name_in) and self.listen.frameExists(userdata.pick_obj_name_in):
+        self.place_obj_name_pub.publish("/unknown_{}".format(userdata.tower_size_in))
+        self.pick_obj_name_pub.publish("/unknown_0")
+        if self.listen.frameExists("/unknown_{}".format(userdata.tower_size_in)) and self.listen.frameExists("/unknown_0"):
             return 'grasp_generated'
         else:
             return 'grasp_not_generated'

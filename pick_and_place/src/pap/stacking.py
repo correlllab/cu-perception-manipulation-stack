@@ -18,7 +18,8 @@ def main():
     with sm:
         smach.StateMachine.add('StackingStart',
                                 action_database.StackingStart(),
-                                transitions={'Ready':'PerceiveObjects1'},
+                                transitions={'Start':'PerceiveObjects1',
+                                                'Ready':'GenerateCubeGrasp1'},
                                 remapping={'tower_size_in':'tower_size',
                                             'tower_size_out':'tower_size'})
 
