@@ -222,11 +222,17 @@ class SearchObject(smach.State):
         for i in range(100):
             if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
                 return 'found'
-            msg = self.create_pose_velocity_msg([0.0,0.05,0.0,0.0,0.0,0.0])
+            msg = self.create_pose_velocity_msg([0.0,-0.05,0.0,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)
             rate.sleep()
         for i in range(200):
             if np.all(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
+                return 'found'
+            msg = self.create_pose_velocity_msg([0.0,0.05,0.0,0.0,0.0,0.0])
+            self.jn.kinematic_control(msg)
+            rate.sleep()
+        for i in range(100):
+            if np.all(np.array(self.finger_detect) == np.array(self.detect_goal)):
                 return 'found'
             msg = self.create_pose_velocity_msg([0.0,-0.05,0.0,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)
@@ -238,7 +244,11 @@ class SearchObject(smach.State):
         while True:
             if np.any(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
                 return 'found'
-            msg = self.create_pose_velocity_msg([0.0,0.0,-0.025,0.0,0.0,0.0])
+            choices = np.array([0.0,0.05,-0.05,0.1,-0.1])
+            x = np.random.choice(choices)
+            y = np.random.choice(choices)
+            z = -0.01
+            msg = self.create_pose_velocity_msg([x,y,z,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)
             rate.sleep()
         return 'not_found'

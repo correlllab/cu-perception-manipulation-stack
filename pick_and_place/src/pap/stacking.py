@@ -45,8 +45,13 @@ def main():
 
         smach.StateMachine.add('GotoObject1',
                                 action_database.GotoObject('/pick_frame'),
-                                transitions={'there':'GraspObject1',
+                                transitions={'there':'CalibrateFingers2',
                                             'no_tf_found':'GotoObject1'})
+
+        smach.StateMachine.add('SearchObject3',
+                                action_database.SearchObject(fingers_to_use,search='down_z'),
+                                transitions={'found':'GraspObject1',
+                                            'not_found': 'SearchObject1'})
 
         smach.StateMachine.add('SearchObject1',
                                 action_database.SearchObject(fingers_to_use),
@@ -65,7 +70,7 @@ def main():
 
         smach.StateMachine.add('CalibrateFingers2',
                                 action_database.CalibrateFingers(pos=gripper_pos),
-                                transitions={'calibrated':'SearchObject1',
+                                transitions={'calibrated':'SearchObject3',
                                             'not_calibrated':'CalibrateFingers2'})
 
         smach.StateMachine.add('CalibrateFingers3',
