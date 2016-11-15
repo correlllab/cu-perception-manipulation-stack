@@ -389,24 +389,24 @@ public:
       ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
-      bool is_cup = ObjectDetectionPtr->is_cup(single_object);
+      std::string label = ObjectDetectionPtr->label_object(single_object);
 
       //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
       std::ostringstream ss;
-      if(!is_cup)
+      if(label != "cup")
       {
         ROS_INFO_STREAM_NAMED("ppc", "cup centroid: " << cup_centroid[0]<<"1: "<< cup_centroid[1]<<"2: " << cup_centroid[2]);
         ROS_INFO_STREAM_NAMED("ppc", "difference: " << fabs(cup_centroid[0]-useless_centroid(0))<<",  "<< fabs(cup_centroid[1]-useless_centroid(1))<<", " << fabs(cup_centroid[2]-useless_centroid(2)));
         if(fabs(cup_centroid[0]-useless_centroid(0)) < .01  && fabs(cup_centroid[1]-useless_centroid(1)) < .01  && fabs(cup_centroid[2]-useless_centroid(2)) < .01 )
-          is_cup = true;
+          label = "cup";
         else
-          ss << "new_unknown_" << idx;
+          ss << label << "_" << idx;
       }
-      if(is_cup)
+      if(label == "cup")
       {
         ROS_INFO_STREAM_NAMED("ppc", "cup found! ");
 
-        ss << "cup_" << idx;
+        ss << label << "_" << idx;
         cup_centroid = object_centroid;
         visual_tools_->publishWireframeCuboid(object_pose, .1, .1, .1, rviz_visual_tools::RAND);
 
@@ -563,7 +563,7 @@ public:
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "perception");
-  ros::AsyncSpinner spinner(1);
+  ros::AsyncSpinner spinner(3);
   spinner.start();
 
   int test = 1;

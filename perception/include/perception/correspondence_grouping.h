@@ -18,7 +18,7 @@
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
 #include <pcl/common/transforms.h>
 #include <pcl/console/parse.h>
-//#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl_ros/point_cloud.h>
 
 namespace object_detection
@@ -27,6 +27,8 @@ typedef pcl::PointXYZRGB PointType;
 typedef pcl::Normal NormalType;
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::SHOT352 DescriptorType;
+
+//std::string models[] = {"cup.pcd"};
 /*
 struct CloudStyle
 {
@@ -55,6 +57,16 @@ CloudStyle style_violet (255.0, 0.0, 255.0, 8.0);
 */
 //Algorithm params
 
+struct model_object
+{
+  std::string name;
+  pcl::PointCloud<PointType>::Ptr raw_cloud;
+  pcl::PointCloud<PointType>::Ptr keypoints;
+  pcl::PointCloud<NormalType>::Ptr normals;
+  pcl::PointCloud<DescriptorType>::Ptr descriptors;
+
+  model_object* next;
+};
 
 class ObjectDetection
 {
@@ -65,12 +77,15 @@ private:
   pcl::PointCloud<NormalType>::Ptr cup_normals;
   pcl::PointCloud<DescriptorType>::Ptr cup_descriptors;
 
-
+  model_object* models_linkedlist;
+  void load_model_objects();
+  bool is_object(model_object*  unknown, model_object* model);
+  model_object* compute_descriptors(pcl::PointCloud<PointType>::Ptr point_cloud);
 public:
   explicit ObjectDetection();
   void compute_cup();
   bool is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > unknown);
-
+  std::string label_object(pcl::PointCloud<PointType>::Ptr unknown);
 protected:
   ros::NodeHandle nh_;
   ros::Publisher found_match_cloud_pub_;
