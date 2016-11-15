@@ -75,7 +75,7 @@ void ObjectDetection::load_model_objects()
        std::cout << "Model total points: " << new_node->raw_cloud->size () << "; Selected Keypoints: " << new_node->keypoints->size () << std::endl;
        new_node->name = models[a];
        std::cout << "name set" << std::endl;
-       if(true)//!models_linkedlist)
+       if(!models_linkedlist)
        {
          std::cout << "7" << std::endl;
          models_linkedlist = new_node;

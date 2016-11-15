@@ -13,12 +13,12 @@
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <rviz_visual_tools/tf_visual_tools.h>
 
-// Eigen and TF
-#include <eigen_conversions/eigen_msg.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
-#include <tf_conversions/tf_eigen.h>
-#include <tf/transform_datatypes.h>
+//// Eigen and TF
+//#include <eigen_conversions/eigen_msg.h>
+//#include <tf/transform_broadcaster.h>
+//#include <tf/transform_listener.h>
+//#include <tf_conversions/tf_eigen.h>
+//#include <tf/transform_datatypes.h>
 
 // Image processing
 #include <pcl_ros/point_cloud.h>
@@ -87,6 +87,7 @@ public:
   PerceptionTester(int test)
     : nh_("~")
   {
+    objects_linkedlist = NULL;
     ROS_INFO_STREAM_NAMED("constructor","starting PerceptionTester...");
     ObjectDetectionPtr.reset(new object_detection::ObjectDetection());
     image_processing_enabled_ = false;
@@ -141,6 +142,8 @@ public:
     }
   }
 
+
+
   ~PerceptionTester()
   {
   }
@@ -150,6 +153,55 @@ public:
     image_processing_enabled_ = enabled.data;
   }
   Eigen::Vector3d cup_centroid;
+
+  object_tracking* objects_linkedlist;
+
+  void update_objects(Eigen::Vector3d centroid, std::string name)
+  {
+    object_tracking* new_node(new object_tracking());
+    new_node->name = name;
+    new_node->centroid = centroid;
+    new_node->timestamp = std::time(NULL);
+    new_node->next = NULL;
+
+    if(!objects_linkedlist)
+      objects_linkedlist = new_node;
+    else
+    {
+      object_tracking* iterator = objects_linkedlist;
+      while(iterator)
+      {
+        if(fabs(centroid[0]-iterator->centroid[0]) < .01  && fabs(centroid[1]-iterator->centroid[1]) < .01  && fabs(centroid[2]-iterator->centroid[2]) < .01 )
+        {
+          new_node->next = iterator->next;
+          iterator = new_node;
+          return;
+        }
+        if(iterator->next)
+          iterator = iterator->next;
+        else
+          break;
+      }
+      iterator->next = new_node;
+
+    }
+
+    return;
+  }
+
+  std::string previously_seen_object(Eigen::Vector3d centroid)
+  {
+    object_tracking* iterator = objects_linkedlist;
+    while(iterator)
+    {
+      if(fabs(centroid[0]-iterator->centroid[0]) < .01  && fabs(centroid[1]-iterator->centroid[1]) < .01  && fabs(centroid[2]-iterator->centroid[2]) < .01 )
+        return iterator->name;
+      iterator = iterator->next;
+    }
+
+    return "unknown";
+  }
+
   void processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
     /*
@@ -390,9 +442,14 @@ public:
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
       std::string label = ObjectDetectionPtr->label_object(single_object);
+      std::ostringstream ss;
+      if(label == "unknown")
+        label = previously_seen_object(object_centroid);
+      ss << label << "_" << idx;
+      update_objects(object_centroid, label);
 
       //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
-      std::ostringstream ss;
+/*
       if(label != "cup")
       {
         ROS_INFO_STREAM_NAMED("ppc", "cup centroid: " << cup_centroid[0]<<"1: "<< cup_centroid[1]<<"2: " << cup_centroid[2]);
@@ -410,7 +467,7 @@ public:
         cup_centroid = object_centroid;
         visual_tools_->publishWireframeCuboid(object_pose, .1, .1, .1, rviz_visual_tools::RAND);
 
-      }
+      }*/
       object_labels.push_back(ss.str());
       //pcl::io::savePCDFileASCII("/home/rebecca/ros/"+ss.str()+".pcd", *single_object);
 
