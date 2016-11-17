@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
+find_package(PCL 1.7 REQUIRED)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -51,14 +53,12 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  identified_object.msg #rebecca's addin
 )
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
+#generate_messages(
+#  DEPENDENCIES
+#  std_msgs
+#)
 
 generate_dynamic_reconfigure_options(
   cfg/perception_param.cfg
@@ -162,12 +162,19 @@ include_directories(
 
 add_executable(perception
   src/perception.cpp
+  src/correspondence_grouping.cpp
 )
+
 target_link_libraries(perception
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES} libvtkCommon.so libvtkFiltering.so
 )
-add_dependencies(perception perception_generate_messages_cpp)
+
+
 add_dependencies(perception perception_gencfg)
+
+
+
 
 #############
 ## Install ##

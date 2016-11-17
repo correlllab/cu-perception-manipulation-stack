@@ -1,6 +1,14 @@
 #ifndef PERCEPTION_PARAM_H
 #define PERCEPTION_PARAM_H
 
+// Eigen and TF
+#include <eigen_conversions/eigen_msg.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+#include <tf/transform_datatypes.h>
+
+#include <ctime>
 #include <ros/ros.h>
 #include <string>
 
@@ -57,7 +65,21 @@ namespace perception
   int unknown_objects = 0;
 
   std::vector<std::string> object_labels;
+  const std::string base_frame = "camera_rgb_optical_frame";
+  //const std::string base_frame = "base";
+  const int seconds_keep_alive = 15;
+  const int seconds_rename = 12;
+  double centroid_tracking_distance = 0.025; //meters
+  double retest_object_seconds = 1;
+  struct object_tracking
+  {
+    std::string label;
+    int id;
+    std::time_t timestamp;
+    Eigen::Vector3d centroid;
 
+    object_tracking* next;
+  };
 }
 
 
