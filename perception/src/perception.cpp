@@ -133,7 +133,7 @@ public:
         {
           // Can't get this to work :S
           // ROS_ERROR(boost::lexical_cast<std::string>(object_poses_.size()));
-          tf_visualizer_.publishTransform(*it, "camera_rgb_optical_frame", object_labels[idx]);
+          tf_visualizer_.publishTransform(*it, base_frame, object_labels[idx]);
           idx++;
         }
       }
@@ -155,8 +155,124 @@ public:
   Eigen::Vector3d cup_centroid;
 
   object_tracking* objects_linkedlist;
+  object_tracking* near_centroid_object(Eigen::Vector3d centroid)
+  {
+    object_tracking* iterator = objects_linkedlist;
+    double x_dif, y_dif, z_dif;
+    while(iterator)
+    {
+      x_dif = (centroid[0]-iterator->centroid[0]);
+      y_dif = (centroid[1]-iterator->centroid[1]);
+      z_dif = (centroid[2]-iterator->centroid[2]);
+      //std::cout << "centroid difference:" << (x_dif*x_dif + y_dif*y_dif + z_dif*z_dif) << std::endl;
+      if((x_dif*x_dif + y_dif*y_dif + z_dif*z_dif) < centroid_tracking_distance*centroid_tracking_distance)
+        return iterator;
+      /*if(fabs(centroid[0]-iterator->centroid[0]) < .01  && fabs(centroid[1]-iterator->centroid[1]) < .01  && fabs(centroid[2]-iterator->centroid[2]) < .01 )
+        return iterator;*/
+      iterator = iterator->next;
+    }
+    return iterator;
+  }
 
-  void update_objects(Eigen::Vector3d centroid, std::string name)
+  bool timed_out(std::time_t timestamp, double seconds_to_timeout)
+  {
+    double seconds_since_updated = difftime( time(0), timestamp);
+
+    return (seconds_since_updated >= seconds_to_timeout);
+  }
+
+  void add_tracking_object(Eigen::Vector3d centroid, std::string label, int id)
+  {
+    object_tracking* new_node(new object_tracking());
+    new_node->label = label;
+    new_node->centroid = centroid;
+    new_node->id = id;
+    new_node->timestamp = std::time(NULL);
+    new_node->next = NULL;
+
+    if(!objects_linkedlist)
+      objects_linkedlist = new_node;
+    else
+    {
+      object_tracking* iterator = objects_linkedlist;
+      while(iterator->next)
+      {
+        iterator = iterator->next;
+      }
+      iterator->next = new_node;
+    }
+
+  }
+
+  int get_unique_id()
+  {
+    object_tracking* iterator;
+    int id = 0;
+    while(id < 100)
+    {
+      iterator = objects_linkedlist;
+      //std::cout << "unique checking:" << id;
+      while(iterator)
+      {
+        //std::cout << "numbers:" << iterator->id;
+        if(iterator->id == id)
+        {
+          break;
+        }
+        iterator = iterator->next;
+      }
+      if(!iterator)
+        return id;
+      id++;
+    }
+    return id;
+  }
+
+  void remove_outdated_objects()
+  {
+    if(!objects_linkedlist)
+      return;
+    object_tracking* previous = objects_linkedlist;
+    object_tracking* next = previous->next;
+    std::ostringstream ss;
+    while(next)
+    {
+      //std::cout << previous->label << "_" << previous->id;
+      if(timed_out(next->timestamp, seconds_keep_alive))
+      {
+        previous->next = next->next;
+
+        ss << next->label << "_" << next->id;
+        //std::cout << "removing " << ss.str() << endl;
+        tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+        delete next;
+        next = previous->next;
+        ss.str("");
+      }
+      else
+      {
+        previous = next;
+        next = next->next;
+      }
+    }
+    if(timed_out(objects_linkedlist->timestamp, seconds_keep_alive))
+    {
+      previous = objects_linkedlist;
+      objects_linkedlist = objects_linkedlist->next;
+      ss << previous->label << "_" << previous->id;
+      tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+      delete previous;
+    }
+  }
+
+  void update_tracked_object(object_tracking* object, Eigen::Vector3d new_centroid, std::string label)
+  {
+    object->centroid = new_centroid;
+    object->timestamp = std::time(NULL);
+    object->label = label;
+  }
+
+  /*void update_objects(Eigen::Vector3d centroid, std::string name)
   {
     object_tracking* new_node(new object_tracking());
     new_node->name = name;
@@ -201,7 +317,7 @@ public:
 
     return "unknown";
   }
-
+*/
   void processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
     /*
@@ -231,7 +347,7 @@ public:
     pcl::fromROSMsg(*msg, *raw_cloud);
 
 
-    ROS_DEBUG_STREAM_NAMED("ppc","starting segmentation");
+    //ROS_DEBUG_STREAM_NAMED("ppc","starting segmentation");
 
     // z-filtering
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr z_filtered_objects (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -241,7 +357,7 @@ public:
     // TODO: read parameters in a way that allows dynamic changes
     pass.setFilterLimits(0.5, 1.2);
     pass.filter(*z_filtered_objects);
-    ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
+    //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
     z_filtered_objects->header.frame_id = "camera_rgb_optical_frame";
     z_filtered_objects_cloud_pub_.publish(z_filtered_objects);
 
@@ -260,7 +376,7 @@ public:
 
     if (inliers->indices.size () == 0)
     {
-      ROS_ERROR_STREAM_NAMED("ppc", "Could not estimate a planar model.");
+      //ROS_ERROR_STREAM_NAMED("ppc", "Could not estimate a planar model.");
       return;
     }
 
@@ -271,7 +387,7 @@ public:
     eifilter.setIndices(inliers);
     eifilter.setNegative(true);
     eifilter.filter(*not_table);
-    ROS_INFO_STREAM_NAMED("ppc", "point cloud after table top filtering has " << not_table->width * not_table->height);
+    //ROS_INFO_STREAM_NAMED("ppc", "point cloud after table top filtering has " << not_table->width * not_table->height);
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // objects is the set of points not on the table
     not_table_cloud_pub_.publish(not_table);
@@ -283,7 +399,7 @@ public:
     eifilter.setNegative(false);
     eifilter.filter(*plane);
     plane->header.frame_id = "camera_rgb_optical_frame";
-    ROS_INFO_STREAM_NAMED("ppc", "plane has " << plane->width * plane->height);
+    //ROS_INFO_STREAM_NAMED("ppc", "plane has " << plane->width * plane->height);
 
     // now create a 2D convex hull of the plane
     pcl::ConvexHull<pcl::PointXYZRGB> conv;
@@ -304,7 +420,7 @@ public:
     eifilter.setIndices(obj_indices);
     eifilter.setNegative(false);
     eifilter.filter(*objects);
-    ROS_INFO_STREAM_NAMED("ppc", "point cloud after ROI filtering has " << objects->width * objects->height);
+    //ROS_INFO_STREAM_NAMED("ppc", "point cloud after ROI filtering has " << objects->width * objects->height);
     objects->header.frame_id = "camera_rgb_optical_frame";
     roi_cloud_pub_.publish(objects);
 
@@ -317,7 +433,7 @@ public:
 
     if (inliers->indices.size () == 0)
     {
-      ROS_ERROR_STREAM_NAMED("ppc", "Could not estimate a planar model.");
+      //ROS_ERROR_STREAM_NAMED("ppc", "Could not estimate a planar model.");
       return;
     }
 
@@ -326,7 +442,7 @@ public:
     eifilter.setIndices(inliers);
     eifilter.setNegative(true);
     eifilter.filter(*not_table);
-    ROS_INFO_STREAM_NAMED("ppc", "final point cloud has " << not_table->width * not_table->height);
+    //ROS_INFO_STREAM_NAMED("ppc", "final point cloud has " << not_table->width * not_table->height);
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // not_table is the set of points not on the table
     //objects_cloud_pub_.publish(not_table);
@@ -339,7 +455,7 @@ public:
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     // SI units
     //ec.setClusterTolerance(0.02);//original before rebecca came
-    ec.setClusterTolerance(0.06);
+    ec.setClusterTolerance(0.04);
     /* From experiments:
      * - Tiny wood cubes have about 300 points
      * - Cubeletes have about 800 points
@@ -438,15 +554,53 @@ public:
       local_poses.push_back(object_pose);
       //ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
 
-      ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
+      //ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
-      std::string label = ObjectDetectionPtr->label_object(single_object);
       std::ostringstream ss;
-      if(label == "unknown")
-        label = previously_seen_object(object_centroid);
-      ss << label << "_" << idx;
-      update_objects(object_centroid, label);
+      object_tracking* matching_centroid = near_centroid_object(object_centroid);
+      std::string label;
+      if(matching_centroid)
+      {
+        ///bug: object's label gets pushed into tf transform publisher, but we removed it at the end of this fuction
+        ///   this results in removed objects being sent to base, then back to where is was
+        if(matching_centroid->label == "unknown" || timed_out(matching_centroid->timestamp,retest_object_seconds))
+        {
+          label = ObjectDetectionPtr->label_object(single_object);
+          if(matching_centroid->label == "unknown" || label != "unknown" )
+          {
+            if(matching_centroid->label != label)
+            {
+              ss << matching_centroid->label << "_" << matching_centroid->id;
+              tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+              ss.str("");
+            }
+            update_tracked_object(matching_centroid, object_centroid, label);
+          }
+          else if(timed_out(matching_centroid->timestamp,seconds_rename))
+          {
+            ss << matching_centroid->label << "_" << matching_centroid->id;
+            tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+            ss.str("");
+            update_tracked_object(matching_centroid, object_centroid, label);
+          }
+          else
+          {
+            label = matching_centroid->label;
+          }
+        }
+        else
+          label = matching_centroid->label;
+        ss << label << "_" << matching_centroid->id;
+      }
+      else
+      {
+        label = ObjectDetectionPtr->label_object(single_object);
+        int id = get_unique_id();
+        ss << label << "_" << id;
+        add_tracking_object(object_centroid, label, id);
+      }
+
 
       //std::string object_identity = object_recognition( object_pose, single_object_transformed, idx);
 /*
@@ -470,16 +624,29 @@ public:
       }*/
       object_labels.push_back(ss.str());
       //pcl::io::savePCDFileASCII("/home/rebecca/ros/"+ss.str()+".pcd", *single_object);
-
+      remove_outdated_objects();
       objects_cloud_pub_.publish(single_object);
-      ROS_INFO_STREAM_NAMED("ppc", ss.str() + " published");
+      //ROS_INFO_STREAM_NAMED("ppc", ss.str() + " published");
       idx++;
 
     }
+
+//    object_tracking* iterator = objects_linkedlist;
+//    while(iterator)
+//    {
+//      std::cout << "objects: " << iterator->label << "_" << iterator->id << endl;
+//      iterator = iterator->next;
+//    }
     objects_detected_ = true;
     object_poses_ = local_poses;
     visual_tools_->triggerBatchPublish();
 
+//    iterator = objects_linkedlist;
+//    while(iterator)
+//    {
+//      std::cout << "objects: " << iterator->label << "_" << iterator->id << endl;
+//      iterator = iterator->next;
+//    }
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
   }
 

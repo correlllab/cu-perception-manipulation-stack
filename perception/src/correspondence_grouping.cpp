@@ -77,9 +77,9 @@ void ObjectDetection::load_model_objects()
        std::cout << "name set" << std::endl;
        if(!models_linkedlist)
        {
-         std::cout << "7" << std::endl;
+        // std::cout << "7" << std::endl;
          models_linkedlist = new_node;
-         std::cout << "8" << std::endl;
+         //std::cout << "8" << std::endl;
        }
        else
        {
@@ -91,7 +91,7 @@ void ObjectDetection::load_model_objects()
          iterator->next = new_node;
 
        }
-       std::cout << "9" << std::endl;
+       //std::cout << "9" << std::endl;
        //std::cout << "Added model " << new_node->name;
 
      }
@@ -161,7 +161,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   pcl::copyPointCloud (*model->keypoints, model_good_keypoints_indices, *model_good_kp);
   pcl::copyPointCloud (*unknown->keypoints, unknown_good_keypoints_indices, *unknown_good_kp);
 
-  std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
+  //std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
 
   /**
    *  Clustering
@@ -221,12 +221,12 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
    */
   if (/*rototranslations.size () <= 0 && */(model_unknown_corrs->size () < 5 ))
   {
-    std::cout << "No groups found " << std::endl;
+    //std::cout << "No groups found " << std::endl;
     return false;
   }
   else
   {
-    std::cout << "MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATCH " << std::endl;
+    //std::cout << "MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATCH " << std::endl;
     return true;
     /**
      * Generates clouds for each instances found
@@ -244,13 +244,13 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
 
 model_object* ObjectDetection::compute_descriptors(pcl::PointCloud<PointType>::Ptr point_cloud)
 {
-  std::cout << "about to init node " << std::endl;
+  //std::cout << "about to init node " << std::endl;
   model_object* new_node(new model_object());
   new_node->raw_cloud = point_cloud;
   new_node->descriptors.reset(new pcl::PointCloud<DescriptorType>);
   new_node->keypoints.reset(new pcl::PointCloud<PointType>);
   new_node->normals.reset(new pcl::PointCloud<NormalType>);
-  std::cout << "init new_node " << std::endl;
+  //std::cout << "init new_node " << std::endl;
   /**
    * Compute Normals
    */
@@ -269,26 +269,26 @@ model_object* ObjectDetection::compute_descriptors(pcl::PointCloud<PointType>::P
   pcl::PointCloud<int> keypointIndices1;
   uniform_sampling.compute(keypointIndices1);
   pcl::copyPointCloud(*new_node->raw_cloud, keypointIndices1.points, *new_node->keypoints);
-  std::cout << "Model total points: " << new_node->raw_cloud->size () << "; Selected Keypoints: " << new_node->keypoints->size () << std::endl;
+  //std::cout << "Model total points: " << new_node->raw_cloud->size () << "; Selected Keypoints: " << new_node->keypoints->size () << std::endl;
   new_node->keypoints->header.frame_id = "camera_rgb_optical_frame";
-  std::cout << "1" << std::endl;
+  //std::cout << "1" << std::endl;
   /**
    *  Compute Descriptor for keypoints
    */
   pcl::SHOTEstimationOMP<PointType, NormalType, DescriptorType> descr_est;
   descr_est.setRadiusSearch (descr_rad_);
-  std::cout << "2" << std::endl;
+  //std::cout << "2" << std::endl;
 
   descr_est.setInputCloud (new_node->keypoints);
-  std::cout << "3" << std::endl;
+  //std::cout << "3" << std::endl;
   descr_est.setInputNormals (new_node->normals);
-  std::cout << "4" << std::endl;
+  //std::cout << "4" << std::endl;
   descr_est.setSearchSurface (new_node->raw_cloud);
-  std::cout << "5" << std::endl;
+  //std::cout << "5" << std::endl;
   descr_est.compute (*new_node->descriptors);
-  std::cout << "6" << std::endl;
+  //std::cout << "6" << std::endl;
   new_node->next = NULL;
-  std::cout << "new node being returned" << std::endl;
+  //std::cout << "new node being returned" << std::endl;
   return new_node;
 
 }

@@ -63,7 +63,7 @@ Visualization Manager:
       Class: rviz/PointCloud2
       Color: 255; 255; 255
       Color Transformer: RGB8
-      Decay Time: 10
+      Decay Time: 1
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -97,6 +97,18 @@ Visualization Manager:
         All Enabled: false
         base:
           Value: false
+        block_10:
+          Value: true
+        block_3:
+          Value: true
+        block_4:
+          Value: true
+        block_6:
+          Value: true
+        block_7:
+          Value: true
+        block_9:
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
@@ -111,19 +123,21 @@ Visualization Manager:
           Value: true
         cup_1:
           Value: true
-        cup_3:
-          Value: true
-        new_unknown_2:
-          Value: true
-        new_unknown_4:
-          Value: true
-        new_unknown_5:
-          Value: true
-        new_unknown_6:
-          Value: true
-        new_unknown_7:
-          Value: true
         root:
+          Value: true
+        unknown_0:
+          Value: true
+        unknown_1:
+          Value: true
+        unknown_11:
+          Value: true
+        unknown_2:
+          Value: true
+        unknown_3:
+          Value: true
+        unknown_5:
+          Value: true
+        unknown_8:
           Value: true
         world:
           Value: false
@@ -139,21 +153,35 @@ Visualization Manager:
               {}
           camera_rgb_frame:
             camera_rgb_optical_frame:
+              block_10:
+                {}
+              block_3:
+                {}
+              block_4:
+                {}
+              block_6:
+                {}
+              block_7:
+                {}
+              block_9:
+                {}
               cup_0:
                 {}
               cup_1:
                 {}
-              cup_3:
+              unknown_0:
                 {}
-              new_unknown_2:
+              unknown_1:
                 {}
-              new_unknown_4:
+              unknown_11:
                 {}
-              new_unknown_5:
+              unknown_2:
                 {}
-              new_unknown_6:
+              unknown_3:
                 {}
-              new_unknown_7:
+              unknown_5:
+                {}
+              unknown_8:
                 {}
       Update Interval: 0
       Value: true
@@ -203,7 +231,7 @@ Visualization Manager:
       Marker Topic: /bounding_boxes
       Name: MarkerArray
       Namespaces:
-        Wireframe Cuboid: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -260,7 +288,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.28304
+      Distance: 1.60945
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -272,10 +300,10 @@ Visualization Manager:
         Z: 0.607554
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: -1.3498
+      Pitch: -0.8798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.755
+      Yaw: 4.75
     Saved: ~
 Window Geometry:
   Displays:
@@ -293,5 +321,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1404
-  X: 2162
-  Y: 124
+  X: 423
+  Y: 33

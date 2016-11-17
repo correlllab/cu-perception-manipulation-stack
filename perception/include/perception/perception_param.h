@@ -67,12 +67,14 @@ namespace perception
   std::vector<std::string> object_labels;
   const std::string base_frame = "camera_rgb_optical_frame";
   //const std::string base_frame = "base";
-  const int seconds_keep_alive = 5;
-  int blocks = 0;
-  int cups = 0;
+  const int seconds_keep_alive = 15;
+  const int seconds_rename = 12;
+  double centroid_tracking_distance = 0.025; //meters
+  double retest_object_seconds = 1;
   struct object_tracking
   {
-    std::string name;
+    std::string label;
+    int id;
     std::time_t timestamp;
     Eigen::Vector3d centroid;
 
