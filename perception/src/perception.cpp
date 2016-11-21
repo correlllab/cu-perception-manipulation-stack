@@ -114,7 +114,7 @@ public:
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
-    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
+    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("camera_rgb_optical_frame","/bounding_boxes"));
     visual_tools_->enableBatchPublishing();
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
@@ -349,7 +349,7 @@ public:
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // objects is the set of points not on the table
     not_table_cloud_pub_.publish(not_table);
-
+/*
     // on top of table filtering. First extract plane
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane (new pcl::PointCloud<pcl::PointXYZRGB>);
     eifilter.setInputCloud(z_filtered_objects);
@@ -404,16 +404,27 @@ public:
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // not_table is the set of points not on the table
     //objects_cloud_pub_.publish(not_table);
-
+*/
+    //down sample
+    float model_ss_ (0.01f);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr not_table_keypoints(new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::UniformSampling<pcl::PointXYZRGB> uniform_sampling;
+    uniform_sampling.setInputCloud (not_table);
+    uniform_sampling.setRadiusSearch (model_ss_);
+    pcl::PointCloud<int> keypointIndices1;
+    uniform_sampling.compute(keypointIndices1);
+    pcl::copyPointCloud(*not_table, keypointIndices1.points, *not_table_keypoints);
+    //std::cout << "Model total points: " << new_node->raw_cloud->size () << "; Selected Keypoints: " << new_node->keypoints->size () << std::endl;
+    not_table_keypoints->header.frame_id = "camera_rgb_optical_frame";
     // Cluster objects
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
-    tree->setInputCloud(not_table);
+    tree->setInputCloud(not_table_keypoints);
 
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     // SI units
     //ec.setClusterTolerance(0.02);//original before rebecca came
-    ec.setClusterTolerance(0.04);
+    ec.setClusterTolerance(0.03);
     /* From experiments:
      * - Tiny wood cubes have about 300 points
      * - Cubeletes have about 800 points
@@ -426,10 +437,10 @@ public:
      * Idea: filter known objects and use RANSAC to find a match. Others, do more processing on
      *  -start to save objects
      */
-    ec.setMinClusterSize(185);  // less than a wood cube
+    ec.setMinClusterSize(10);  // less than a wood cube
     ec.setMaxClusterSize(15000);  // a plate is lots
     ec.setSearchMethod(tree);
-    ec.setInputCloud(not_table);
+    ec.setInputCloud(not_table_keypoints);
     ec.extract(cluster_indices);
 
     //TODO: Old poses continue to be published?
@@ -471,7 +482,7 @@ public:
            pit != it->indices.end();
            ++pit)
       {
-        single_object->points.push_back(not_table->points[*pit]);
+        single_object->points.push_back(not_table_keypoints->points[*pit]);
       }
       single_object->width = single_object->points.size();
       single_object->height = 1;
