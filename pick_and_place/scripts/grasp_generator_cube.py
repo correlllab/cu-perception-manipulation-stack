@@ -73,6 +73,13 @@ class GraspGeneratorCube(object):
                                     "/place_frame",
                                     "/root")
 
+    def get_camera_frame(self):
+        frame = "/camera_link"
+        if self.listen.frameExists("/root") and self.listen.frameExists(frame):
+            translation, quaternion = self.listen.lookupTransform("/root", frame, rospy.Time(0))
+            print(translation)
+            print(quaternion)
+
     def generate_pick_frame(self):
         pick_obj_name = self.pick_frame
         if self.listen.frameExists("/root") and self.listen.frameExists(pick_obj_name):
@@ -92,6 +99,7 @@ class GraspGeneratorCube(object):
     def broadcast_frames(self,msg):
         self.generate_place_frame()
         self.generate_pick_frame()
+        self.get_camera_frame()
 
 
     def getOffsetPoses(self, translation, quaternion, requrd_rot, requrd_trans):

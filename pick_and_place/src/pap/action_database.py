@@ -25,12 +25,12 @@ class StackingStart(smach.State):
         self.jgn = JacoGripper()
 
     def execute(self,userdata):
-        self.jgn.set_position([0.0,0.0,0.0])
         if userdata.tower_size_in == 0:
             self.jn.home()
             userdata.tower_size_out = userdata.tower_size_in + 1
             return 'Start'
         else:
+            self.jgn.set_position([50.0,50.0,0.0])
             self.jn.home()
             userdata.tower_size_out = userdata.tower_size_in + 1
             return 'Ready'
@@ -244,10 +244,10 @@ class SearchObject(smach.State):
         while True:
             if np.any(np.array(self.finger_detect)[[self.fingers]] == np.array(self.detect_goal)):
                 return 'found'
-            choices = np.array([0.0,0.05,-0.05,0.1,-0.1])
+            choices = np.array([0.0,0.075,-0.075,0.025,-0.025,0.05,-0.05])
             x = np.random.choice(choices)
             y = np.random.choice(choices)
-            z = -0.01
+            z = -0.02
             msg = self.create_pose_velocity_msg([x,y,z,0.0,0.0,0.0])
             self.jn.kinematic_control(msg)
             rate.sleep()

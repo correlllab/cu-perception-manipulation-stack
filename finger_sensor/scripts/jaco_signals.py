@@ -48,7 +48,7 @@ class SignalDetector():
                     elif sai[finger] < self.sai_calibration[finger] and self.objectDet[finger] == True:
                         detected[finger] = False
             else:
-                self.calibrate_fingers(sai,finger,1000)
+                self.calibrate_fingers(sai,finger,1800)
 
         self.objectDet = self.send_finger_msg(self.object_det_pub,FingerDetect,detected,self.objectDet)
 
