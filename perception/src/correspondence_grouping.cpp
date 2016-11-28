@@ -22,8 +22,8 @@ float hv_rad_clutter_ (0.03f);
 float hv_regularizer_ (3.0f);
 float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
-std::string path_to_models = "/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/";
-std::string models[] = {"cup", "block"};
+std::string path_to_models = "/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
+std::string models[] = {/*"red_metal_cup_white_speckles","red_wood_block_1inx1in"};//{"cup", */"block"};
 //other option is to try a hue histogram
 //http://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
 
@@ -58,18 +58,30 @@ ObjectDetection::ObjectDetection()
 
 }
 
+/*
+ * pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
+    pcl::PolygonMesh triangles;
+    pcl::io::loadPolygonFileSTL("C:/Users/bono/Documents/Kinect2/Meshes/MeshedReconstructionAnderson.stl", triangles);
+    pcl::fromROSMsg(triangles.cloud, *cloud);
+    */
+
 void ObjectDetection::load_model_objects()
 {
    model_object* new_node;
    pcl::PointCloud<PointType>::Ptr cloud;//(new pcl::PointCloud<PointType> ());
+   pcl::PolygonMesh triangles;
+
    if(sizeof(models) <= 0) return;
    for( unsigned int a = 0; a < sizeof(models)/sizeof(models[0]); a++ )
    {
      std::cout << "sizeof(models)" << sizeof(models)/sizeof(models[0]) << std::endl;
      std::cout << models[a] << endl;
      cloud.reset(new pcl::PointCloud<PointType> ());
-     if( pcl::io::loadPCDFile (path_to_models + models[a] + ".pcd", *cloud) >= 0)
+     if//(pcl::io::loadPolygonFileSTL(path_to_models + models[a] + "/meshes/poisson_mesh.stl", triangles) >= 0)
+       ( pcl::io::loadPCDFile (path_to_models + models[a] + ".pcd", *cloud) >= 0)
      {
+       //pcl::fromPCLPointCloud2(triangles.cloud, *cloud);
+       //pcl::fromROSMsg(triangles.cloud, *cloud);
        std::cout << "loaded " << models[a] << std::endl;
        new_node = compute_descriptors(cloud);
        std::cout << "Model total points: " << new_node->raw_cloud->size () << "; Selected Keypoints: " << new_node->keypoints->size () << std::endl;
@@ -128,7 +140,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
     return false;
   }
   found_match_cloud_pub_.publish(unknown->keypoints);
-  found_match_cloud_pub_.publish(model->keypoints);
+  //found_match_cloud_pub_.publish(model->keypoints);
 
   /**
    *  Find Model-Scene Correspondences with KdTree
@@ -161,7 +173,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   pcl::copyPointCloud (*model->keypoints, model_good_keypoints_indices, *model_good_kp);
   pcl::copyPointCloud (*unknown->keypoints, unknown_good_keypoints_indices, *unknown_good_kp);
 
-  //std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
+  std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
 
   /**
    *  Clustering
@@ -221,12 +233,12 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
    */
   if (/*rototranslations.size () <= 0 && */(model_unknown_corrs->size () < 5 ))
   {
-    //std::cout << "No groups found " << std::endl;
+    std::cout << "No groups found " << std::endl;
     return false;
   }
   else
   {
-    //std::cout << "MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATCH " << std::endl;
+    std::cout << "MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATCH " << std::endl;
     return true;
     /**
      * Generates clouds for each instances found

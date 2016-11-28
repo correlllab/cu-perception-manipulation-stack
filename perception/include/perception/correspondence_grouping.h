@@ -21,6 +21,11 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl_ros/point_cloud.h>
 
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/io/ply_io.h>
+#include <ros/ros.h>
+
 namespace object_detection
 {
 typedef pcl::PointXYZRGB PointType;

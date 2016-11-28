@@ -418,7 +418,7 @@ public:
     not_table_keypoints->header.frame_id = "camera_rgb_optical_frame";
     // Cluster objects
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
-    tree->setInputCloud(not_table_keypoints);
+    tree->setInputCloud(not_table);
 
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
@@ -440,7 +440,7 @@ public:
     ec.setMinClusterSize(10);  // less than a wood cube
     ec.setMaxClusterSize(15000);  // a plate is lots
     ec.setSearchMethod(tree);
-    ec.setInputCloud(not_table_keypoints);
+    ec.setInputCloud(not_table);
     ec.extract(cluster_indices);
 
     //TODO: Old poses continue to be published?
@@ -453,7 +453,7 @@ public:
     bowl_objects = 0;
     unknown_objects = 0;
 
-    int objects_found = cluster_indices.end() - cluster_indices.begin();
+    //int objects_found = cluster_indices.end() - cluster_indices.begin();
     object_labels.clear();
     Eigen::Vector4d useless_centroid;
     Eigen::Vector3d object_centroid;
@@ -482,7 +482,7 @@ public:
            pit != it->indices.end();
            ++pit)
       {
-        single_object->points.push_back(not_table_keypoints->points[*pit]);
+        single_object->points.push_back(not_table->points[*pit]);
       }
       single_object->width = single_object->points.size();
       single_object->height = 1;
@@ -520,9 +520,9 @@ public:
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
       object_pose.translation() = object_centroid;
       local_poses.push_back(object_pose);
-      //ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
+      ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << idx << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
 
-      //ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
+      ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
 
       /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
       std::ostringstream ss;
