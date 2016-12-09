@@ -22,7 +22,7 @@ float hv_rad_clutter_ (0.03f);
 float hv_regularizer_ (3.0f);
 float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
-std::string path_to_models = "/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
+std::string path_to_models = "/home/correlllab/ros/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
 std::string models[] = {/*"red_metal_cup_white_speckles","red_wood_block_1inx1in"};//{"cup", */"block"};
 //other option is to try a hue histogram
 //http://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
@@ -312,7 +312,7 @@ void ObjectDetection::compute_cup()
   cup_normals.reset(new pcl::PointCloud<NormalType>);
   cup_descriptors.reset(new pcl::PointCloud<DescriptorType>);
 
-  if( pcl::io::loadPCDFile ("/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/cup.pcd", *cup) < 0)
+  if( pcl::io::loadPCDFile ("/home/correlllab/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/cup.pcd", *cup) < 0)
   {
     std::cout << "Error loading model cloud." << std::endl;
     return;
@@ -657,5 +657,3 @@ bool identify_objects(pcl::PointCloud<PointType>::Ptr unknown)
 }*/
 
 } // end namespace object_detection
-
-

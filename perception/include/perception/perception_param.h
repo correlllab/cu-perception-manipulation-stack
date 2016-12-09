@@ -14,8 +14,8 @@
 
 namespace perception
 {
-  const bool standalone = true; //running with a robot base or just the camera
-  const bool continuous_running = true; //continuously run perception or wait for keyboard command
+  const bool standalone = false; //running with a robot base or just the camera
+  const bool continuous_running = false; //continuously run perception or wait for keyboard command
   enum task_running { TASK1 = 0, TASK2 = 1, TASK3 = 2} task;
 
   //cup with spoon
@@ -69,8 +69,8 @@ namespace perception
   std::vector<std::string> object_labels;
   std::string base_frame;
 
-  const int seconds_keep_alive = 15;
-  const int seconds_rename = 12;
+  const int seconds_keep_alive = 5;
+  const int seconds_rename = 4;
   double centroid_tracking_distance = 0.025; //meters
   double retest_object_seconds = 1;
   struct object_tracking
