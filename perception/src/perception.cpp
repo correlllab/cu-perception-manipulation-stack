@@ -13,13 +13,6 @@
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <rviz_visual_tools/tf_visual_tools.h>
 
-//// Eigen and TF
-//#include <eigen_conversions/eigen_msg.h>
-//#include <tf/transform_broadcaster.h>
-//#include <tf/transform_listener.h>
-//#include <tf_conversions/tf_eigen.h>
-//#include <tf/transform_datatypes.h>
-
 // Image processing
 #include <pcl_ros/point_cloud.h>
 #include <pcl/PCLPointCloud2.h>
@@ -49,6 +42,8 @@
 #include <perception/perception_param.h>
 #include <perception/correspondence_grouping.h>
 
+//color-based segmentation
+#include <pcl/segmentation/region_growing_rgb.h>
 namespace perception
 {
 void callback(perception::perception_paramConfig &config, uint32_t level)
@@ -406,7 +401,7 @@ public:
     //objects_cloud_pub_.publish(not_table);
 */
     //down sample
-    float model_ss_ (0.01f);
+   /* float model_ss_ (0.01f);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr not_table_keypoints(new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::UniformSampling<pcl::PointXYZRGB> uniform_sampling;
     uniform_sampling.setInputCloud (not_table);
@@ -415,7 +410,7 @@ public:
     uniform_sampling.compute(keypointIndices1);
     pcl::copyPointCloud(*not_table, keypointIndices1.points, *not_table_keypoints);
     //std::cout << "Model total points: " << new_node->raw_cloud->size () << "; Selected Keypoints: " << new_node->keypoints->size () << std::endl;
-    not_table_keypoints->header.frame_id = "camera_rgb_optical_frame";
+    not_table_keypoints->header.frame_id = "camera_rgb_optical_frame";*/
     // Cluster objects
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
     tree->setInputCloud(not_table);
@@ -461,7 +456,6 @@ public:
     Eigen::Affine3d object_pose;
     visual_tools_->deleteAllMarkers();
 
-
     tf_listener_.waitForTransform(base_frame, "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
     try
     {
@@ -473,6 +467,159 @@ public:
       //ros::Duration(1.0).sleep();
     }
 
+    clustered_objects* segmented_objects = NULL;
+    clustered_objects* iterator;
+    pcl::PointXYZRGB min, max;
+    int unique_id = 0;
+    //separate objects into a linked list to make processing more simple
+    //perform object labeling
+    //if unknown, attempt to separate clusters by color and re-label
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
+         it != cluster_indices.end();
+         ++it)
+    {
+      clustered_objects* new_object(new clustered_objects());
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object (new pcl::PointCloud<pcl::PointXYZRGB>);
+      for (std::vector<int>::const_iterator pit = it->indices.begin();
+           pit != it->indices.end();
+           ++pit)
+      {
+        single_object->points.push_back(not_table->points[*pit]);
+      }
+      single_object->width = single_object->points.size();
+      single_object->height = 1;
+      single_object->is_dense = true;
+      single_object->header.frame_id = "camera_rgb_optical_frame";
+      std::string label = ObjectDetectionPtr->label_object(single_object);
+      if(colored_block_detection)
+      {
+        //label = ObjectDetectionPtr->label_object(single_object);
+        pcl::getMinMax3D(*single_object, min, max);
+        double height = max.z-min.z;
+        double depth = max.x-min.x;
+        double width = max.y-min.y;
+        std::cout << label << " height: " << height << ", depth: " << depth << ", width: " << width;
+        if(label == "unknown")
+        {
+          new_object = get_colored_segments(single_object, unique_id);
+
+        }
+        else
+        {
+          new_object->label = label;
+          new_object->point_cloud = single_object;
+          new_object->id = unique_id;
+          unique_id++;
+          //get_colored_segments_2(single_object, unique_id);
+        }
+
+      }
+      else
+      { //just label and add object
+        //label = ObjectDetectionPtr->label_object(single_object);
+        new_object->label = label;
+        new_object->point_cloud = single_object;
+        new_object->id = unique_id;
+        unique_id++;
+      }
+
+      if(!segmented_objects)
+      {
+        segmented_objects = new_object;
+        iterator = segmented_objects;
+      }
+      else
+      {
+        while(iterator->next)
+          iterator = iterator->next;
+        iterator->next = new_object;
+      }
+    }
+
+    iterator = segmented_objects;
+    object_pose = Eigen::Affine3d::Identity();
+    tf::transformTFToEigen(qr_transform, object_pose);
+
+    while(iterator)
+    {
+      Eigen::Affine3d new_pose = object_pose;
+
+      //transform object to base frame for proper pose
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
+      pcl::transformPointCloud (*iterator->point_cloud, *single_object_transformed, new_pose);
+      single_object_transformed->header.frame_id = base_frame;
+
+      //coputing the centroid in base frame coordinates and push to local_pushes
+      pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
+      object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
+      new_pose.translation() = object_centroid;
+      local_poses.push_back(new_pose);
+
+      ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << iterator->id << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
+      ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_" << iterator->id << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
+
+      //object tracking
+      std::ostringstream ss;
+      object_tracking* matching_centroid = near_centroid_object(object_centroid);
+      std::string label = iterator->label;
+      rviz_visual_tools::colors color = rviz_visual_tools::MAGENTA;
+      if(matching_centroid)
+      {
+        ///bug: object's label gets pushed into tf transform publisher, but we removed it at the end of this fuction
+        ///   this results in removed objects being sent to base, then back to where is was
+        if(matching_centroid->label == "unknown" || timed_out(matching_centroid->timestamp,retest_object_seconds))
+        {
+          //label = ObjectDetectionPtr->label_object(single_object);
+          if(matching_centroid->label == "unknown" || label != "unknown" )
+          {
+            if(matching_centroid->label != label)
+            {
+              ss << matching_centroid->label << "_" << matching_centroid->id;
+              tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+              ss.str("");
+            }
+            update_tracked_object(matching_centroid, object_centroid, label);
+          }
+          else if(timed_out(matching_centroid->timestamp,seconds_rename))
+          {
+            ss << matching_centroid->label << "_" << matching_centroid->id;
+            tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+            ss.str("");
+            update_tracked_object(matching_centroid, object_centroid, label);
+          }
+          else
+          {
+            label = matching_centroid->label;
+          }
+        }
+        else
+          label = matching_centroid->label;
+        ss << label << "_" << matching_centroid->id;
+      }
+      else
+      {
+        int id = get_unique_id();
+        ss << label << "_" << id;
+        add_tracking_object(object_centroid, label, id);
+      }
+      if(label == "unknown")
+         color = rviz_visual_tools::CYAN;
+     ROS_INFO_STREAM_NAMED("ppc", "Object Name" << ss.str());
+      //pcl::PointXYZRGB min, max;
+      pcl::getMinMax3D(*iterator->point_cloud, min, max);
+      double height = max.z-min.z;
+      double depth = max.x-min.x;
+      double width = max.y-min.y;
+      visual_tools_->publishWireframeCuboid(new_pose, depth, width, height, color);
+      object_labels.push_back(ss.str());
+      //pcl::io::savePCDFileASCII("/home/rebecca/ros/"+ss.str()+".pcd", *single_object);
+
+      objects_cloud_pub_.publish(iterator->point_cloud);
+
+      iterator = iterator->next;
+    }
+    remove_outdated_objects();
+    /*
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
          it != cluster_indices.end();
          ++it)
@@ -489,7 +636,7 @@ public:
       single_object->is_dense = true;
       single_object->header.frame_id = "camera_rgb_optical_frame";
 
-      //removing noise
+      /*removing noise
       pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
 
       sor.setInputCloud (single_object);
@@ -524,17 +671,52 @@ public:
 
       ROS_INFO_STREAM_NAMED("ppc", "\n\nuseless_centroid_" << idx << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
 
-      /*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************/
+      //*******************************REBECCA'S PERCEPTION ADDITIONS**********************************************************************
       std::ostringstream ss;
       object_tracking* matching_centroid = near_centroid_object(object_centroid);
-      std::string label;
-      if(matching_centroid)
+      std::string label = ObjectDetectionPtr->label_object(single_object);
+      //colored object detection and tracking
+      if(colored_block_detection && label == "unknown")
+      {
+        pcl::RegionGrowingRGB<pcl::PointXYZRGB> reg;
+        reg.setInputCloud(single_object);
+        reg.setSearchMethod(tree);
+        reg.setDistanceThreshold(0.02);
+        reg.setPointColorThreshold(10);
+        reg.setRegionColorThreshold(10);
+        reg.setMinClusterSize(50);
+
+        std::vector <pcl::PointIndices> clusters;
+        reg.extract (clusters);
+        for (std::vector<pcl::PointIndices>::const_iterator it_2 = clusters.begin();
+             it_2 != clusters.end();
+             ++it_2)
+        {
+          pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_block (new pcl::PointCloud<pcl::PointXYZRGB>);
+          for (std::vector<int>::const_iterator pit = it_2->indices.begin();
+               pit != it_2->indices.end();
+               ++pit)
+          {
+            single_block->points.push_back(single_object->points[*pit]);
+          }
+          single_block->width = single_block->points.size();
+          single_block->height = 1;
+          single_block->is_dense = true;
+          single_block->header.frame_id = "camera_rgb_optical_frame";
+          std::string label_2 = ObjectDetectionPtr->label_object(single_block);
+          if(label_2 == "block")
+          {
+
+          }
+        }
+      }
+      else if(matching_centroid)
       {
         ///bug: object's label gets pushed into tf transform publisher, but we removed it at the end of this fuction
         ///   this results in removed objects being sent to base, then back to where is was
         if(matching_centroid->label == "unknown" || timed_out(matching_centroid->timestamp,retest_object_seconds))
         {
-          label = ObjectDetectionPtr->label_object(single_object);
+          //label = ObjectDetectionPtr->label_object(single_object);
           if(matching_centroid->label == "unknown" || label != "unknown" )
           {
             if(matching_centroid->label != label)
@@ -563,7 +745,7 @@ public:
       }
       else
       {
-        label = ObjectDetectionPtr->label_object(single_object);
+        //label = ObjectDetectionPtr->label_object(single_object);
         int id = get_unique_id();
         ss << label << "_" << id;
         add_tracking_object(object_centroid, label, id);
@@ -581,7 +763,7 @@ public:
       //ROS_INFO_STREAM_NAMED("ppc", ss.str() + " published");
       idx++;
 
-    }
+    }*/
 
 //    object_tracking* iterator = objects_linkedlist;
 //    while(iterator)
@@ -600,6 +782,73 @@ public:
 //      iterator = iterator->next;
 //    }
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
+  }
+
+  clustered_objects* get_colored_segments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int &unique_id)
+  {
+    pcl::RegionGrowingRGB<pcl::PointXYZRGB> reg;
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+    tree->setInputCloud(single_object);
+    reg.setInputCloud(single_object);
+    //reg.setIndices(indices);
+    reg.setSearchMethod(tree);
+    reg.setDistanceThreshold(1); //10
+    reg.setPointColorThreshold(6); //6
+    reg.setRegionColorThreshold(5); //5
+    reg.setMinClusterSize(100);
+
+    std::vector <pcl::PointIndices> clusters;
+    reg.extract (clusters);
+    clustered_objects* return_object = NULL;
+    clustered_objects* iterator;
+    for (std::vector<pcl::PointIndices>::const_iterator it = clusters.begin();
+         it != clusters.end();
+         ++it)
+    {
+      clustered_objects* new_object(new clustered_objects());
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr part_object (new pcl::PointCloud<pcl::PointXYZRGB>);
+      for (std::vector<int>::const_iterator pit = it->indices.begin();
+           pit != it->indices.end();
+           ++pit)
+      {
+        part_object->points.push_back(single_object->points[*pit]);
+      }
+      part_object->width = part_object->points.size();
+      part_object->height = 1;
+      part_object->is_dense = true;
+      part_object->header.frame_id = "camera_rgb_optical_frame";
+
+      new_object->label = ObjectDetectionPtr->label_object(part_object);
+      pcl::PointXYZRGB min, max;
+      pcl::getMinMax3D(*part_object, min, max);
+      double height = max.z-min.z;
+      double depth = max.x-min.x;
+      double width = max.y-min.y;
+      std::cout << new_object->label << " height: " << height << ", depth: " << depth << ", width: " << width;
+
+      if(height < 0.025 && height > 0.015)
+      {
+        std::cout << "renaming object to block based on height" << endl;
+        new_object->label = "block";
+      }
+      new_object->point_cloud = part_object;
+      new_object->id = unique_id;
+      unique_id++;
+      std::cout << new_object->label << std::endl;
+      //get_colored_segments_2(part_object, unique_id);
+      if(!return_object)
+      {
+        return_object = new_object;
+        iterator = return_object;
+      }
+      else
+      {
+        while(iterator->next)
+          iterator = iterator->next;
+        iterator->next = new_object;
+      }
+    }
+    return return_object;
   }
 
 }; // end class PerceptionTester

@@ -7,7 +7,7 @@
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 #include <tf/transform_datatypes.h>
-
+#include <pcl_ros/point_cloud.h>
 #include <ctime>
 #include <ros/ros.h>
 #include <string>
@@ -16,6 +16,7 @@ namespace perception
 {
   const bool standalone = true; //running with a robot base or just the camera
   const bool continuous_running = true; //continuously run perception or wait for keyboard command
+  const bool colored_block_detection = true;
   enum task_running { TASK1 = 0, TASK2 = 1, TASK3 = 2} task;
 
   //cup with spoon
@@ -69,9 +70,9 @@ namespace perception
   std::vector<std::string> object_labels;
   std::string base_frame;
 
-  const int seconds_keep_alive = 15;
-  const int seconds_rename = 12;
-  double centroid_tracking_distance = 0.025; //meters
+  const int seconds_keep_alive = 6; //15
+  const int seconds_rename = 5; //12
+  double centroid_tracking_distance = 0.015; //meters
   double retest_object_seconds = 1;
   struct object_tracking
   {
@@ -81,6 +82,15 @@ namespace perception
     Eigen::Vector3d centroid;
 
     object_tracking* next;
+  };
+  struct clustered_objects
+  {
+    std::string label;
+    int id;
+    Eigen::Vector3d centroid;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud;
+
+    clustered_objects* next;
   };
 }
 

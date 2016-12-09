@@ -51,7 +51,7 @@ ObjectDetection::ObjectDetection()
     models_linkedlist = NULL;
     if(sizeof(models) > 0) //tabletop detection
     {
-      compute_cup();
+      //compute_cup();
       load_model_objects();
     }
 
@@ -173,7 +173,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   pcl::copyPointCloud (*model->keypoints, model_good_keypoints_indices, *model_good_kp);
   pcl::copyPointCloud (*unknown->keypoints, unknown_good_keypoints_indices, *unknown_good_kp);
 
-  std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
+  //std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
 
   /**
    *  Clustering
