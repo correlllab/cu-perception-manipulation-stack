@@ -109,7 +109,7 @@ public:
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
-    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("camera_rgb_optical_frame","/bounding_boxes"));
+    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
     visual_tools_->enableBatchPublishing();
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
@@ -344,7 +344,7 @@ public:
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // objects is the set of points not on the table
     not_table_cloud_pub_.publish(not_table);
-/*
+
     // on top of table filtering. First extract plane
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane (new pcl::PointCloud<pcl::PointXYZRGB>);
     eifilter.setInputCloud(z_filtered_objects);
@@ -365,7 +365,7 @@ public:
     prism.setInputCloud(z_filtered_objects);
     prism.setInputPlanarHull(convex_hull);
     // TODO set them easily
-    prism.setHeightLimits(-0.002, 0.06);
+    prism.setHeightLimits(-0.002, 0.1);
     pcl::PointIndices::Ptr obj_indices (new pcl::PointIndices);
     prism.segment(*obj_indices);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr objects (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -399,7 +399,7 @@ public:
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // not_table is the set of points not on the table
     //objects_cloud_pub_.publish(not_table);
-*/
+/*
     //down sample
    /* float model_ss_ (0.01f);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr not_table_keypoints(new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -432,7 +432,7 @@ public:
      * Idea: filter known objects and use RANSAC to find a match. Others, do more processing on
      *  -start to save objects
      */
-    ec.setMinClusterSize(10);  // less than a wood cube
+    ec.setMinClusterSize(100);  // less than a wood cube
     ec.setMaxClusterSize(15000);  // a plate is lots
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
@@ -755,7 +755,7 @@ public:
       double height = max.z-min.z;
       double depth = max.x-min.x;
       double width = max.y-min.y;
-      visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, rviz_visual_tools::RAND);
+      visual_tools_->publishWireframeCuboid(object_pose, height, depth, width, rviz_visual_tools::RAND);
       object_labels.push_back(ss.str());
       //pcl::io::savePCDFileASCII("/home/rebecca/ros/"+ss.str()+".pcd", *single_object);
       remove_outdated_objects();
