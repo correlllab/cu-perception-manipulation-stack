@@ -23,7 +23,7 @@ float hv_regularizer_ (3.0f);
 float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 std::string path_to_models = "/home/correlllab/ros/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
-std::string models[] = {/*"red_metal_cup_white_speckles","red_wood_block_1inx1in"};//{"cup", */"block"};
+std::string models[] = {"cup","block","plate","bowl"};
 //other option is to try a hue histogram
 //http://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
 
