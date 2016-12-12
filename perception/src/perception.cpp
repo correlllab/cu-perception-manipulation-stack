@@ -631,10 +631,28 @@ public:
       double depth = max.x-min.x;
       double width = max.y-min.y;
       visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
-      
+
       //pcl::io::savePCDFileASCII("/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/"+ss.str()+".pcd", *iterator->point_cloud);
 
       objects_cloud_pub_.publish(iterator->point_cloud);
+
+      if(label == "cup_with_spoon")
+      {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr spoon_object (new pcl::PointCloud<pcl::PointXYZRGB>);
+        for (int pit = 0; pit < single_object_transformed->points.size(); ++pit)
+        {
+          if(single_object_transformed->points[pit].z > min.z+.07)
+            spoon_object->points.push_back(single_object_transformed->points[pit]);
+        }
+        ROS_INFO_STREAM_NAMED("ppc", "object point cloud size: " << spoon_object->points.size());
+        object_labels.push_back("spoon");
+        object_pose = Eigen::Affine3d::Identity();
+        pcl::compute3DCentroid(*spoon_object, useless_centroid);
+        object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
+        object_pose.translation() = object_centroid;
+        local_poses.push_back(object_pose);
+        visual_tools_->publishWireframeCuboid(object_pose, .1, .1, .1, rviz_visual_tools::MAGENTA);
+      }
 
       iterator = iterator->next;
     }
