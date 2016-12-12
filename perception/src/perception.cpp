@@ -456,17 +456,7 @@ public:
     Eigen::Affine3d object_pose;
     visual_tools_->deleteAllMarkers();
 
-    tf_listener_.waitForTransform(base_frame, "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
-    try
-    {
-      tf_listener_.lookupTransform(base_frame, "camera_rgb_optical_frame", ros::Time(0), qr_transform);
-    }
-    catch (tf::TransformException ex)
-    {
-      ROS_ERROR("%s", ex.what());
-      //ros::Duration(1.0).sleep();
-    }
-
+    
     clustered_objects* segmented_objects = NULL;
     clustered_objects* iterator;
     pcl::PointXYZRGB min, max;
@@ -537,26 +527,53 @@ public:
     }
 
     iterator = segmented_objects;
-    object_pose = Eigen::Affine3d::Identity();
-    tf::transformTFToEigen(qr_transform, object_pose);
+    
 
     while(iterator)
     {
-      Eigen::Affine3d new_pose = object_pose;
+      tf_listener_.waitForTransform(base_frame, "camera_rgb_optical_frame", ros::Time(0), ros::Duration(1.0));
+      try
+      {
+        tf_listener_.lookupTransform(base_frame, "camera_rgb_optical_frame", ros::Time(0), qr_transform);
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_ERROR("%s", ex.what());
+        //ros::Duration(1.0).sleep();
+      }
+      object_pose = Eigen::Affine3d::Identity();
+      pcl::compute3DCentroid(*iterator->point_cloud, useless_centroid);
+      object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
+
+      tf::transformTFToEigen(qr_transform, object_pose);
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
+      pcl::transformPointCloud (*iterator->point_cloud, *single_object_transformed, object_pose);
+      object_pose.translation() = object_centroid;
+      single_object_transformed->header.frame_id = base_frame;
+
+      object_pose = Eigen::Affine3d::Identity();
+      pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
+      object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
+      object_pose.translation() = object_centroid;
+      
+
+      /*object_pose = Eigen::Affine3d::Identity();
+      tf::transformTFToEigen(qr_transform, object_pose);
+      //Eigen::Affine3d new_pose = object_pose;
 
       //transform object to base frame for proper pose
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
-      pcl::transformPointCloud (*iterator->point_cloud, *single_object_transformed, new_pose);
+      pcl::transformPointCloud (*iterator->point_cloud, *single_object_transformed, object_pose);
       single_object_transformed->header.frame_id = base_frame;
 
       //coputing the centroid in base frame coordinates and push to local_pushes
       pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
-      new_pose.translation() = object_centroid;
-      local_poses.push_back(new_pose);
+      object_pose.translation() = object_centroid;
+      local_poses.push_back(object_pose);*/
 
-      ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << iterator->id << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
-      ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_" << iterator->id << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
+      //ROS_INFO_STREAM_NAMED("ppc", "\n\nObject " << iterator->id << " has " << single_object_transformed->width * single_object_transformed->height << " points");// << '\n');
+      //ROS_INFO_STREAM_NAMED("ppc", "useless_centroid_" << iterator->id << ": "<< useless_centroid(0)<<", "<< useless_centroid(1)<<", " << useless_centroid(2));
 
       //object tracking
       std::ostringstream ss;
@@ -604,15 +621,18 @@ public:
       }
       if(label == "unknown")
          color = rviz_visual_tools::CYAN;
-     ROS_INFO_STREAM_NAMED("ppc", "Object Name" << ss.str());
+      local_poses.push_back(object_pose);
+      object_labels.push_back(ss.str());
+      
+      //ROS_INFO_STREAM_NAMED("ppc", "Object Name" << ss.str());
       //pcl::PointXYZRGB min, max;
-      pcl::getMinMax3D(*iterator->point_cloud, min, max);
+      pcl::getMinMax3D(*single_object_transformed, min, max);
       double height = max.z-min.z;
       double depth = max.x-min.x;
       double width = max.y-min.y;
-      visual_tools_->publishWireframeCuboid(new_pose, depth, width, height, color);
-      object_labels.push_back(ss.str());
-      //pcl::io::savePCDFileASCII("/home/rebecca/ros/"+ss.str()+".pcd", *single_object);
+      visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
+      
+      //pcl::io::savePCDFileASCII("/home/correlllab/ros/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/"+ss.str()+".pcd", *iterator->point_cloud);
 
       objects_cloud_pub_.publish(iterator->point_cloud);
 
@@ -795,7 +815,7 @@ public:
     reg.setDistanceThreshold(1); //10
     reg.setPointColorThreshold(6); //6
     reg.setRegionColorThreshold(5); //5
-    reg.setMinClusterSize(100);
+    reg.setMinClusterSize(50);
 
     std::vector <pcl::PointIndices> clusters;
     reg.extract (clusters);

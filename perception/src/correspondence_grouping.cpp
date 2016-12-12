@@ -22,8 +22,9 @@ float hv_rad_clutter_ (0.03f);
 float hv_regularizer_ (3.0f);
 float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
-std::string path_to_models = "/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/";
-std::string models[] = {"cup","block"};
+
+std::string path_to_models = "/home/correlllab/ros/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
+std::string models[] = {"cup","block","plate","bowl"};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
