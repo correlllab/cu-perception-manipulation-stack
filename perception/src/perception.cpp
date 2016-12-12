@@ -85,7 +85,7 @@ public:
     if(standalone)
       base_frame = "camera_rgb_optical_frame";
     else
-      base_frame = "base";
+      base_frame = "root";
 
     objects_linkedlist = NULL;
     ROS_INFO_STREAM_NAMED("constructor","starting PerceptionTester...");
@@ -419,7 +419,7 @@ public:
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     // SI units
     //ec.setClusterTolerance(0.02);//original before rebecca came
-    ec.setClusterTolerance(0.03);
+    ec.setClusterTolerance(0.04);
     /* From experiments:
      * - Tiny wood cubes have about 300 points
      * - Cubeletes have about 800 points
@@ -636,7 +636,7 @@ public:
 
       objects_cloud_pub_.publish(iterator->point_cloud);
 
-      if(label == "cup_with_spoon")
+      if(label == "cup_radhen" && height > .1)
       {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr spoon_object (new pcl::PointCloud<pcl::PointXYZRGB>);
         for (int pit = 0; pit < single_object_transformed->points.size(); ++pit)
