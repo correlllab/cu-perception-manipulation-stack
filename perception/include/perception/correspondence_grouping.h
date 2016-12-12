@@ -69,6 +69,7 @@ struct model_object
   pcl::PointCloud<PointType>::Ptr keypoints;
   pcl::PointCloud<NormalType>::Ptr normals;
   pcl::PointCloud<DescriptorType>::Ptr descriptors;
+  int correspondence_needed;
 
   model_object* next;
 };

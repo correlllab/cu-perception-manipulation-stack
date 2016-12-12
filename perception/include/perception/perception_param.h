@@ -14,7 +14,7 @@
 
 namespace perception
 {
-  const bool standalone = false; //running with a robot base or just the camera
+  const bool standalone = true; //running with a robot base or just the camera
   const bool continuous_running = true; //continuously run perception or wait for keyboard command
   const bool colored_block_detection = false;
 

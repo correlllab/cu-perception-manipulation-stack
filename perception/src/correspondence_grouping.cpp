@@ -23,8 +23,9 @@ float hv_regularizer_ (3.0f);
 float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 
-std::string path_to_models = "/home/correlllab/ros/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
-std::string models[] = {"cup","block","plate","bowl"};
+std::string path_to_models = "/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
+std::string models[] = {"cup_with_spoon","cup","block","plate","bowl"};
+int correspondences_needed[] = {95, 25, 7, 300, 100};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -66,6 +67,7 @@ void ObjectDetection::load_model_objects()
      {
        new_node = compute_descriptors(cloud);
        new_node->name = models[a];
+       new_node->correspondence_needed = correspondences_needed[a];
        if(!models_linkedlist)
        {
          models_linkedlist = new_node;
@@ -148,7 +150,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   pcl::copyPointCloud (*model->keypoints, model_good_keypoints_indices, *model_good_kp);
   pcl::copyPointCloud (*unknown->keypoints, unknown_good_keypoints_indices, *unknown_good_kp);
 
-  //std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
+  std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
 
   /**
    *  Clustering
@@ -207,7 +209,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   /**
    * Stop if no instances
    */
-  if (/*rototranslations.size () <= 0 && */(model_unknown_corrs->size () < 5 ))
+  if (/*rototranslations.size () <= 0 && */(model_unknown_corrs->size () < model->correspondence_needed ))
   {
     std::cout << "No groups found " << std::endl;
     return false;

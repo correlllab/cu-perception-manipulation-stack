@@ -365,7 +365,7 @@ public:
     prism.setInputCloud(z_filtered_objects);
     prism.setInputPlanarHull(convex_hull);
     // TODO set them easily
-    prism.setHeightLimits(-0.002, 0.1);
+    prism.setHeightLimits(-0.002, 0.15);
     pcl::PointIndices::Ptr obj_indices (new pcl::PointIndices);
     prism.segment(*obj_indices);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr objects (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -632,7 +632,7 @@ public:
       double width = max.y-min.y;
       visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
       
-      //pcl::io::savePCDFileASCII("/home/correlllab/ros/jaco_ws/src/cu-perception-manipulation-stack/perception/object_database/"+ss.str()+".pcd", *iterator->point_cloud);
+      //pcl::io::savePCDFileASCII("/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/"+ss.str()+".pcd", *iterator->point_cloud);
 
       objects_cloud_pub_.publish(iterator->point_cloud);
 
