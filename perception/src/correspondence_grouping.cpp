@@ -24,10 +24,9 @@ float hv_regularizer_ (3.0f);
 float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 
-//std::string path_to_models = "/home/rebecca/ros/sandbox_ws/src/cu-perception-manipulation-stack/perception/object_database/";//ycb/";
 std::string path_to_models = "/object_database/";
-std::string models[] = {"cup","block","plate","bowl"};
-int correspondences_needed[] = {50, 7, 150, 100};
+std::string models[] = {"cup","block","plate","bowl","spoon"};
+int correspondences_needed[] = {50, 7, 150, 100, 7};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -39,7 +38,6 @@ ObjectDetection::ObjectDetection()
     std::string path = ros::package::getPath("perception");
     path_to_models = path + path_to_models;
     models_linkedlist = NULL;
-    cout << path_to_models << endl;
     if(sizeof(models) > 0)
     {
       load_model_objects();

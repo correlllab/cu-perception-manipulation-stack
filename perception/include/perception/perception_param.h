@@ -17,6 +17,8 @@ namespace perception
   const bool standalone = true; //running with a robot base or just the camera
   const bool continuous_running = true; //continuously run perception or wait for keyboard command
   const bool colored_block_detection = false;
+  const bool save_new = false;
+  const bool one_of_each = true;
 
   enum task_running { TASK1 = 0, TASK2 = 1, TASK3 = 2} task;
 
