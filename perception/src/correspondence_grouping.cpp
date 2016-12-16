@@ -25,8 +25,8 @@ float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 
 std::string path_to_models = "/object_database/";
-std::string models[] = {"cup","block","plate","bowl","spoon"};
-int correspondences_needed[] = {50, 7, 150, 100, 7};
+std::string models[] = {"cup","block","plate","bowl","joystick","cellphone"};
+int correspondences_needed[] = {50, 7, 150, 50, 50, 100};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")

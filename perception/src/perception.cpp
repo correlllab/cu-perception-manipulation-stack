@@ -48,7 +48,11 @@ namespace perception
 {
 void callback(perception::perception_paramConfig &config, uint32_t level)
 {
-  std::ostringstream ss;
+  //standalone = !config.with_robot; //running with a robot base or just the camera
+  continuous_running = config.run_perception; //continuously run perception or wait for keyboard command
+  colored_block_detection = config.colored_segmentation;
+  save_new = config.save_unknown_pcd;
+  one_of_each = config.only_one_object;
   //ss << "Reconfigure request, min_cup_height: " << config.min_cws_height << ", max_cup_height: " << config.max_cws_height;
   //ROS_INFO_STREAM_NAMED("ppc",ss.str());
 
@@ -82,11 +86,8 @@ public:
   PerceptionTester(int test)
     : nh_("~")
   {
-    if(standalone)
-      base_frame = "camera_rgb_optical_frame";
-    else
-      base_frame = "root";
-
+    previous_frame = "";
+    base_frame = "root";
     objects_linkedlist = NULL;
     ROS_INFO_STREAM_NAMED("constructor","starting PerceptionTester...");
     ObjectDetectionPtr.reset(new object_detection::ObjectDetection());
@@ -109,8 +110,8 @@ public:
     f = boost::bind(&callback, _1, _2);
     srv.setCallback(f);
 
-    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
-    visual_tools_->enableBatchPublishing();
+    //visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
+    //visual_tools_->enableBatchPublishing();
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
 
@@ -180,13 +181,14 @@ public:
     return (seconds_since_updated >= seconds_to_timeout);
   }
 
-  void add_tracking_object(Eigen::Vector3d centroid, std::string label, int id)
+  void add_tracking_object(Eigen::Vector3d centroid, std::string label, int id, std::string published_name)
   {
     object_tracking* new_node(new object_tracking());
     new_node->label = label;
     new_node->centroid = centroid;
     new_node->id = id;
     new_node->timestamp = std::time(NULL);
+    new_node->published_name = published_name;
     new_node->next = NULL;
 
     if(!objects_linkedlist)
@@ -240,9 +242,15 @@ public:
       if(timed_out(next->timestamp, seconds_keep_alive))
       {
         previous->next = next->next;
-
-        ss << next->label << "_" << next->id;
+	if(one_of_each && next->label != "unknown" && next->label != "block")
+        {
+          ss << next->label << "_position";
+        }
+	else
+	{
+          ss << next->label << "_" << next->id;
         //std::cout << "removing " << ss.str() << endl;
+        }
         tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
         delete next;
         next = previous->next;
@@ -258,19 +266,29 @@ public:
     {
       previous = objects_linkedlist;
       objects_linkedlist = objects_linkedlist->next;
-      ss << previous->label << "_" << previous->id;
+      if(one_of_each && next->label != "unknown" && next->label != "block")
+      {
+          ss << previous->label << "_position";
+      }
+      else
+      {
+          ss << previous->label << "_" << previous->id;
+      }
+
       tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
       delete previous;
     }
   }
 
-  void update_tracked_object(object_tracking* object, Eigen::Vector3d new_centroid, std::string label)
+  void update_tracked_object(object_tracking* object, Eigen::Vector3d new_centroid, std::string label, std::string  published_name)
   {
     object->centroid = new_centroid;
     object->timestamp = std::time(NULL);
     object->label = label;
+    object->published_name = published_name;
   }
 
+  std::string previous_frame;
   void processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
     /*
@@ -290,7 +308,19 @@ public:
      * 7) Compute their centroids.
      */
 
-    if (!image_processing_enabled_ && !continuous_running)
+   if(false)
+      base_frame = "camera_rgb_optical_frame";
+   else
+      base_frame = "root";
+
+   if(base_frame != previous_frame)
+   {
+      previous_frame = base_frame;
+      visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
+      visual_tools_->enableBatchPublishing();
+   }
+
+    if (!continuous_running)
     {
       return;
     }
@@ -565,25 +595,40 @@ public:
       {
         ///bug: object's label gets pushed into tf transform publisher, but we removed it at the end of this fuction
         ///   this results in removed objects being sent to base, then back to where is was
+        ss << matching_centroid->published_name;
         if(matching_centroid->label == "unknown" || timed_out(matching_centroid->timestamp,retest_object_seconds))
         {
-          //label = ObjectDetectionPtr->label_object(single_object);
           if(matching_centroid->label == "unknown" || label != "unknown" )
           {
             if(matching_centroid->label != label)
             {
-              ss << matching_centroid->label << "_" << matching_centroid->id;
               tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
               ss.str("");
+              if(one_of_each && label != "unknown" && label != "block")
+              {
+                  ss << label << "_position";
+              }
+              else
+              {
+                  ss << label << "_" << id;
+              }
             }
-            update_tracked_object(matching_centroid, object_centroid, label);
+            update_tracked_object(matching_centroid, object_centroid, label, ss.str());
           }
           else if(timed_out(matching_centroid->timestamp,seconds_rename))
           {
-            ss << matching_centroid->label << "_" << matching_centroid->id;
+            ss << matching_centroid->published_name;
             tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
             ss.str("");
-            update_tracked_object(matching_centroid, object_centroid, label);
+            if(one_of_each && label != "unknown" && label != "block")
+            {
+                ss << label << "_position";
+            }
+            else
+            {
+                ss << label << "_" << id;
+            }
+            update_tracked_object(matching_centroid, object_centroid, label, ss.str());
           }
           else
           {
@@ -592,27 +637,27 @@ public:
         }
         else
           label = matching_centroid->label;
-        ss << label << "_" << matching_centroid->id;
+        ss << matching_centroid->published_name;
       }
       else
       {
         int id = get_unique_id();
-        ss << label << "_" << id;
-        add_tracking_object(object_centroid, label, id);
+        if(one_of_each && label != "unknown" && label != "block")
+        {
+            ss << label << "_position";
+        }
+        else
+        {
+            ss << label << "_" << id;
+        }
+
+        add_tracking_object(object_centroid, label, id, ss.str());
       }
       if(label == "unknown")
          color = rviz_visual_tools::CYAN;
 
-      if(one_of_each && label != "unknown" && label != "block")
-      {
-        local_poses.push_back(object_pose);
-        object_labels.push_back(label + "_position");
-      }
-      else
-      {
-        local_poses.push_back(object_pose);
-        object_labels.push_back(ss.str());
-      }
+      local_poses.push_back(object_pose);
+      object_labels.push_back(ss.str());
 
       pcl::getMinMax3D(*single_object_transformed, min, max);
       double height = max.z-min.z;
@@ -621,11 +666,14 @@ public:
       visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
 
       if(save_new && label == "unknown")
+      {
+        std::cout << ros::package::getPath("perception") << "/object_database/new/"<<ss.str()<<".pcd" << endl;
         pcl::io::savePCDFileASCII(ros::package::getPath("perception") + "/object_database/new/"+ss.str()+".pcd", *iterator->point_cloud);
+      }
 
       objects_cloud_pub_.publish(iterator->point_cloud);
 
-      if(!standalone && label == "cup" && height > .1)
+      /*if(!standalone && label == "cup" && height > .1)
       {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr spoon_object (new pcl::PointCloud<pcl::PointXYZRGB>);
         for (int pit = 0; pit < single_object_transformed->points.size(); ++pit)
@@ -641,7 +689,7 @@ public:
         object_pose.translation() = object_centroid;
         local_poses.push_back(object_pose);
         visual_tools_->publishWireframeCuboid(object_pose, .05, .05, .05, rviz_visual_tools::MAGENTA);
-      }
+      }*/
 
       iterator = iterator->next;
     }
