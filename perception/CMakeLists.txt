@@ -11,8 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
   std_msgs
   tf
-  dynamic_reconfigure
+  #dynamic_reconfigure
 )
+
+FIND_LIBRARY(HDF5_LIBRARY hdf5 /usr/local/hdf5/lib/)
 
 find_package(PCL 1.7 REQUIRED)
 
@@ -50,19 +52,14 @@ find_package(PCL 1.7 REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 
-
-add_message_files(
-  FILES
-)
-
 #generate_messages(
 #  DEPENDENCIES
 #  std_msgs
 #)
 
-generate_dynamic_reconfigure_options(
-  cfg/perception_param.cfg
-)
+#generate_dynamic_reconfigure_options(
+#  cfg/perception_param.cfg
+#)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
@@ -161,17 +158,31 @@ include_directories(
 # )
 
 add_executable(perception
+  src/finger_sensor_perception.cpp
   src/perception.cpp
   src/correspondence_grouping.cpp
 )
+
+#add_executable(new_perception
+#  src/perception.cpp
+#  src/object_recognition.cpp
+#)
+#target_link_libraries(test_node ${CATKIN_LIBRARIES} ${HDF5_LIBRARY}})
 
 target_link_libraries(perception
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES} libvtkCommon.so libvtkFiltering.so
 )
 
+#target_link_libraries(new_perception
 
-add_dependencies(perception perception_gencfg)
+#  ${catkin_LIBRARIES}
+#  ${HDF5_LIBRARY}
+#  ${PCL_LIBRARIES} libvtkCommon.so libvtkFiltering.so
+#)
+
+
+#add_dependencies(perception perception_gencfg)
 
 
 

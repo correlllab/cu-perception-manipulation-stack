@@ -1,114 +1,36 @@
 /**
- * Author(s) : Andy McEvoy
- * Desc      : perception server for teleop demo
- * Date      : 2016 - May - 21
+ * Author(s) : Rebecca Cox, Jorge Canardo, Andy McEvoy
+ * Desc      : perception server for object recognition
+ * Date      : 2017 - Feb - 02
  */
 
-#include <boost/lexical_cast.hpp>
+#include <perception/perception.h>
 
-#include <ros/ros.h>
-#include <std_msgs/Int64.h>
-#include <std_msgs/Bool.h>
-#include <math.h>
-#include <rviz_visual_tools/rviz_visual_tools.h>
-#include <rviz_visual_tools/tf_visual_tools.h>
-
-// Image processing
-#include <pcl_ros/point_cloud.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/transforms.h>
-#include <pcl/filters/statistical_outlier_removal.h>
-#include <pcl/search/search.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/surface/convex_hull.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/segmentation/extract_clusters.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_polygonal_prism_data.h>
-#include <ros/package.h>
-//object identification
-#include <pcl/io/pcd_io.h> //print pcd to file
-#include <pcl/common/geometry.h>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl/common/common.h>
-
-//dynamic reconfiguration of variables during runtime
-#include <dynamic_reconfigure/server.h>
-#include <perception/perception_paramConfig.h>
-#include <perception/perception_param.h>
-#include <perception/correspondence_grouping.h>
-
-//color-based segmentation
-#include <pcl/segmentation/region_growing_rgb.h>
 namespace perception
 {
-void callback(perception::perception_paramConfig &config, uint32_t level)
-{
-  //standalone = !config.with_robot; //running with a robot base or just the camera
-  continuous_running = config.run_perception; //continuously run perception or wait for keyboard command
-  colored_block_detection = config.colored_segmentation;
-  save_new = config.save_unknown_pcd;
-  one_of_each = config.only_one_object;
-  //ss << "Reconfigure request, min_cup_height: " << config.min_cws_height << ", max_cup_height: " << config.max_cws_height;
-  //ROS_INFO_STREAM_NAMED("ppc",ss.str());
 
-  //task = static_cast<task_running>(config.task);
-}
-
-class PerceptionTester
-{
-private:
-  boost::shared_ptr<object_detection::ObjectDetection> ObjectDetectionPtr;
-  ros::NodeHandle nh_;
-
-  ros::Subscriber raw_cloud_sub_;
-  ros::Subscriber enabled_sub_;
-  ros::Publisher not_table_cloud_pub_;
-  ros::Publisher z_filtered_objects_cloud_pub_;
-  ros::Publisher roi_cloud_pub_;
-  ros::Publisher objects_cloud_pub_;
-  ros::Publisher number_of_objects_pub_;
-
-  bool objects_detected_;
-  std::vector<Eigen::Affine3d> object_poses_;
-
-  bool image_processing_enabled_;
-
-  rviz_visual_tools::TFVisualTools tf_visualizer_;
-  tf::TransformListener tf_listener_;
-
-  rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
-public:
-  PerceptionTester(int test)
+Perception::Perception(int test)
     : nh_("~")
   {
+    table_orientation(0) = 0;
     previous_frame = "";
-    base_frame = "root";
-    objects_linkedlist = NULL;
-    ROS_INFO_STREAM_NAMED("constructor","starting PerceptionTester...");
+    base_frame = "camera_rgb_optical_frame";
+    tracked_objects = NULL;
+    ROS_INFO_STREAM_NAMED("constructor","starting Perception...");
+    fingerSensorsPtr.reset(new object_detection::FingerSensorPerception());
     ObjectDetectionPtr.reset(new object_detection::ObjectDetection());
     image_processing_enabled_ = false;
 
     // point clouds
-    raw_cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &PerceptionTester::processPointCloud, this);
+    raw_cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &Perception::processPointCloud, this);
     // Enable/disable point cloud processing
-    enabled_sub_ = nh_.subscribe("/perception/enabled", 1, &PerceptionTester::enableProcessing, this);
+    enabled_sub_ = nh_.subscribe("/perception/enabled", 1, &Perception::enableProcessing, this);
     // Debuggin clouds/publishers
     not_table_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/not_table_cloud", 1);
     z_filtered_objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/z_filt_objects_cloud", 1);
     roi_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/roi_cloud", 1);
     // Final clouds/publishers
     objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/objects_cloud", 1);
-    number_of_objects_pub_ = nh_.advertise<std_msgs::Int64>("/num_objects", 1);
-
-    dynamic_reconfigure::Server<perception::perception_paramConfig> srv;
-    dynamic_reconfigure::Server<perception::perception_paramConfig>::CallbackType f;
-    f = boost::bind(&callback, _1, _2);
-    srv.setCallback(f);
 
     //visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
     //visual_tools_->enableBatchPublishing();
@@ -126,9 +48,6 @@ public:
         // TODO: we're using camera_rgb_optical_frame all the time, but the
         // 3d images and the color seem to be shifted. Is that the right frame? Maybe
         // the camera needs to be calibrated?
-        std_msgs::Int64 msg;
-        msg.data = object_poses_.size();
-        number_of_objects_pub_.publish(msg);
         std::size_t idx = 0;
         for (std::vector<Eigen::Affine3d>::const_iterator it = object_poses_.begin(); it != object_poses_.end(); it++ )
         {
@@ -144,21 +63,14 @@ public:
   }
 
 
-
-  ~PerceptionTester()
-  {
-  }
-
-  void enableProcessing(const std_msgs::Bool &enabled)
+  void Perception::enableProcessing(const std_msgs::Bool &enabled)
   {
     image_processing_enabled_ = enabled.data;
   }
-  Eigen::Vector3d cup_centroid;
-
-  object_tracking* objects_linkedlist;
-  object_tracking* near_centroid_object(Eigen::Vector3d centroid)
+  
+  single_object_ll* Perception::near_centroid_object(Eigen::Vector3d centroid)
   {
-    object_tracking* iterator = objects_linkedlist;
+    single_object_ll* iterator = tracked_objects;
     double x_dif, y_dif, z_dif;
     while(iterator)
     {
@@ -174,16 +86,16 @@ public:
     return iterator;
   }
 
-  bool timed_out(std::time_t timestamp, double seconds_to_timeout)
+  bool Perception::timed_out(std::time_t timestamp, double seconds_to_timeout)
   {
     double seconds_since_updated = difftime( time(0), timestamp);
 
     return (seconds_since_updated >= seconds_to_timeout);
   }
 
-  void add_tracking_object(Eigen::Vector3d centroid, std::string label, int id, std::string published_name)
+  void Perception::add_tracking_object(Eigen::Vector3d centroid, std::string label, int id, std::string published_name)
   {
-    object_tracking* new_node(new object_tracking());
+    single_object_ll* new_node(new single_object_ll());
     new_node->label = label;
     new_node->centroid = centroid;
     new_node->id = id;
@@ -191,11 +103,11 @@ public:
     new_node->published_name = published_name;
     new_node->next = NULL;
 
-    if(!objects_linkedlist)
-      objects_linkedlist = new_node;
+    if(!tracked_objects)
+      tracked_objects = new_node;
     else
     {
-      object_tracking* iterator = objects_linkedlist;
+      single_object_ll* iterator = tracked_objects;
       while(iterator->next)
       {
         iterator = iterator->next;
@@ -205,13 +117,13 @@ public:
 
   }
 
-  int get_unique_id()
+  int Perception::get_unique_id()
   {
-    object_tracking* iterator;
+    single_object_ll* iterator;
     int id = 0;
     while(id < 100)
     {
-      iterator = objects_linkedlist;
+      iterator = tracked_objects;
       //std::cout << "unique checking:" << id;
       while(iterator)
       {
@@ -229,12 +141,12 @@ public:
     return id;
   }
 
-  void remove_outdated_objects()
+  void Perception::remove_outdated_objects()
   {
-    if(!objects_linkedlist)
+    if(!tracked_objects)
       return;
-    object_tracking* previous = objects_linkedlist;
-    object_tracking* next = previous->next;
+    single_object_ll* previous = tracked_objects;
+    single_object_ll* next = previous->next;
     std::ostringstream ss;
     while(next)
     {
@@ -242,14 +154,14 @@ public:
       if(timed_out(next->timestamp, seconds_keep_alive))
       {
         previous->next = next->next;
-	if(one_of_each && next->label != "unknown" && next->label != "block")
+        if(one_of_each && next->label != "unknown" && next->label != "block")
         {
           ss << next->label << "_position";
         }
-	else
-	{
+        else
+        {
           ss << next->label << "_" << next->id;
-        //std::cout << "removing " << ss.str() << endl;
+          //std::cout << "removing " << ss.str() << endl;
         }
         tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
         delete next;
@@ -262,17 +174,17 @@ public:
         next = next->next;
       }
     }
-    if(timed_out(objects_linkedlist->timestamp, seconds_keep_alive))
+    if(timed_out(tracked_objects->timestamp, seconds_keep_alive))
     {
-      previous = objects_linkedlist;
-      objects_linkedlist = objects_linkedlist->next;
+      previous = tracked_objects;
+      tracked_objects = tracked_objects->next;
       if(one_of_each && next->label != "unknown" && next->label != "block")
       {
-          ss << previous->label << "_position";
+        ss << previous->label << "_position";
       }
       else
       {
-          ss << previous->label << "_" << previous->id;
+        ss << previous->label << "_" << previous->id;
       }
 
       tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
@@ -280,7 +192,7 @@ public:
     }
   }
 
-  void update_tracked_object(object_tracking* object, Eigen::Vector3d new_centroid, std::string label, std::string  published_name)
+  void Perception::update_tracked_object(single_object_ll* object, Eigen::Vector3d new_centroid, std::string label, std::string  published_name)
   {
     object->centroid = new_centroid;
     object->timestamp = std::time(NULL);
@@ -288,8 +200,7 @@ public:
     object->published_name = published_name;
   }
 
-  std::string previous_frame;
-  void processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
+  void Perception::processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
     /*
      * The process is as follows:
@@ -308,22 +219,19 @@ public:
      * 7) Compute their centroids.
      */
 
-   if(false)
-      base_frame = "camera_rgb_optical_frame";
-   else
-      base_frame = "root";
+    if(standalone)
+       base_frame = "camera_rgb_optical_frame";
+    else
+       base_frame = "root";
 
-   if(base_frame != previous_frame)
-   {
-      previous_frame = base_frame;
-      visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
-      visual_tools_->enableBatchPublishing();
-   }
-
-    if (!continuous_running)
+    if(base_frame != previous_frame)
     {
-      return;
+       previous_frame = base_frame;
+       visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
+       visual_tools_->enableBatchPublishing();
     }
+
+
 
     // Read raw point cloud
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr raw_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -338,21 +246,29 @@ public:
     pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("z");
     // TODO: read parameters in a way that allows dynamic changes
-    pass.setFilterLimits(0.5, 1.2);
+    pass.setFilterLimits(0.0, 1.2); // 0.5, 1.2
     pass.filter(*z_filtered_objects);
     //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
     z_filtered_objects->header.frame_id = "camera_rgb_optical_frame";
     z_filtered_objects_cloud_pub_.publish(z_filtered_objects);
 
     // Table top segmentation
+    //TODO: Try to optimize, no reason to rerun ransac for every frame when the table and camera don't move
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
     pcl::SACSegmentation <pcl::PointXYZRGB> table_segmenter;
+    if(table_orientation(0) != 0)
+    {
+      table_segmenter.setAxis(table_orientation);
+      table_segmenter.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
+    }
+    else
+      table_segmenter.setModelType(pcl::SACMODEL_PLANE);
     table_segmenter.setOptimizeCoefficients(true);
-    table_segmenter.setModelType(pcl::SACMODEL_PLANE);
+
     table_segmenter.setMethodType(pcl::SAC_RANSAC);
     table_segmenter.setMaxIterations(1000);
-    table_segmenter.setDistanceThreshold(0.01);
+    table_segmenter.setDistanceThreshold(0.02);
 
     table_segmenter.setInputCloud(z_filtered_objects);
     table_segmenter.segment(*inliers, *coefficients);
@@ -407,6 +323,8 @@ public:
     objects->header.frame_id = "camera_rgb_optical_frame";
     roi_cloud_pub_.publish(objects);
 
+
+
     // The prism is not great at removing the whole plane, even if we increase the lower height
     // limit to 0.005 m, so let's get its output, fit a plane, and get everything that's not a
     // plane. Repetitive code. There should be a better pcl API
@@ -414,11 +332,24 @@ public:
     table_segmenter.setInputCloud(objects);
     table_segmenter.segment(*inliers, *coefficients);
 
+    //finding a normal perpendicular to the table
+    if(table_orientation(0) == 0)
+    {
+      table_orientation = calucalateTableNormal(objects, inliers);
+      visual_tools_->triggerBatchPublish();
+    }
     if (inliers->indices.size () == 0)
     {
       //ROS_ERROR_STREAM_NAMED("ppc", "Could not estimate a planar model.");
       return;
     }
+
+    if (!image_processing_enabled_)
+    {
+      //std::cout << "not performing perception, cont_run: " << continuous_running << std::endl;
+      return;
+    }
+    std::cout << "perception running..." << std::endl;
 
     // Extract indices not from table
     eifilter.setInputCloud(objects);
@@ -449,7 +380,7 @@ public:
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     // SI units
     //ec.setClusterTolerance(0.02);//original before rebecca came
-    ec.setClusterTolerance(0.04);
+    ec.setClusterTolerance(0.03);
     /* From experiments:
      * - Tiny wood cubes have about 300 points
      * - Cubeletes have about 800 points
@@ -462,7 +393,7 @@ public:
      * Idea: filter known objects and use RANSAC to find a match. Others, do more processing on
      *  -start to save objects
      */
-    ec.setMinClusterSize(100);  // less than a wood cube
+    ec.setMinClusterSize(200);  // less than a wood cube
     ec.setMaxClusterSize(15000);  // a plate is lots
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
@@ -473,11 +404,6 @@ public:
     object_poses_ = local_poses;
     std::size_t idx = 0;
 
-    cws_objects = 0;
-    plate_objects = 0;
-    bowl_objects = 0;
-    unknown_objects = 0;
-
     //int objects_found = cluster_indices.end() - cluster_indices.begin();
     object_labels.clear();
     Eigen::Vector4d useless_centroid;
@@ -486,9 +412,9 @@ public:
     Eigen::Affine3d object_pose;
     visual_tools_->deleteAllMarkers();
 
-    
-    clustered_objects* segmented_objects = NULL;
-    clustered_objects* iterator;
+
+    single_object_ll* segmented_objects = NULL;
+    single_object_ll* iterator;
     pcl::PointXYZRGB min, max;
     int unique_id = 0;
     //separate objects into a linked list to make processing more simple
@@ -498,7 +424,7 @@ public:
          it != cluster_indices.end();
          ++it)
     {
-      clustered_objects* new_object(new clustered_objects());
+      single_object_ll* new_object(new single_object_ll());
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object (new pcl::PointCloud<pcl::PointXYZRGB>);
       for (std::vector<int>::const_iterator pit = it->indices.begin();
            pit != it->indices.end();
@@ -518,7 +444,7 @@ public:
         double height = max.z-min.z;
         double depth = max.x-min.x;
         double width = max.y-min.y;
-        std::cout << label << " height: " << height << ", depth: " << depth << ", width: " << width;
+        //std::cout << label << " height: " << height << ", depth: " << depth << ", width: " << width;
         if(label == "unknown")
         {
           new_object = get_colored_segments(single_object, unique_id);
@@ -557,7 +483,7 @@ public:
     }
 
     iterator = segmented_objects;
-    
+
 
     while(iterator)
     {
@@ -571,6 +497,7 @@ public:
         ROS_ERROR("%s", ex.what());
         //ros::Duration(1.0).sleep();
       }
+
       object_pose = Eigen::Affine3d::Identity();
       pcl::compute3DCentroid(*iterator->point_cloud, useless_centroid);
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
@@ -585,10 +512,10 @@ public:
       pcl::compute3DCentroid(*single_object_transformed, useless_centroid);
       object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
       object_pose.translation() = object_centroid;
-      
+
       //object tracking
       std::ostringstream ss;
-      object_tracking* matching_centroid = near_centroid_object(object_centroid);
+      single_object_ll* matching_centroid = near_centroid_object(object_centroid);
       std::string label = iterator->label;
       rviz_visual_tools::colors color = rviz_visual_tools::MAGENTA;
       if(matching_centroid)
@@ -610,14 +537,14 @@ public:
               }
               else
               {
-                  ss << label << "_" << id;
+                  ss << label << "_" << matching_centroid->id;
               }
             }
             update_tracked_object(matching_centroid, object_centroid, label, ss.str());
           }
           else if(timed_out(matching_centroid->timestamp,seconds_rename))
           {
-            ss << matching_centroid->published_name;
+            //ss << matching_centroid->published_name;
             tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
             ss.str("");
             if(one_of_each && label != "unknown" && label != "block")
@@ -626,7 +553,7 @@ public:
             }
             else
             {
-                ss << label << "_" << id;
+                ss << label << "_" << iterator->id;
             }
             update_tracked_object(matching_centroid, object_centroid, label, ss.str());
           }
@@ -636,8 +563,10 @@ public:
           }
         }
         else
+        {
           label = matching_centroid->label;
-        ss << matching_centroid->published_name;
+          //ss << matching_centroid->published_name;
+        }
       }
       else
       {
@@ -650,7 +579,7 @@ public:
         {
             ss << label << "_" << id;
         }
-
+        //std::cout << "object id" << id << std::endl;
         add_tracking_object(object_centroid, label, id, ss.str());
       }
       if(label == "unknown")
@@ -659,11 +588,13 @@ public:
       local_poses.push_back(object_pose);
       object_labels.push_back(ss.str());
 
-      pcl::getMinMax3D(*single_object_transformed, min, max);
+      pcl::getMinMax3D(*iterator->point_cloud, min, max);
       double height = max.z-min.z;
       double depth = max.x-min.x;
       double width = max.y-min.y;
       visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
+
+      //std::cout << "object ss: " << ss.str()  << std::endl;
 
       if(save_new && label == "unknown")
       {
@@ -672,24 +603,6 @@ public:
       }
 
       objects_cloud_pub_.publish(iterator->point_cloud);
-
-      /*if(!standalone && label == "cup" && height > .1)
-      {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr spoon_object (new pcl::PointCloud<pcl::PointXYZRGB>);
-        for (int pit = 0; pit < single_object_transformed->points.size(); ++pit)
-        {
-          if(single_object_transformed->points[pit].z > min.z+.07)
-            spoon_object->points.push_back(single_object_transformed->points[pit]);
-        }
-        ROS_INFO_STREAM_NAMED("ppc", "object point cloud size: " << spoon_object->points.size());
-        object_labels.push_back("spoon_position");
-        object_pose = Eigen::Affine3d::Identity();
-        pcl::compute3DCentroid(*spoon_object, useless_centroid);
-        object_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
-        object_pose.translation() = object_centroid;
-        local_poses.push_back(object_pose);
-        visual_tools_->publishWireframeCuboid(object_pose, .05, .05, .05, rviz_visual_tools::MAGENTA);
-      }*/
 
       iterator = iterator->next;
     }
@@ -702,7 +615,93 @@ public:
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
   }
 
-  clustered_objects* get_colored_segments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int &unique_id)
+  
+  tf::Vector3 table_axis;
+  geometry_msgs::PoseStamped pose;
+
+  Eigen::Affine3d create_rotation_matrix(double ax, double ay, double az) {
+    Eigen::Affine3d rx =
+        Eigen::Affine3d(Eigen::AngleAxisd(ax, Eigen::Vector3d(1, 0, 0)));
+    Eigen::Affine3d ry =
+        Eigen::Affine3d(Eigen::AngleAxisd(ay, Eigen::Vector3d(0, 1, 0)));
+    Eigen::Affine3d rz =
+        Eigen::Affine3d(Eigen::AngleAxisd(az, Eigen::Vector3d(0, 0, 1)));
+    //std::cout<< "rx " << rx.rotation() << endl;
+    //std::cout<< "ry " << ry.rotation() << endl;
+    //std::cout<< "rz " << rz.rotation() << endl;
+    return rx * ry * rz ;
+  }
+  Eigen::Vector3f Perception::calucalateTableNormal(pcl::PointCloud<pcl::PointXYZRGB>::Ptr table, pcl::PointIndices::Ptr inliers)
+  {
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal> ());
+    Eigen::Vector3f axis;
+    pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> norm_est;
+    norm_est.setKSearch(10);
+    norm_est.setIndices(inliers);
+    norm_est.setInputCloud(table);
+    norm_est.compute(*cloud_normals);
+    double x=0, y=0, z=0;
+    for(size_t i = 0; i<cloud_normals->points.size(); i++)
+    {
+      x += cloud_normals->points[i].normal[0];
+      y += cloud_normals->points[i].normal[1];
+      z += cloud_normals->points[i].normal[2];
+      //tf::Vector3 axis_vector(cloud_normals->points[i].normal[0], cloud_normals->points[i].normal[1], cloud_normals->points[i].normal[2]);
+
+
+    }
+    axis(0) = x/cloud_normals->points.size();
+    axis(1) = y/cloud_normals->points.size();
+    axis(2) = z/cloud_normals->points.size();
+    //std::cout << "averages, x: " <<x/cloud_normals->points.size()<< ", y: " << y/cloud_normals->points.size()<< ", z: " <<z/cloud_normals->points.size() << endl;
+
+    geometry_msgs::Quaternion msg;
+    // extracting surface normals
+
+    tf::Vector3 axis_vector(x/cloud_normals->points.size(), y/cloud_normals->points.size(), z/cloud_normals->points.size());
+    tf::Vector3 up_vector( 1.0, 0.0, 0.0); // (0,0,1)
+
+    tf::Vector3 right_vector = axis_vector.cross(up_vector);
+    right_vector.normalized();
+    tf::Quaternion q(right_vector, -1.0*acos(axis_vector.dot(up_vector)));
+    q.normalize();
+    tf::quaternionTFToMsg(q, msg);
+
+    //adding pose to pose array
+
+    Eigen::Vector4d useless_centroid;
+    Eigen::Vector3d table_centroid;
+
+    pcl::compute3DCentroid(*table, *inliers, useless_centroid);
+    table_centroid << useless_centroid(0), useless_centroid(1), useless_centroid(2); //x, y, z
+
+    pose.pose.position.x = table_centroid(0);
+    pose.pose.position.y = table_centroid(1);
+    pose.pose.position.z = table_centroid(2);
+    pose.pose.orientation = msg;
+
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "camera_rgb_optical_frame";
+    marker.header.stamp = ros::Time();
+    marker.ns = "my_namespace";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::MODIFY;
+    marker.pose = pose.pose;
+    marker.scale.x = 0.15;
+    marker.scale.y = 0.01;
+    marker.scale.z = 0.01;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    visual_tools_->publishMarker(marker);
+
+    return axis;
+  }
+
+  single_object_ll* Perception::get_colored_segments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object, int &unique_id)
   {
     pcl::RegionGrowingRGB<pcl::PointXYZRGB> reg;
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
@@ -717,13 +716,13 @@ public:
 
     std::vector <pcl::PointIndices> clusters;
     reg.extract (clusters);
-    clustered_objects* return_object = NULL;
-    clustered_objects* iterator;
+    single_object_ll* return_object = NULL;
+    single_object_ll* iterator;
     for (std::vector<pcl::PointIndices>::const_iterator it = clusters.begin();
          it != clusters.end();
          ++it)
     {
-      clustered_objects* new_object(new clustered_objects());
+      single_object_ll* new_object(new single_object_ll());
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr part_object (new pcl::PointCloud<pcl::PointXYZRGB>);
       for (std::vector<int>::const_iterator pit = it->indices.begin();
            pit != it->indices.end();
@@ -769,7 +768,7 @@ public:
     return return_object;
   }
 
-}; // end class PerceptionTester
+
 } // end namespace perception
 
 
@@ -780,7 +779,7 @@ int main(int argc, char** argv)
   spinner.start();
 
   int test = 1;
-  perception::PerceptionTester tester(test);
+  perception::Perception tester(test);
 
   return 0;
 }

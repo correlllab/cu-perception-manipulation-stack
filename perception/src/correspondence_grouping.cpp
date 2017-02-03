@@ -1,3 +1,9 @@
+/**
+ * Author(s) : Rebecca Cox
+ * Desc      : object recognition using Correspondence Grouping
+ * Src       : http://pointclouds.org/documentation/tutorials/correspondence_grouping.php
+ * Date      : 2017 - Feb - 02
+ */
 
 #include <perception/correspondence_grouping.h>
 #include <ros/package.h>
@@ -25,8 +31,8 @@ float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 
 std::string path_to_models = "/object_database/";
-std::string models[] = {"cup","block","plate","bowl","joystick","cellphone"};
-int correspondences_needed[] = {50, 7, 150, 50, 50, 100};
+std::string models[] = {"cup","block","plate","bowl"};//,"joystick","cellphone"};
+int correspondences_needed[] = {30, 7, 150, 50, 50, 100};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -35,6 +41,9 @@ ObjectDetection::ObjectDetection()
     show_keypoints_ = true;
     use_hough_ = true;
     found_match_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/correspondence_keypoints", 10);
+    //publish surface normals of objects
+    poseArrayPub = nh_.advertise<visualization_msgs::Marker>( "/normal_vectors", 0 );
+    std::cout << "test for change" << std::endl;
     std::string path = ros::package::getPath("perception");
     path_to_models = path + path_to_models;
     models_linkedlist = NULL;
@@ -214,12 +223,71 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
    */
   if (/*rototranslations.size () <= 0 && */(model_unknown_corrs->size () < model->correspondence_needed ))
   {
-    std::cout << "No groups found " << std::endl;
+    //std::cout << "No groups found " << std::endl;
     return false;
   }
   else
   {
-    std::cout << "MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATCH " << std::endl;
+    poseArray.poses.clear(); // Clear last block perception result
+    poseArray.header.stamp = ros::Time::now();
+    poseArray.header.frame_id = "camera_rgb_optical_frame";
+    for(size_t i = 0; i<unknown->normals->points.size()+25; i=i+5)
+      {
+        //new_node->normals->points[i].x = new_node->raw_cloud->points[i].x;
+        //new_node->normals->points[i].y = new_node->raw_cloud->points[i].y;
+        //new_node->normals->points[i].z = new_node->raw_cloud->points[i].z;
+
+        geometry_msgs::PoseStamped pose;
+        geometry_msgs::Quaternion msg;
+
+        // extracting surface normals
+        tf::Vector3 axis_vector(unknown->normals->points[i].normal[0], unknown->normals->points[i].normal[1], unknown->normals->points[i].normal[2]);
+        tf::Vector3 up_vector( 1.0, 0.0, 0.0); // (0,0,1)
+        /*
+        btVector3 axis(pcl_cloud.points[i].normal[0],pcl_cloud.points[i].normal[1],pcl_cloud.points[i].normal[2]);
+        00131       btVector3 marker_axis(1, 0, 0);
+        00132       btQuaternion qt(marker_axis.cross(axis.normalize()), marker_axis.angle(axis.normalize()));
+        00133       geometry_msgs::Quaternion quat_msg;
+        00134       tf::quaternionTFToMsg(qt, quat_msg);
+        00135       normals_marker_array_msg_.markers[i].pose.orientation = quat_msg;
+        */
+        tf::Vector3 right_vector = axis_vector.cross(up_vector);
+        right_vector.normalized();
+        tf::Quaternion q(right_vector, -1.0*acos(axis_vector.dot(up_vector)));
+        q.normalize();
+        tf::quaternionTFToMsg(q, msg);
+
+        //adding pose to pose array
+
+        pose.pose.position.x = unknown->raw_cloud->points[i].x;
+        pose.pose.position.y = unknown->raw_cloud->points[i].y;
+        pose.pose.position.z = unknown->raw_cloud->points[i].z;
+        pose.pose.orientation = msg;
+        if (!(isinf(pose.pose.orientation.x) || isnan(pose.pose.orientation.x) ||
+              isinf(pose.pose.orientation.y) || isnan(pose.pose.orientation.y) ||
+              isinf(pose.pose.orientation.z) || isnan(pose.pose.orientation.z) ||
+              isinf(pose.pose.orientation.w) || isnan(pose.pose.orientation.w) ))
+        {
+          visualization_msgs::Marker marker;
+          marker.header.frame_id = "camera_rgb_optical_frame";
+          marker.header.stamp = ros::Time();
+          marker.ns = "my_namespace";
+          marker.id = i;
+          marker.type = visualization_msgs::Marker::ARROW;
+          marker.action = visualization_msgs::Marker::MODIFY;
+          marker.pose = pose.pose;
+          marker.scale.x = 0.02;
+          marker.scale.y = 0.001;
+          marker.scale.z = 0.001;
+          marker.color.a = 1.0; // Don't forget to set the alpha!
+          marker.color.r = 0.0;
+          marker.color.g = 1.0;
+          marker.color.b = 0.0;
+          poseArrayPub.publish( marker );
+          //poseArray.poses.push_back(pose.pose);
+
+        }
+      }
     return true;
     /**
      * Generates clouds for each instances found

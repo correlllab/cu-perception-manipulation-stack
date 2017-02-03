@@ -1,3 +1,9 @@
+/**
+ * Author(s) : Rebecca Cox
+ * Desc      : object recognition using Correspondence Grouping
+ * Src       : http://pointclouds.org/documentation/tutorials/correspondence_grouping.php
+ * Date      : 2017 - Feb - 02
+ */
 
 #ifndef CORRESPONDENCE_GROUPING_H
 #define CORRESPONDENCE_GROUPING_H
@@ -21,10 +27,24 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl_ros/point_cloud.h>
 
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
+
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+#include <tf/transform_datatypes.h>
+#include <rviz_visual_tools/rviz_visual_tools.h>
+#include <rviz_visual_tools/tf_visual_tools.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/io/ply_io.h>
 #include <ros/ros.h>
+#include <pcl/visualization/histogram_visualizer.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/vfh.h>
 
 namespace object_detection
 {
@@ -32,6 +52,7 @@ typedef pcl::PointXYZRGB PointType;
 typedef pcl::Normal NormalType;
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::SHOT352 DescriptorType;
+//typedef pcl::VFHSignature308 DescriptorType;
 
 //std::string models[] = {"cup.pcd"};
 /*
@@ -77,24 +98,18 @@ struct model_object
 class ObjectDetection
 {
 private:
-  bool cup_loaded;
-  pcl::PointCloud<PointType>::Ptr cup;
-  pcl::PointCloud<PointType>::Ptr cup_keypoints;
-  pcl::PointCloud<NormalType>::Ptr cup_normals;
-  pcl::PointCloud<DescriptorType>::Ptr cup_descriptors;
-
   model_object* models_linkedlist;
   void load_model_objects();
   bool is_object(model_object*  unknown, model_object* model);
   model_object* compute_descriptors(pcl::PointCloud<PointType>::Ptr point_cloud);
 public:
   explicit ObjectDetection();
-  void compute_cup();
-  bool is_cup(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > unknown);
   std::string label_object(pcl::PointCloud<PointType>::Ptr unknown);
 protected:
   ros::NodeHandle nh_;
   ros::Publisher found_match_cloud_pub_;
+  ros::Publisher poseArrayPub;
+  geometry_msgs::PoseArray poseArray;
 
 };
 
