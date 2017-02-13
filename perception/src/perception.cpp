@@ -38,6 +38,7 @@ Perception::Perception(int test)
     ros::Duration(5).sleep();
 
     objects_detected_ = false;
+    clear_tf_buffer = false;
 
     ros::Rate loop_rate(50);
     while(ros::ok())

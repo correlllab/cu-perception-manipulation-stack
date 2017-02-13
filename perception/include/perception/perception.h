@@ -101,6 +101,7 @@ private:
     std::vector<Eigen::Affine3d> object_poses_;
 
     bool image_processing_enabled_;
+    bool clear_tf_buffer;
 
     rviz_visual_tools::TFVisualTools tf_visualizer_;
     tf::TransformListener tf_listener_;

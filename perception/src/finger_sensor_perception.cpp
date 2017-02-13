@@ -20,7 +20,7 @@ FingerSensorPerception::FingerSensorPerception()
   right_tip_.reset(new rviz_visual_tools::RvizVisualTools("r_gripper_r_finger_tip","/r_finger_sensor_values"));
   right_tip_->enableBatchPublishing();
 
-  normalize = true;
+  normalize = false;
 }
 
 void FingerSensorPerception::processSensorValues(const std_msgs::Int32MultiArray& msg)
@@ -51,20 +51,20 @@ void FingerSensorPerception::processSensorValues(const std_msgs::Int32MultiArray
 
   for(int i=0; i < 16; i++)
   {
-    norm_data[i] = msg.data[i]*normalize_factors[i];
-    std::cout << msg.data[i] << " ";
+    norm_data[i] = msg.data[i];//*normalize_factors[i];
+    //std::cout << msg.data[i] << " ";
   }
-  std::cout << std::endl;
+ // std::cout << std::endl;
 
   for(int i=0; i<16; i++)
   {
-    if(i<7 && norm_data[i]>half_cent)
+    if(i<7 && norm_data[i]>one5_cent)
       left_tip_->publishSphere(getLeftPoint(norm_data[i],i+1), rviz_visual_tools::CYAN);
-    else if(i==7 && norm_data[i]>half_cent)
+    else if(i==7 && norm_data[i]>one_cent)
       left_tip_->publishSphere(getTipPoint(norm_data[i]));
-    else if(i==15 && norm_data[i]>half_cent)
+    else if(i==15 && norm_data[i]>one_cent)
       right_tip_->publishSphere(getTipPoint(norm_data[i]), rviz_visual_tools::MAGENTA);
-    else if(i>7 && norm_data[i]>half_cent)
+    else if(i!=15 && i>7 && norm_data[i]>one5_cent)
       right_tip_->publishSphere(getRightPoint(norm_data[i],i-7), rviz_visual_tools::GREEN);
   }
 
@@ -75,6 +75,8 @@ void FingerSensorPerception::processSensorValues(const std_msgs::Int32MultiArray
 
 double FingerSensorPerception::getOffset(int sensor_value)
 {
+
+  return 0.01;
   if(sensor_value < three5_cent)
     return 0.035;
   else if(sensor_value < three_cent)
@@ -90,7 +92,7 @@ double FingerSensorPerception::getOffset(int sensor_value)
   else if(sensor_value < half_cent)
     return 0.005;
   else
-    return 0;
+    return 0.005;
 }
 
 geometry_msgs::Point FingerSensorPerception::getTipPoint(int sensor_value)
@@ -109,7 +111,7 @@ geometry_msgs::Point FingerSensorPerception::getLeftPoint(int sensor_value, int 
   surface.x = 0;
   surface.y = -getOffset(sensor_value);
   surface.z = (8-sensor_index)*(-0.01);
-
+  std::cout <<  "Left: " << sensor_value << std::endl;
   return surface;
 }
 
@@ -119,7 +121,7 @@ geometry_msgs::Point FingerSensorPerception::getRightPoint(int sensor_value, int
   surface.x = 0;
   surface.y = getOffset(sensor_value);
   surface.z = (8-sensor_index)*(-0.01);
-
+  std::cout <<  "Rght: " << sensor_value << std::endl;
   return surface;
 }
 
