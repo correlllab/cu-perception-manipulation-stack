@@ -7,8 +7,10 @@ Panels:
         - /Global Options1
         - /TF1/Frames1
         - /PoseArray1
+        - /Marker2
         - /PointCloud22
         - /MarkerArray4
+        - /MarkerArray6
       Splitter Ratio: 0.636943
     Tree Height: 895
   - Class: rviz/Selection
@@ -30,7 +32,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: RawCloud
 Visualization Manager:
   Class: ""
   Displays:
@@ -38,7 +40,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.03
         Value: Lines
@@ -51,7 +53,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -64,7 +66,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -81,7 +83,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: false
       Marker Topic: /ARmarker_points
@@ -95,26 +97,40 @@ Visualization Manager:
       Frame Timeout: 3
       Frames:
         All Enabled: false
+        ar_marker_0:
+          Value: false
+        ar_marker_246:
+          Value: false
+        ar_marker_255:
+          Value: false
         base:
-          Value: true
+          Value: false
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
         camera_rgb_frame:
           Value: false
         camera_rgb_optical_frame:
           Value: false
         collision_head_link_1:
-          Value: true
+          Value: false
         collision_head_link_2:
+          Value: false
+        cup__position:
+          Value: true
+        cup_position:
           Value: true
         display:
           Value: false
         dummyhead1:
           Value: false
+        grip_pose:
+          Value: true
+        handle:
+          Value: true
         head:
           Value: false
         head_camera:
@@ -124,7 +140,7 @@ Visualization Manager:
         left_arm_mount:
           Value: false
         left_gripper:
-          Value: true
+          Value: false
         left_gripper_base:
           Value: false
         left_gripper_mass:
@@ -163,6 +179,8 @@ Visualization Manager:
           Value: false
         pedestal:
           Value: false
+        pick_pose:
+          Value: true
         r_gripper_l_finger:
           Value: false
         r_gripper_l_finger_tip:
@@ -290,7 +308,7 @@ Visualization Manager:
         right_arm_mount:
           Value: false
         right_gripper:
-          Value: false
+          Value: true
         right_gripper_base:
           Value: false
         right_gripper_mass:
@@ -328,13 +346,21 @@ Visualization Manager:
         right_wrist:
           Value: false
         root:
-          Value: true
+          Value: false
         screen:
           Value: false
         sonar_ring:
           Value: false
         torso:
           Value: false
+        unknown_0:
+          Value: false
+        unknown_1:
+          Value: true
+        unknown_2:
+          Value: false
+        unknown_3:
+          Value: true
         world:
           Value: false
       Marker Scale: 0.25
@@ -523,7 +549,30 @@ Visualization Manager:
                   {}
               camera_rgb_frame:
                 camera_rgb_optical_frame:
-                  {}
+                  ar_marker_0:
+                    {}
+                  ar_marker_246:
+                    {}
+                  ar_marker_255:
+                    {}
+            cup__position:
+              {}
+            cup_position:
+              {}
+            grip_pose:
+              {}
+            handle:
+              {}
+            pick_pose:
+              {}
+            unknown_0:
+              {}
+            unknown_1:
+              {}
+            unknown_2:
+              {}
+            unknown_3:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz/MarkerArray
@@ -886,7 +935,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 10
       Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -897,8 +946,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
-      Color: 85; 255; 255
-      Color Transformer: RGB8
+      Color: 129; 0; 0
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -910,10 +959,10 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 7
       Size (m): 0.01
       Style: Points
-      Topic: /camera/depth_registered/points
+      Topic: /not_table_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -923,7 +972,7 @@ Visualization Manager:
       Marker Topic: /l_finger_sensor_values
       Name: MarkerArray
       Namespaces:
-        {}
+        Sphere: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -931,9 +980,17 @@ Visualization Manager:
       Marker Topic: /r_finger_sensor_values
       Name: MarkerArray
       Namespaces:
-        {}
+        Sphere: true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /bounding_boxes
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -958,22 +1015,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.44784
+      Distance: 0.769867
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.545039
-        Y: -0.161355
-        Z: -0.0159421
+        X: 0.54591
+        Y: -0.0470869
+        Z: -0.113127
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.284797
+      Pitch: 0.749799
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.11003
+      Yaw: 6.20007
     Saved: ~
 Window Geometry:
   Displays:

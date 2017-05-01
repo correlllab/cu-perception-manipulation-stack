@@ -4,10 +4,16 @@ from __future__ import division, print_function
 import serial
 import rospy
 from std_msgs.msg import Int32MultiArray, MultiArrayLayout, MultiArrayDimension
+import numpy as np
+
+BAUD_RATE = 57600
+PORT_NAME = '/dev/ttyACM0'
+NUM_SENSORS = 16  # CHANGE this to no. of sensor values read
 
 
-def collect_data(port='/dev/ttyACM0'):
-    with serial.Serial(port, 115200, timeout=0.1) as ser:
+ave_values = []
+def collect_data(port=PORT_NAME):
+    with serial.Serial(port, BAUD_RATE, timeout=0.1) as ser:
         ser.flushInput()
         # Give it some time to initialize
         data = []
@@ -19,16 +25,18 @@ def collect_data(port='/dev/ttyACM0'):
         buffer = []
         r = rospy.Rate(100)
         while not rospy.is_shutdown():
+            
             buffer.append(ser.read(ser.inWaiting()))
             foo = ''.join(buffer).splitlines()
             try:
                 last_full_line = foo[-2]
+                #print(last_full_line)
             except IndexError:
                 r.sleep()
                 continue
             try:
                 values = [int(i) for i in last_full_line.split()]
-                if len(values) == 6:        # CHANGE this to no. of sensor values read
+                if len(values) == NUM_SENSORS:  
                     yield values
             except ValueError:
                 rospy.loginfo(last_full_line)
@@ -39,18 +47,37 @@ def collect_data(port='/dev/ttyACM0'):
 
 
 def sensor_node():
+ 
     c = collect_data()
+    ave = np.empty([10,16])
+    #average baseline for sensors
+    #ave = [6569,5297,5885,5870,5564,6122,6033,5483,7108,5863,5864,5231,5666,5514,6421,6486]
+    ave = [6680,5800,5322,5272,6057,5133,4976,0,5119,5256,4603,5181,4796,4319,4439,2483]
+
+    index = 0
     pub = rospy.Publisher('/sensor_values', Int32MultiArray, queue_size=1)
     rospy.init_node('sensor_node')
     rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         values = next(c)
         msg = Int32MultiArray(
-            MultiArrayLayout([MultiArrayDimension('sensor data', 6, 1)], 1), # CHANGE the second arg to no. of sensor values read
-            values)                                                             # from serialport(just the values)
+            MultiArrayLayout([MultiArrayDimension('sensor data', NUM_SENSORS, 1)], 1), # CHANGE the second arg to no. of sensor values read
+            #values) #uncomment to publish raw values
+            np.subtract(values,ave)) #uncomment to publish values with base subtracted out
+
+        print(np.subtract(values,ave))
         pub.publish(msg)
+        '''#uncomment to calculate knew average base for each sensor
+        ave[index] = values
+        index += 1
+        if(index >= 10):
+            print(np.mean(ave, axis =0))
+            index = 0
+        '''
         rate.sleep()
 
 if __name__ == '__main__':
     rospy.init_node('sensor_node')
     s = sensor_node()
+
+

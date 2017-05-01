@@ -5,9 +5,24 @@
  */
 
 #include <perception/perception.h>
+#include <exception>
+#include <dynamic_reconfigure/server.h>
+#include <perception/sensor_paramConfig.h>
 
 namespace perception
 {
+
+double l_gripper_offset;
+double r_gripper_offset;
+
+void callback(perception::sensor_paramConfig &config, uint32_t level)
+{
+    l_gripper_offset = config.left_gripper_offset_y;
+    r_gripper_offset = config.right_gripper_offset_y;
+    std::cout << "received new gripper offsets" << std::endl;
+    std::cout << "Left: " << l_gripper_offset << std::endl;
+    std::cout << "Right: " << r_gripper_offset << std::endl;
+}
 
 Perception::Perception(int test)
     : nh_("~")
@@ -17,9 +32,12 @@ Perception::Perception(int test)
     base_frame = "camera_rgb_optical_frame";
     tracked_objects = NULL;
     ROS_INFO_STREAM_NAMED("constructor","starting Perception...");
-    fingerSensorsPtr.reset(new object_detection::FingerSensorPerception());
+    fingerSensorsPtr.reset(new FingerSensorPerception());
+    fingerSensorsPtr->l_gripper_offset = 0;
+    fingerSensorsPtr->r_gripper_offset = 0;
+
     ObjectDetectionPtr.reset(new object_detection::ObjectDetection());
-    image_processing_enabled_ = false;
+    image_processing_enabled_ = begin_from_start;
 
     // point clouds
     raw_cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &Perception::processPointCloud, this);
@@ -31,18 +49,25 @@ Perception::Perception(int test)
     roi_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/roi_cloud", 1);
     // Final clouds/publishers
     objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/objects_cloud", 1);
-
-    //visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
-    //visual_tools_->enableBatchPublishing();
+    number_of_objects_pub_ = nh_.advertise<std_msgs::Int64>("/num_objects", 1);
+    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools(base_frame,"/bounding_boxes"));
+    visual_tools_->enableBatchPublishing();
     ROS_DEBUG_STREAM_NAMED("constructor","waiting for pubs and subs to come online... (5s)");
     ros::Duration(5).sleep();
 
     objects_detected_ = false;
     clear_tf_buffer = false;
 
+    dynamic_reconfigure::Server<perception::sensor_paramConfig> srv;
+    dynamic_reconfigure::Server<perception::sensor_paramConfig>::CallbackType f;
+    f = boost::bind(&callback, _1, _2);
+    srv.setCallback(f);
+
     ros::Rate loop_rate(50);
     while(ros::ok())
     {
+      fingerSensorsPtr->l_gripper_offset = l_gripper_offset;
+      fingerSensorsPtr->r_gripper_offset = r_gripper_offset;
       //ROS_INFO_STREAM_NAMED("PercConstr", "While Loop");
       if (objects_detected_)
       {
@@ -50,6 +75,9 @@ Perception::Perception(int test)
         // 3d images and the color seem to be shifted. Is that the right frame? Maybe
         // the camera needs to be calibrated?
         std::size_t idx = 0;
+        std_msgs::Int64 msg;
+        msg.data = object_poses_.size();
+        number_of_objects_pub_.publish(msg);
         for (std::vector<Eigen::Affine3d>::const_iterator it = object_poses_.begin(); it != object_poses_.end(); it++ )
         {
           // Can't get this to work :S
@@ -203,6 +231,12 @@ Perception::Perception(int test)
 
   void Perception::processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
+      if (!image_processing_enabled_)
+      {
+        //std::cout << "not performing perception, cont_run: " << continuous_running << std::endl;
+        return;
+      }
+      objects_detected_ = false;
     /*
      * The process is as follows:
      * 1) Read cloud
@@ -269,7 +303,7 @@ Perception::Perception(int test)
 
     table_segmenter.setMethodType(pcl::SAC_RANSAC);
     table_segmenter.setMaxIterations(1000);
-    table_segmenter.setDistanceThreshold(0.02);
+    table_segmenter.setDistanceThreshold(0.01);
 
     table_segmenter.setInputCloud(z_filtered_objects);
     table_segmenter.segment(*inliers, *coefficients);
@@ -290,7 +324,8 @@ Perception::Perception(int test)
     //ROS_INFO_STREAM_NAMED("ppc", "point cloud after table top filtering has " << not_table->width * not_table->height);
     not_table->header.frame_id = "camera_rgb_optical_frame";
     // objects is the set of points not on the table
-    not_table_cloud_pub_.publish(not_table);
+
+
 
     // on top of table filtering. First extract plane
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -345,11 +380,7 @@ Perception::Perception(int test)
       return;
     }
 
-    if (!image_processing_enabled_)
-    {
-      //std::cout << "not performing perception, cont_run: " << continuous_running << std::endl;
-      return;
-    }
+
     std::cout << "perception running..." << std::endl;
 
     // Extract indices not from table
@@ -359,6 +390,11 @@ Perception::Perception(int test)
     eifilter.filter(*not_table);
     //ROS_INFO_STREAM_NAMED("ppc", "final point cloud has " << not_table->width * not_table->height);
     not_table->header.frame_id = "camera_rgb_optical_frame";
+    not_table_cloud_pub_.publish(not_table);
+   /* if(find_basket)
+    {
+      return;
+    }*/
     // not_table is the set of points not on the table
     //objects_cloud_pub_.publish(not_table);
 /*
@@ -394,12 +430,48 @@ Perception::Perception(int test)
      * Idea: filter known objects and use RANSAC to find a match. Others, do more processing on
      *  -start to save objects
      */
-    ec.setMinClusterSize(200);  // less than a wood cube
-    ec.setMaxClusterSize(15000);  // a plate is lots
+    if(find_basket)
+    {
+        ec.setMinClusterSize(1000);  // less than a wood cube
+        ec.setMaxClusterSize(20000);  // a plate is lots
+    }
+    else
+    {
+        ec.setMinClusterSize(150);  // less than a wood cube
+        ec.setMaxClusterSize(15000);  // a plate is lots
+    }
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
     ec.extract(cluster_indices);
+    pcl::PointXYZRGB min, max;
+    /*
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr single_object (new pcl::PointCloud<pcl::PointXYZRGB>);
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
+         it != cluster_indices.end();
+         ++it)
+    {
+      for (std::vector<int>::const_iterator pit = it->indices.begin();
+           pit != it->indices.end();
+           ++pit)
+      {
+        single_object->points.push_back(not_table->points[*pit]);
+      }
+      single_object->width = single_object->points.size();
+      single_object->height = 1;
+      single_object->is_dense = true;
+      single_object->header.frame_id = "camera_rgb_optical_frame";
 
+    }
+    objects_cloud_pub_.publish(single_object);
+    std::cout << "Object size:" << single_object->points.size() << std::endl;
+
+    pcl::getMinMax3D(*single_object, min, max);
+    double height0 = max.z-min.z;
+    double depth0 = max.x-min.x;
+    double width0 = max.y-min.y;
+    visual_tools_->publishWireframeCuboid(Eigen::Affine3d::Identity(), depth0, width0, height0, rviz_visual_tools::CYAN);
+    visual_tools_->triggerBatchPublish();
+    return;*/
     //TODO: Old poses continue to be published?
     std::vector<Eigen::Affine3d> local_poses;
     object_poses_ = local_poses;
@@ -408,7 +480,7 @@ Perception::Perception(int test)
     //int objects_found = cluster_indices.end() - cluster_indices.begin();
     object_labels.clear();
     Eigen::Vector4d useless_centroid;
-    Eigen::Vector3d object_centroid;
+    Eigen::Vector3d object_centroid, handle;
     tf::StampedTransform qr_transform;
     Eigen::Affine3d object_pose;
     visual_tools_->deleteAllMarkers();
@@ -416,7 +488,7 @@ Perception::Perception(int test)
 
     single_object_ll* segmented_objects = NULL;
     single_object_ll* iterator;
-    pcl::PointXYZRGB min, max;
+    //pcl::PointXYZRGB min, max;
     int unique_id = 0;
     //separate objects into a linked list to make processing more simple
     //perform object labeling
@@ -438,6 +510,8 @@ Perception::Perception(int test)
       single_object->is_dense = true;
       single_object->header.frame_id = "camera_rgb_optical_frame";
       std::string label = ObjectDetectionPtr->label_object(single_object);
+      if(!(label == "unknown" && only_blocks))
+      {
       if(colored_block_detection)
       {
         //label = ObjectDetectionPtr->label_object(single_object);
@@ -480,6 +554,7 @@ Perception::Perception(int test)
         while(iterator->next)
           iterator = iterator->next;
         iterator->next = new_object;
+      }
       }
     }
 
@@ -589,11 +664,60 @@ Perception::Perception(int test)
       local_poses.push_back(object_pose);
       object_labels.push_back(ss.str());
 
-      pcl::getMinMax3D(*iterator->point_cloud, min, max);
+      pcl::getMinMax3D(*single_object_transformed, min, max);
       double height = max.z-min.z;
       double depth = max.x-min.x;
       double width = max.y-min.y;
       visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
+
+      if(publish_handle && (label == "cup" || label == "cup_"))
+      {
+
+        double x,y,z;
+        z = object_centroid[2];
+        /*
+        std::cout << "object_centroid:" << object_centroid[0] << ", " <<object_centroid[1] << ", " << object_centroid[2] <<std::endl;
+        std::cout << "x_dif:" << abs(10000*(object_centroid[0]-max.x)) << ", x_diff" <<abs(10000*(object_centroid[0]-min.x)) <<std::endl;
+        std::cout << "y_dif:" << abs(10000*(object_centroid[1]-max.y)) << ", y_diff" <<abs(10000*(object_centroid[1]-min.y)) <<std::endl;
+        if(abs(10000*(object_centroid[0]-max.x)) > abs(10000*(object_centroid[0]-min.x)))
+        {
+            x = max.x;
+        }
+        else
+        {
+            x = min.x;
+        }
+        if(abs(10000*(object_centroid[1]-max.y)) > abs(10000*(object_centroid[1]-min.y)))
+        {
+            y = max.y;
+        }
+        else
+        {
+            y = min.y;
+        }*/
+        double x_diff, y_diff;
+        double xloc, yloc;
+        double max_diff=0;
+        for (size_t i = 0; i < single_object_transformed->points.size (); ++i)
+        {
+            x_diff = std::pow(100*single_object_transformed->points[i].x - 100*object_centroid[0],2);
+            y_diff = std::pow(100*single_object_transformed->points[i].y - 100*object_centroid[1],2);
+
+            if((x_diff + y_diff) > max_diff)
+            {
+                max_diff = x_diff + y_diff;
+                xloc = single_object_transformed->points[i].x;
+                yloc = single_object_transformed->points[i].y;
+            }
+            if(max_diff > 45.0)
+                break;
+        }
+        std::cout << "max handle distance: " << max_diff;
+        handle << xloc,yloc,z;
+        object_pose.translation() = handle;
+        local_poses.push_back(object_pose);
+        object_labels.push_back("handle");
+      }
 
       //std::cout << "object ss: " << ss.str()  << std::endl;
 
@@ -609,11 +733,13 @@ Perception::Perception(int test)
     }
     remove_outdated_objects();
 
-    objects_detected_ = true;
+    if(local_poses.size() > 0) objects_detected_ = true;
+
     object_poses_ = local_poses;
     visual_tools_->triggerBatchPublish();
 
     ROS_DEBUG_STREAM_NAMED("pcc","finished segmentation");
+
   }
 
   
@@ -754,17 +880,20 @@ Perception::Perception(int test)
       unique_id++;
       std::cout << new_object->label << std::endl;
       //get_colored_segments_2(part_object, unique_id);
-      if(!return_object)
-      {
-        return_object = new_object;
-        iterator = return_object;
-      }
-      else
-      {
-        while(iterator->next)
-          iterator = iterator->next;
-        iterator->next = new_object;
-      }
+     // if(!(new_object->label == "unknown" && only_blocks))
+      //{
+        if(!return_object)
+        {
+            return_object = new_object;
+            iterator = return_object;
+        }
+        else
+        {
+            while(iterator->next)
+                iterator = iterator->next;
+            iterator->next = new_object;
+        }
+      //}
     }
     return return_object;
   }

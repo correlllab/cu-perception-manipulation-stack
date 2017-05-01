@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+NUM_SENSORS = 16 
 
 def Int32MultiArray2np(msg):
     arr = np.array(msg.data)
@@ -63,10 +64,13 @@ class FingerSensorVisualizer(object):
 
     def callback(self, msg):
         nparr = Int32MultiArray2np(msg)
-        if nparr.shape != (4,): # CHANGE this to no. of sensor values read from serialport(just the values)
-            raise ValueError("Need 16 sensor values!")
-
-        data = nparr.reshape(2, 2)
+        if nparr.shape != (NUM_SENSORS,): # CHANGE this to no. of sensor values read from serialport(just the values)
+            raise ValueError("Need " +str(NUM_SENSORS)+ " sensor values!")
+        if(NUM_SENSORS == 16):
+            shape = 4
+        else:
+            shape = 2
+        data = nparr.reshape(shape, shape)
         self.im.set_data(np.log2(data))
         self.ax.set_title(str(data))
         self.fig.canvas.draw()

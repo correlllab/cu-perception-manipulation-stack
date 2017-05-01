@@ -146,11 +146,18 @@ include_directories(
 add_executable(camera_alignment
   src/camera_alignment.cpp
 )
+
 target_link_libraries(camera_alignment
   ${catkin_LIBRARIES}
 )
 
+add_executable(camera_alignment_baxter
+  src/camera_alignment_baxter.cpp
+)
 
+target_link_libraries(camera_alignment_baxter
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

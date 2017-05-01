@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
   std_msgs
   tf
-  #dynamic_reconfigure
+  dynamic_reconfigure
 )
 
 FIND_LIBRARY(HDF5_LIBRARY hdf5 /usr/local/hdf5/lib/)
@@ -57,9 +57,10 @@ find_package(PCL 1.7 REQUIRED)
 #  std_msgs
 #)
 
-#generate_dynamic_reconfigure_options(
-#  cfg/perception_param.cfg
-#)
+generate_dynamic_reconfigure_options(
+  cfg/sensor_param.cfg
+  cfg/perception_param.cfg
+)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
@@ -133,7 +134,10 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake
 )
+
+#include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 
 ## Declare a C++ library
 # add_library(perception
@@ -182,7 +186,7 @@ target_link_libraries(perception
 #)
 
 
-#add_dependencies(perception perception_gencfg)
+add_dependencies(perception perception_gencfg)
 
 
 

@@ -6,8 +6,10 @@
 
 #include <perception/finger_sensor_perception.h>
 
-namespace object_detection
+namespace perception
 {
+
+
 FingerSensorPerception::FingerSensorPerception()
  : nh_("~")
 {
@@ -21,10 +23,25 @@ FingerSensorPerception::FingerSensorPerception()
   right_tip_->enableBatchPublishing();
 
   normalize = false;
+  visual_tools_enabled = true;
+  enabled_sub_ = nh_.subscribe("/finger_perception/enabled", 1, &FingerSensorPerception::enableProcessing, this);
+  log_4 = log(0.25);
+  log_20000 = log(20000.0);
+
+}
+
+void FingerSensorPerception::enableProcessing(const std_msgs::Bool &enabled)
+{
+  visual_tools_enabled = enabled.data;
 }
 
 void FingerSensorPerception::processSensorValues(const std_msgs::Int32MultiArray& msg)
 {
+  if (!visual_tools_enabled)
+  {
+      //std::cout << "not performing perception, cont_run: " << continuous_running << std::endl;
+    return;
+  }
   int norm_data[16];
   if(normalize) //noramlize before any contact is made
   {
@@ -58,14 +75,14 @@ void FingerSensorPerception::processSensorValues(const std_msgs::Int32MultiArray
 
   for(int i=0; i<16; i++)
   {
-    if(i<7 && norm_data[i]>one5_cent)
-      left_tip_->publishSphere(getLeftPoint(norm_data[i],i+1), rviz_visual_tools::CYAN);
-    else if(i==7 && norm_data[i]>one_cent)
-      left_tip_->publishSphere(getTipPoint(norm_data[i]));
-    else if(i==15 && norm_data[i]>one_cent)
-      right_tip_->publishSphere(getTipPoint(norm_data[i]), rviz_visual_tools::MAGENTA);
-    else if(i!=15 && i>7 && norm_data[i]>one5_cent)
-      right_tip_->publishSphere(getRightPoint(norm_data[i],i-7), rviz_visual_tools::GREEN);
+    if(i<7 && norm_data[i]>threshold)
+      right_tip_->publishSphere(getRightPoint(norm_data[i],i+1), rviz_visual_tools::CYAN);//, rviz_visual_tools::XSMALL);
+    /*else if(i==7 && norm_data[i]>threshold)
+      right_tip_->publishSphere(getTipPoint(norm_data[i]), rviz_visual_tools::WHITE);
+    else if(i==15 && norm_data[i]>threshold)
+      left_tip_->publishSphere(getTipPoint(norm_data[i]), rviz_visual_tools::WHITE);*/
+    else if(i!=15 && i>7 && norm_data[i]>threshold)
+      left_tip_->publishSphere(getLeftPoint(norm_data[i],i-7), rviz_visual_tools::PINK);//,rviz_visual_tools::XSMALL);
   }
 
   left_tip_->triggerBatchPublish();
@@ -75,8 +92,8 @@ void FingerSensorPerception::processSensorValues(const std_msgs::Int32MultiArray
 
 double FingerSensorPerception::getOffset(int sensor_value)
 {
+  return ((log(sensor_value)-log_20000)/log_4)/100;
 
-  return 0.01;
   if(sensor_value < three5_cent)
     return 0.035;
   else if(sensor_value < three_cent)
@@ -109,9 +126,9 @@ geometry_msgs::Point FingerSensorPerception::getLeftPoint(int sensor_value, int 
 {
   geometry_msgs::Point surface;
   surface.x = 0;
-  surface.y = -getOffset(sensor_value);
+  surface.y = -getOffset(sensor_value) + l_gripper_offset;// + 0.035
   surface.z = (8-sensor_index)*(-0.01);
-  std::cout <<  "Left: " << sensor_value << std::endl;
+  //std::cout <<  "Left: " << sensor_value << std::endl;
   return surface;
 }
 
@@ -119,9 +136,9 @@ geometry_msgs::Point FingerSensorPerception::getRightPoint(int sensor_value, int
 {
   geometry_msgs::Point surface;
   surface.x = 0;
-  surface.y = getOffset(sensor_value);
+  surface.y = getOffset(sensor_value) + r_gripper_offset ;// - 0.035;
   surface.z = (8-sensor_index)*(-0.01);
-  std::cout <<  "Rght: " << sensor_value << std::endl;
+  //std::cout <<  "Rght: " << sensor_value << std::endl;
   return surface;
 }
 

@@ -31,8 +31,8 @@ float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 
 std::string path_to_models = "/object_database/";
-std::string models[] = {"cup","block","plate","bowl"};//,"joystick","cellphone"};
-int correspondences_needed[] = {30, 7, 150, 50, 50, 100};
+std::string models[] = {"cup","cup_", "block", "bunny"};//,"plate","bowl"};//,"joystick","cellphone"};
+int correspondences_needed[] = {20, 20, 6, 50, 50, 50, 100};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -43,7 +43,7 @@ ObjectDetection::ObjectDetection()
     found_match_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/correspondence_keypoints", 10);
     //publish surface normals of objects
     poseArrayPub = nh_.advertise<visualization_msgs::Marker>( "/normal_vectors", 0 );
-    std::cout << "test for change" << std::endl;
+
     std::string path = ros::package::getPath("perception");
     path_to_models = path + path_to_models;
     models_linkedlist = NULL;
@@ -235,7 +235,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
       {
         //new_node->normals->points[i].x = new_node->raw_cloud->points[i].x;
         //new_node->normals->points[i].y = new_node->raw_cloud->points[i].y;
-        //new_node->normals->points[i].z = new_node->raw_cloud->points[i].z;
+        //new_node->normals->points[i].z = new_node-    >raw_cloud->points[i].z;
 
         geometry_msgs::PoseStamped pose;
         geometry_msgs::Quaternion msg;
@@ -276,7 +276,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
           marker.type = visualization_msgs::Marker::ARROW;
           marker.action = visualization_msgs::Marker::MODIFY;
           marker.pose = pose.pose;
-          marker.scale.x = 0.02;
+          marker.scale.x = 0.01;
           marker.scale.y = 0.001;
           marker.scale.z = 0.001;
           marker.color.a = 1.0; // Don't forget to set the alpha!

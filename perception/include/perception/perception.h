@@ -60,9 +60,11 @@ namespace perception
   bool continuous_running = true; //continuously run perception or wait for keyboard command
   bool begin_from_start = false; //begin from start, or wait for keyboard command
   bool colored_block_detection = false; //further segments unknown objects by their color
+  bool only_blocks = false; //keeps blocks numbered between 0-N, where N is the number of blocks
   bool save_new = false; //save unknown point clouds to a file
   bool one_of_each = true; //only 1 unique object. used for labeling objects with a specified name (rather than object_some_number)
-
+  bool find_basket = false; //only finds the basket corners if true
+  bool publish_handle = true;
   std::vector<std::string> object_labels;
   std::string base_frame;
 
@@ -86,7 +88,7 @@ namespace perception
 class Perception
 {
 private:
-    boost::shared_ptr<object_detection::FingerSensorPerception> fingerSensorsPtr;
+    boost::shared_ptr<FingerSensorPerception> fingerSensorsPtr;
     boost::shared_ptr<object_detection::ObjectDetection> ObjectDetectionPtr;
     ros::NodeHandle nh_;
     std::string previous_frame;
@@ -96,6 +98,7 @@ private:
     ros::Publisher z_filtered_objects_cloud_pub_;
     ros::Publisher roi_cloud_pub_;
     ros::Publisher objects_cloud_pub_;
+    ros::Publisher number_of_objects_pub_;
     single_object_ll* tracked_objects;
     bool objects_detected_;
     std::vector<Eigen::Affine3d> object_poses_;
