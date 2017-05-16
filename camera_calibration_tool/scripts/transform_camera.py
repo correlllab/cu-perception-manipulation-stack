@@ -7,8 +7,8 @@ from geometry_msgs.msg import Pose, Point, Quaternion
 #translation = ( 1.2323, -0.24536, 0.66794)
 #quaternion = (-0.45097, 0.0087127, 0.89084, -0.054341)
 
-translation = (1.2577, -0.24086, 0.65647) #1.2477, -0.23986, 0.63647
-quaternion = (-0.44515, -0.0092363, 0.89379, -0.053757)
+translation = (1.1163, 1.0209, 0.95861) #1.0763, 1.0109, 0.89861
+quaternion = (0.27218, 0.32564, -0.72603, 0.54107)
 
 def update_transform(pose):
     global translation

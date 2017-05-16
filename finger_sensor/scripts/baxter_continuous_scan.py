@@ -133,7 +133,7 @@ class FingerSensorBaxter(Baxter):
         if self.tl.frameExists("/cup_position"):
             frame_name = "/cup_position"
         else:
-            frame_name = "/cup__position"
+            frame_name = "/cup_far_position"
         self.object_frame = frame_name
         if self.tl.frameExists("/root") and self.tl.frameExists(frame_name):
             t = self.tl.getLatestCommonTime("/root", frame_name)
@@ -232,6 +232,8 @@ class FingerSensorBaxter(Baxter):
                 #rospy.sleep(3)
             if(not self.handle_found):
                 print("Handle not found :(")
+        else:
+            print("Frame does not exist: " +frame_name)
         
             
 
@@ -440,7 +442,7 @@ if __name__ == '__main__':
                 rospy.sleep(0.01)
                 loop_wait += 1
             stop_loop = n.robot.tl.frameExists("cup_position")
-            stop_loop = n.robot.tl.frameExists("cup__position") or stop_loop
+            stop_loop = n.robot.tl.frameExists("cup_far_position") or stop_loop
             perception_pub.publish(Bool(False))
             good = raw_input("Perception successful? y/n:")
             

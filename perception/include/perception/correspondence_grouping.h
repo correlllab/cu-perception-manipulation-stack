@@ -52,37 +52,9 @@ typedef pcl::PointXYZRGB PointType;
 typedef pcl::Normal NormalType;
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::SHOT352 DescriptorType;
-//typedef pcl::VFHSignature308 DescriptorType;
-
-//std::string models[] = {"cup.pcd"};
-/*
-struct CloudStyle
-{
-    double r;
-    double g;
-    double b;
-    double size;
-
-    CloudStyle (double r,
-                double g,
-                double b,
-                double size) :
-        r (r),
-        g (g),
-        b (b),
-        size (size)
-    {
-    }
-};
-
-CloudStyle style_white (255.0, 255.0, 255.0, 4.0);
-CloudStyle style_red (255.0, 0.0, 0.0, 3.0);
-CloudStyle style_green (0.0, 255.0, 0.0, 5.0);
-CloudStyle style_cyan (93.0, 200.0, 217.0, 4.0);
-CloudStyle style_violet (255.0, 0.0, 255.0, 8.0);
-*/
 //Algorithm params
 
+//Calculates descriptors from object database
 struct model_object
 {
   std::string name;
@@ -100,6 +72,8 @@ class ObjectDetection
 private:
   model_object* models_linkedlist;
   void load_model_objects();
+
+  //main function for determining if objects match
   bool is_object(model_object*  unknown, model_object* model);
   model_object* compute_descriptors(pcl::PointCloud<PointType>::Ptr point_cloud);
 public:
@@ -107,8 +81,8 @@ public:
   std::string label_object(pcl::PointCloud<PointType>::Ptr unknown);
 protected:
   ros::NodeHandle nh_;
-  ros::Publisher found_match_cloud_pub_;
-  ros::Publisher poseArrayPub;
+  ros::Publisher found_match_cloud_pub_; //publishes keypoints for debugging purposes
+  ros::Publisher poseArrayPub;  //publishes surface normals for debugging purposes or pretty pictures
   geometry_msgs::PoseArray poseArray;
 
 };

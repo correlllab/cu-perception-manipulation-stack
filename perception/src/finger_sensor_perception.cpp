@@ -94,22 +94,6 @@ double FingerSensorPerception::getOffset(int sensor_value)
 {
   return ((log(sensor_value)-log_20000)/log_4)/100;
 
-  if(sensor_value < three5_cent)
-    return 0.035;
-  else if(sensor_value < three_cent)
-    return 0.03;
-  else if(sensor_value < two5_cent)
-    return 0.025;
-  else if(sensor_value < two_cent)
-    return 0.02;
-  else if(sensor_value < one5_cent)
-    return 0.015;
-  else if(sensor_value < one_cent)
-    return 0.01;
-  else if(sensor_value < half_cent)
-    return 0.005;
-  else
-    return 0.005;
 }
 
 geometry_msgs::Point FingerSensorPerception::getTipPoint(int sensor_value)

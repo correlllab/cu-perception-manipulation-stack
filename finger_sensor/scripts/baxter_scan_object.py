@@ -116,12 +116,6 @@ class FingerSensorBaxter(Baxter):
             self.state = 'postpick'
             
 
-            #x_index = 0
-            #y_index = 0
-            #x_offsets = (0.0, -1.39, -2.645,  -3.64, -4.28,
-            #              -4.5, -4.28, -3.64, -2.645, -1.39, 0.0)
-            #y_offsets = (4.5, 4.28, 3.64, 2.645, 1.39, 
-            #               0.0, -1.39, -2.645,  -3.64, -4.28, -4.5)
             radian = 0
             rad_increase = (3.14156/2)/5
             rospy.sleep(3)
@@ -213,109 +207,7 @@ class FingerSensorBaxter(Baxter):
                     Quaternion(0.99897, -0.034828, 0.027217, 0.010557)))
             self.move_ik(home) 
             rospy.sleep(2)
-            #perception_pub.publish(Bool(True))
-            '''
-            if(handle):
-                #pick_pose is the current gripper position
-                requrd_rot = (0,0,0) # in radians
-                requrd_trans = (.12,.05,0) #(.07,-.03,-.01) end want
-                init_grip_pose = self.getOffsetPoses(trans_2, quat_2, requrd_rot, requrd_trans)
-                #print init_grip_pose
-                trans_3= tuple(init_grip_pose[:3])
-                quat_3= tuple(init_grip_pose[3:])
-                init_grip_pose = PoseStamped(Header(0, rospy.Time(0), n.robot.base),
-                                Pose(Point(*trans_3),
-                                Quaternion(*quat_3)))
-                #while(True):
-                br.sendTransform(trans_3,
-                                  quat_3,
-                                  rospy.Time.now(),
-                                  "grip_pose",
-                                  "/root") 
-                self.move_ik(init_grip_pose)
-                requrd_rot = (0,-3.14156/8,0) # in radians
-                requrd_trans = (-.02,0,-.05) #(.07,-.03,-.01) end want
-                grip_pose = self.getOffsetPoses(trans_3, quat_3, requrd_rot, requrd_trans)
-                #print grip_pose
-                trans_4= tuple(grip_pose[:3])
-                quat_4= tuple(grip_pose[3:])
-                grip_pose = PoseStamped(Header(0, rospy.Time(0), n.robot.base),
-                                Pose(Point(*trans_4),
-                                Quaternion(*quat_4)))
-                br.sendTransform(trans_4,
-                                  quat_4,
-                                  rospy.Time.now(),
-                                  "grip_pose",
-                                  "/root") 
-                #grip_pose = PoseStamped(Header(0, rospy.Time(0), n.robot.base),
-                #                Pose(Point(*trans_2),
-                #                Quaternion(*quat_2)))
-                self.move_ik(grip_pose)
-                self.gripper.open()
-                requrd_rot = (0,-3.14156/8,0) # in radians
-                requrd_trans = (0,-.01,0) #(.07,-.03,-.01) end want
-                final_grip_pose = self.getOffsetPoses(trans_2, quat_2, requrd_rot, requrd_trans)
-                #print init_grip_pose
-                trans_5= tuple(final_grip_pose[:3])
-                quat_5= tuple(final_grip_pose[3:])
-                final_grip_pose = PoseStamped(Header(0, rospy.Time(0), n.robot.base),
-                                Pose(Point(*trans_5),
-                                Quaternion(*quat_5)))
-                br.sendTransform(trans_5,
-                                  quat_5,
-                                  rospy.Time.now(),
-                                  "grip_pose",
-                                  "/root") 
-                self.move_ik(final_grip_pose)
-                direction=(0, 0, 1)
-                while True:
-                    if(not self.sensors_updated()):
-                        return
-                    #rospy.loginfo(count)
-                    #rospy.loginfo("Moving to touch (at {})".format(self.inside[6]))
-                    if self.inside[3] > 600:
-                        break
-                    else:
-                        scaled_direction = (di / 100 for di in direction)
-                        #print("Scaled direction: ", scaled_direction)
-                        v_cartesian = self._vector_to(scaled_direction)
-                        v_cartesian[1] = .005
-                        #print("cartesian: ", v_cartesian)
-                        v_joint = self.compute_joint_velocities(v_cartesian)
-                        #print("joint    : ", v_joint)
-                        self.limb.set_joint_velocities(v_joint)
-                        rospy.sleep(0.25)
 
-            n.robot.gripper.command_position( position = 90)
-            '''
-            '''
-            requrd_rot = (0,0,.1) # in radians
-            requrd_trans = (-0.005,-0.005,0)
-            #quaternion = tuple((1, 0, 0, 0))
-            pose = self.getOffsetPoses(position, quaternion, requrd_rot, requrd_trans)
-            trans_1= tuple(pose[:3])
-            quat_1= tuple(pose[3:])
-            br.sendTransform(trans_1,
-                                  quat_1,
-                                  rospy.Time.now(),
-                                  "pick_pose",
-                                  "/root")
-
-            #pose = Pose(Point(*trans_1),
-            #            Quaternion(*quat_1))
-            h = Header()
-            h.stamp = self.tl.getLatestCommonTime("/root", frame_name)
-            h.frame_id = "/root"
-            stamped_pose = PoseStamped(h, pose)
-            next_pose = PoseStamped(
-                    Header(0, rospy.Time(0), n.robot.base),
-                    Pose(Point(*trans_1),
-                    Quaternion(*quat_1)))
-            #next_pose = self.translate(stamped_pose, (0,0,0), 0)
-            
-            self.move_ik(next_pose)
-            self.state = 'postpick'
-            '''
 
 
 
@@ -825,39 +717,8 @@ if __name__ == '__main__':
                  Quaternion(0.99897, -0.034828, 0.027217, 0.010557)))
     n.robot.move_ik(home) 
     raw_input("Press Enter to continue...")
-    #n.robot.gripper.command_position( position = 10)
-    #raw_input("Press Enter to continue...")
+
     n.robot.scan_cup()
     
-    #n.robot.update_camera_transform()
-    '''
-    
-    #n.robot.update_camera_transform()
 
-    #get block 0 location
-    n.robot.object_frame = "/block_1"
-    test = n._pickFrame(n.robot.object_frame)
-    while( not test):
-        test = n._pickFrame(n.robot.object_frame)
-    raw_input("Press Enter to continue...")
-    #get block 1 location
-    n.robot.object_frame = "/block_3"
-    test = n._pickFrame(n.robot.object_frame)
-    while( not test):
-        test = n._pickFrame(n.robot.object_frame)
-    raw_input("Press Enter to continue...")
-    #get block 2 location
-    n.robot.object_frame = "/block_2"
-    test = n._pickFrame(n.robot.object_frame)
-    while( not test):
-        test = n._pickFrame(n.robot.object_frame)
-    raw_input("Press Enter to continue...")
-    #get block 2 location
-    n.robot.object_frame = "/block_1"
-    test = n._pickFrame(n.robot.object_frame)
-    while( not test):
-        test = n._pickFrame(n.robot.object_frame)
 
-    raw_input("Press Enter to continue...")
-    n.robot.update_camera_transform()
-    '''

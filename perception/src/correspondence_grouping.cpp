@@ -31,7 +31,10 @@ float hv_rad_normals_ (0.05);
 bool hv_detect_clutter_ (true);
 
 std::string path_to_models = "/object_database/";
-std::string models[] = {"cup","cup_", "block", "bunny"};//,"plate","bowl"};//,"joystick","cellphone"};
+
+//Add objects from the database here with a base threshold for matching descriptors
+//cup_ is the cup with the handle visible
+std::string models[] = {"cup","cup_far", "block", "bunny"};//,"plate","bowl"};
 int correspondences_needed[] = {20, 20, 6, 50, 50, 50, 100};
 
 ObjectDetection::ObjectDetection()
@@ -55,7 +58,7 @@ ObjectDetection::ObjectDetection()
 
 }
 
-/* Code to load a 3D model of the object for comparison. Correspondences were not being found, so this
+/* Code to load a stl model of the object for comparison. Correspondences were not being found, so this
  * method is not being used
  * pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>());
     pcl::PolygonMesh triangles;
@@ -169,8 +172,8 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
    */
   //std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
   //std::vector < pcl::Correspondences > clustered_corrs;
-/* Issues with clustering. finding clusters was unsuccessful, even though we found plenty of
- * matching correspondences. Just skipping this part for not
+/* NOTE: Issues with clustering. finding clusters was unsuccessful, even though we found plenty of
+ * matching correspondences. This is only needed to find orientation. Just skipping this part for now
   if (use_hough_)
   {
     pcl::PointCloud<RFType>::Ptr cup_rf (new pcl::PointCloud<RFType> ());
@@ -219,7 +222,8 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   }
 
   /**
-   * Stop if no instances
+   * Stop if no instances.
+   * Uses a threshold for matching correspondance rather than the commented out clustering methods
    */
   if (/*rototranslations.size () <= 0 && */(model_unknown_corrs->size () < model->correspondence_needed ))
   {
@@ -228,6 +232,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   }
   else
   {
+     /* Commented code publishes pretty arrows that show the surface normals
     poseArray.poses.clear(); // Clear last block perception result
     poseArray.header.stamp = ros::Time::now();
     poseArray.header.frame_id = "camera_rgb_optical_frame";
@@ -243,14 +248,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
         // extracting surface normals
         tf::Vector3 axis_vector(unknown->normals->points[i].normal[0], unknown->normals->points[i].normal[1], unknown->normals->points[i].normal[2]);
         tf::Vector3 up_vector( 1.0, 0.0, 0.0); // (0,0,1)
-        /*
-        btVector3 axis(pcl_cloud.points[i].normal[0],pcl_cloud.points[i].normal[1],pcl_cloud.points[i].normal[2]);
-        00131       btVector3 marker_axis(1, 0, 0);
-        00132       btQuaternion qt(marker_axis.cross(axis.normalize()), marker_axis.angle(axis.normalize()));
-        00133       geometry_msgs::Quaternion quat_msg;
-        00134       tf::quaternionTFToMsg(qt, quat_msg);
-        00135       normals_marker_array_msg_.markers[i].pose.orientation = quat_msg;
-        */
+
         tf::Vector3 right_vector = axis_vector.cross(up_vector);
         right_vector.normalized();
         tf::Quaternion q(right_vector, -1.0*acos(axis_vector.dot(up_vector)));
@@ -287,10 +285,10 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
           //poseArray.poses.push_back(pose.pose);
 
         }
-      }
+      }*/
     return true;
     /**
-     * Generates clouds for each instances found
+     * Generates clouds for each instances found, commented out because instances are not getting found
 
     //std::vector<pcl::PointCloud<PointType>::ConstPtr> instances;
     for (size_t i = 0; i < rototranslations.size (); ++i)

@@ -56,15 +56,15 @@
 
 namespace perception
 {
-  bool standalone = false; //running with a robot base or just the camera. sets a default orientation for objects and visual tools
-  bool continuous_running = true; //continuously run perception or wait for keyboard command
-  bool begin_from_start = false; //begin from start, or wait for keyboard command
+  bool standalone = false; //running with a robot base or just the camera
+  bool continuous_running = true; //continuously run perception or wait for command
+  bool begin_from_start = false; //begin from start, or wait for command
   bool colored_block_detection = false; //further segments unknown objects by their color
   bool only_blocks = false; //keeps blocks numbered between 0-N, where N is the number of blocks
   bool save_new = false; //save unknown point clouds to a file
   bool one_of_each = true; //only 1 unique object. used for labeling objects with a specified name (rather than object_some_number)
-  bool find_basket = false; //only finds the basket corners if true
-  bool publish_handle = true;
+  //bool find_basket = false; //only finds the basket corners if true
+  bool publish_handle = true; //publishes cup handle when a cup is found
   std::vector<std::string> object_labels;
   std::string base_frame;
 

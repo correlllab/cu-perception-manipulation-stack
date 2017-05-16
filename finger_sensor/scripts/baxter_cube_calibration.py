@@ -1,5 +1,11 @@
 #! /usr/bin/env python
 
+'''
+ * Author(s) : Rebecca Cox
+ * Desc      : Scene calibration optimization using the finger sensors on Baxter
+ * Date      : 2017 - Spring
+'''
+
 from math import copysign, pi, cos
 
 import numpy as np
@@ -22,9 +28,9 @@ import time #don't use old finger sensor values! only new
 # 0.172, 0.529, -0.286, 0.779
 
 start_num = 0
-num_cubes = 15
+#num_cubes = 15
 cube_name = "/block_"
-cubes = ["/block_5","/block_17","/block_0","/block_6","/block_15"]
+save_to_file = True
 
 class FingerSensorBaxter(Baxter):
     def __init__(self, limb_name, topic='/sensor_values'):
@@ -43,9 +49,7 @@ class FingerSensorBaxter(Baxter):
                                            queue_size=1)
         self.object_frame = ""
         self.camera_centroids = np.zeros((num_cubes, 3))
-        #self.camera_centroids = np.array([[ 0.676749,-0.116798,-0.100457],[ 0.564606,-0.034142,-0.10861 ],[ 0.645695,-0.291158,-0.093074]])
         self.touch_centroids = np.zeros((num_cubes, 3))
-        #self.touch_centroids = np.array([[ 0.684658,-0.097485,-0.09421 ],[ 0.568634,-0.025073,-0.098264],[ 0.660665,-0.273198,-0.093639]])
         self.current_index = 0
         self.update_transform = rospy.Publisher("/update_camera_alignment",
                                                 Pose,
@@ -336,7 +340,7 @@ class FingerSensorBaxter(Baxter):
         self.capture_centroid(self.object_frame)
         self.current_index += 1
         
-
+#visualizes the touch centroid in RVIZ for debugging/verification purposes
 def publish_transform(name, pos):
     broadcast = tf.TransformBroadcaster()
     while(True):
@@ -347,7 +351,7 @@ def publish_transform(name, pos):
         rospy.sleep(1)
 
 if __name__ == '__main__':
-    n = PickAndPlaceNode(FingerSensorBaxter, 'right')
+    n = PickAndPlaceNode(FingerSensorBaxter, 'right') #right is for the right arm
     
     home = PoseStamped(
             Header(0, rospy.Time(0), n.robot.base),
@@ -355,43 +359,39 @@ if __name__ == '__main__':
                  Quaternion(0.99897, -0.034828, 0.027217, 0.010557)))
     n.robot.move_ik(home) 
     
-    #thread.start_new_thread(publish_transform, ("block_0_touch", [.2,.2,.2]))
+    num_cubes = int(raw_input("Enter number of cubes (names should start at block_0!):"))
     raw_input("Press Enter to find cubes...")
-    #get block 0 location
-    f = open('centroid_storage.txt', 'w')
+    print("\nSearching for " + str(num_cubes) + " cubes...\n")
+    if(save_to_file): f = open('centroid_storage.txt', 'w')
     cube = 0
     for i in range(start_num,start_num+num_cubes):
         n.robot.object_frame = cube_name + str(i)
-        if(n._pickFrame(n.robot.object_frame)):
-            
-            f.write(n.robot.object_frame)
-            f.write('\n')
+        if(n._pickFrame(n.robot.object_frame)): #will return False if frame does not exist
+            print("\nFound cube name: " + n.robot.object_frame + "\n")
+            if(save_to_file): 
+                f.write(n.robot.object_frame)
+                f.write('\n')
 
             thread.start_new_thread(publish_transform, (cube_name + str(i) + "_touch", n.robot.touch_centroids[cube].tolist()))
 
-            f.write('camera: \n')
-            f.write(np.array2string(n.robot.camera_centroids[cube], precision=6, separator=','))
-            f.write('\ntouch : \n')
-            f.write(np.array2string(n.robot.touch_centroids[cube], precision=6, separator=','))
-            f.write('\n\n\n')
+            if(save_to_file): 
+                f.write('camera: \n')
+                f.write(np.array2string(n.robot.camera_centroids[cube], precision=6, separator=','))
+                f.write('\ntouch : \n')
+                f.write(np.array2string(n.robot.touch_centroids[cube], precision=6, separator=','))
+                f.write('\n\n\n')
             cube += 1
+        else:
+            print("\nCan't find cube name: " + n.robot.object_frame + " :`( \n")
 
-    f.close()
+    if(save_to_file): f.close()
     
-    #transform using just one cube. find the translation
-    raw_input("Press Enter to perform translation...")
-    '''
-    n.robot.update_translation()
+    if(num_cubes < 3): #only enough cubes have been scanned for a translation
+        raw_input("Press Enter to perform translation...")
+        n.robot.update_translation()
+    else:
+        raw_input("Press Enter to perform rigid transformation...")
+        n.robot.update_camera_transform()
 
-    raw_input("Press Enter for average translation...")
-    #get block 1 location
+    raw_input("Press Enter to end program")
 
-    #find the translation and rotation around the worst axis
-    raw_input("Press Enter rigid transformation...")
-
-    n.robot.update_camera_transform()
-
-    raw_input("Press Enter for full transformation...")
-
-    raw_input("Press Enter to continue...")
-    '''
