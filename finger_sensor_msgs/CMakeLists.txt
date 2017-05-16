@@ -20,14 +20,6 @@ add_message_files(
   FingerTouch.msg
 )
 
-add_service_files(
-  FILES
-
-)
-
-add_action_files(DIRECTORY action
-  FILES
-)
 
 generate_messages(
   DEPENDENCIES
