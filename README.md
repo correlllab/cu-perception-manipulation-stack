@@ -57,7 +57,7 @@ restart udev so it reads the new rules:
 sudo /etc/init.d/udev restart
 ```
 
-### Compiling errors
+### Compile errors
 
 There is an issue currently with PCL from ROS. If you have errors, such as "mets.h", use the following copy command to move missing files directly into PCL's directory on your machine. compile code using catkin build:
 ```
@@ -66,8 +66,19 @@ catkin build
 
 ```
 
-### For Jaco
+Move to moveit_robots/baxter/baxter_moveit_config/config and run this command to generate baxter.urdf:
+```
+    rosrun xacro xacro.py baxter.urdf.xacro > baxter.urdf
+```
 
+or copy this file over:
+```
+    cp <perception>/cfg/baxter.urdf moveit_robots/baxter/baxter_moveit_config/config
+```
+
+### Configuring For Jaco
+
+Use your favorite text editor for .bashrc:
 ```
 gedit ~/.bashrc
 ```
@@ -87,7 +98,7 @@ Save and source the file for each terminal:
 source ~/.bashrc
 ```
 
-### For Baxter
+### Configuring For Baxter
 
 Follow instructions for simulator installation if packages are missing still:
 http://sdk.rethinkrobotics.com/wiki/Simulator_Installation
@@ -108,13 +119,12 @@ export ROS_MASTER_URI=http://$HOSTNAME:11311
 export ROS_IP=`hostname -I | tr -d '[[:space:]]'`
 ```
 
+If you set ROS_HOSTNAME, you may have networking issues! Use 'unset ROS_HOSTNAME' to fix it.
+
 Save and source the file for each terminal:
 ```
 source ~/.bashrc
 ```
-
-## Running the code
-
 
 
 ### For Jaco
@@ -137,8 +147,18 @@ Each of these commands should be ran in a separate window. Some files may need t
     roslaunch perception interface.launch
 ```
 
+### Example Scripts for Baxter:
+
+In finger_sensor:
+```
+ 	stacking_blocks.py
+    baxter_continuous_scan.py
+    baxter_cube_calibration.py
+```
+
 ### Camera
-Modify roslaunch for Baxter or Jaco:
+Modify roslaunch for Baxter or Jaco. This is necessary because they have different AR tags mounted to different locations.
+
 
 type="camera_alignment_baxter"
 
@@ -155,6 +175,8 @@ Scene calibration. Make sure AR tag is visible by looking in RVIZ for transform:
 ```
     rostopic pub /alignment/doit/ std_msgs/Bool True
 ```
+
+Once the scene is calibrated, you can kill the previous publishing command.
 
 If you don't plan to move the camera anytime soon, record transform (position and orientation) of camera_link in RVIZ under TF frames. Paste these values into transform_camera.py to avoid previous steps. 
 When transform is known for the camera, skip above steps and run:
