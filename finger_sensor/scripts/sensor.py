@@ -6,7 +6,7 @@ import rospy
 from std_msgs.msg import Int32MultiArray, MultiArrayLayout, MultiArrayDimension
 import numpy as np
 
-BAUD_RATE = 57600
+BAUD_RATE = 115200
 PORT_NAME = '/dev/ttyACM0'
 NUM_SENSORS = 16  # CHANGE this to no. of sensor values read
 
