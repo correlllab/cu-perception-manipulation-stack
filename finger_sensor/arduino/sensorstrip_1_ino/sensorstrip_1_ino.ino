@@ -32,7 +32,7 @@ int proximity_freq_ = 1; // range = [0 , 3]. 390.625kHz, 781.250kHz, 1.5625MHz, 
 #define PROXIMITY_RESULT_MSB 0x87  // High byte of proximity measure
 #define PROXIMITY_RESULT_LSB 0x88  // low byte of proximity measure
 #define PROXIMITY_MOD 0x8F  // proximity modulator timing
-#define NUM_SENSORS 6
+#define NUM_SENSORS 2
 
 /***** GLOBAL VARIABLES *****/
 int num_devices_;
@@ -41,7 +41,10 @@ unsigned int proximity_value_;
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
+  
+  while (!Serial.dtr());    // DEBUG
+  Serial.println("Serial Initialized");    // DEBUG
   Wire.begin();
 
   // clear serial

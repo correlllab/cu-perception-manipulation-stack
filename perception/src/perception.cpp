@@ -96,7 +96,7 @@ Perception::Perception(int test)
   {
     image_processing_enabled_ = enabled.data;
   }
-  
+
   single_object_ll* Perception::near_centroid_object(Eigen::Vector3d centroid)
   {
     single_object_ll* iterator = tracked_objects;
@@ -281,7 +281,7 @@ Perception::Perception(int test)
     pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("z");
     // TODO: read parameters in a way that allows dynamic changes
-    pass.setFilterLimits(0.0, 3); // 0.5, 1.2
+    pass.setFilterLimits(0.0, 0.91); // 0.5, 1.2
     pass.filter(*z_filtered_objects);
     //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
     z_filtered_objects->header.frame_id = "camera_rgb_optical_frame";
@@ -438,7 +438,7 @@ Perception::Perception(int test)
     else
     {
         ec.setMinClusterSize(150);  // less than a wood cube
-        ec.setMaxClusterSize(15000);  // a plate is lots
+        ec.setMaxClusterSize(20000);  // a plate is lots
     }
     ec.setSearchMethod(tree);
     ec.setInputCloud(not_table);
@@ -670,7 +670,7 @@ Perception::Perception(int test)
       double width = max.y-min.y;
       visual_tools_->publishWireframeCuboid(object_pose, depth, width, height, color);
 
-      if(publish_handle && (label == "cup" || label == "cup_"))
+      if(publish_handle && label.find("cup") != std::string::npos)
       {
 
         double x,y,z;
@@ -742,7 +742,7 @@ Perception::Perception(int test)
 
   }
 
-  
+
   tf::Vector3 table_axis;
   geometry_msgs::PoseStamped pose;
 

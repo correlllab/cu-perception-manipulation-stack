@@ -8,6 +8,10 @@
 #include <perception/correspondence_grouping.h>
 #include <ros/package.h>
 
+#include <iostream>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+
 namespace object_detection
 {
 bool show_keypoints_ (false);
@@ -32,10 +36,24 @@ bool hv_detect_clutter_ (true);
 
 std::string path_to_models = "/object_database/";
 
-//Add objects from the database here with a base threshold for matching descriptors
-//cup_ is the cup with the handle visible
-std::string models[] = {"cup","cup_far", "block", "bunny"};//,"plate","bowl"};
-int correspondences_needed[] = {20, 20, 6, 50, 50, 50, 100};
+/**
+ * `models` is the array of names of files in the "object_database" folder, without
+ * the ".pcd" file extension. For example, if the folder looks like this:
+ *
+ *   object_database
+ *     /plate.pcd
+ *     /cup.pcd
+ *
+ * then models should be set to `{"plate", "cup"}`
+ */
+std::string models[] =         {"cup", "plate", "bowl_farther_half", "spoon"};
+/**
+ * Correspondences needed for each associated model.
+ * ex: if `models = {"plate", "cup"}`, this can be set to `{100, 200}` for a
+ *     required correspondence of 100 needed to match a plate and 200 to match a
+ *     cup
+ */
+int correspondences_needed[] = { 50,   200,     70,                  5     };
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -119,7 +137,7 @@ std::string ObjectDetection::label_object(pcl::PointCloud<PointType>::Ptr unknow
 
     iterator = iterator->next;
   }
-
+  pcl::io::savePCDFileASCII ("test_pcd.pcd", *unknown);
   return "unknown";
 }
 
