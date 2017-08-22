@@ -19,9 +19,9 @@ void callback(perception::sensor_paramConfig &config, uint32_t level)
 {
     l_gripper_offset = config.left_gripper_offset_y;
     r_gripper_offset = config.right_gripper_offset_y;
-    std::cout << "received new gripper offsets" << std::endl;
-    std::cout << "Left: " << l_gripper_offset << std::endl;
-    std::cout << "Right: " << r_gripper_offset << std::endl;
+    // std::cout << "received new gripper offsets" << std::endl;
+    // std::cout << "Left: " << l_gripper_offset << std::endl;
+    // std::cout << "Right: " << r_gripper_offset << std::endl;
 }
 
 Perception::Perception(int test)
@@ -281,7 +281,7 @@ Perception::Perception(int test)
     pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("z");
     // TODO: read parameters in a way that allows dynamic changes
-    pass.setFilterLimits(0.0, 0.91); // 0.5, 1.2
+    pass.setFilterLimits(0.0, 0.95); // 0.5, 1.2
     pass.filter(*z_filtered_objects);
     //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
     z_filtered_objects->header.frame_id = "camera_rgb_optical_frame";

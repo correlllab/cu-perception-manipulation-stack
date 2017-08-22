@@ -53,7 +53,7 @@ std::string models[] =         {"cup", "plate", "bowl_farther_half", "spoon"};
  *     required correspondence of 100 needed to match a plate and 200 to match a
  *     cup
  */
-int correspondences_needed[] = { 50,   200,     70,                  5     };
+int correspondences_needed[] = {75,200,70,5};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -115,7 +115,7 @@ void ObjectDetection::load_model_objects()
          iterator->next = new_node;
 
        }
-       //std::cout << "Added model " << new_node->name;
+      //  std::cout << "Added model " << new_node->name << std::endl;
 
      }
      else
@@ -137,7 +137,7 @@ std::string ObjectDetection::label_object(pcl::PointCloud<PointType>::Ptr unknow
 
     iterator = iterator->next;
   }
-  pcl::io::savePCDFileASCII ("test_pcd.pcd", *unknown);
+  // pcl::io::savePCDFileASCII ("test_pcd.pcd", *unknown);
   return "unknown";
 }
 
@@ -183,7 +183,7 @@ bool ObjectDetection::is_object(model_object* unknown, model_object* model)
   pcl::copyPointCloud (*model->keypoints, model_good_keypoints_indices, *model_good_kp);
   pcl::copyPointCloud (*unknown->keypoints, unknown_good_keypoints_indices, *unknown_good_kp);
 
-  std::cout << "Correspondences found: " << model_unknown_corrs->size () << std::endl;
+  std::cout << "Correspondences of " << model_unknown_corrs->size () << " found with " << model->name << std::endl;
 
   /**
    *  Clustering

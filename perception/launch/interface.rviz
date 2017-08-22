@@ -12,7 +12,7 @@ Panels:
         - /MarkerArray4
         - /MarkerArray6
       Splitter Ratio: 0.625714
-    Tree Height: 733
+    Tree Height: 803
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -97,6 +97,8 @@ Visualization Manager:
       Frame Timeout: 3
       Frames:
         All Enabled: false
+        bowl_farther_half_position:
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
@@ -107,6 +109,10 @@ Visualization Manager:
           Value: false
         camera_rgb_optical_frame:
           Value: false
+        cup_position:
+          Value: true
+        handle:
+          Value: true
         j2n6a300_end_effector:
           Value: false
         j2n6a300_link_1:
@@ -135,7 +141,25 @@ Visualization Manager:
           Value: false
         j2n6a300_link_finger_tip_3:
           Value: false
+        plate_position:
+          Value: true
         root:
+          Value: true
+        unknown_1:
+          Value: true
+        unknown_2:
+          Value: true
+        unknown_3:
+          Value: true
+        unknown_4:
+          Value: true
+        unknown_5:
+          Value: true
+        unknown_6:
+          Value: true
+        unknown_7:
+          Value: true
+        unknown_8:
           Value: true
       Marker Scale: 0.25
       Name: TF
@@ -144,6 +168,8 @@ Visualization Manager:
       Show Names: true
       Tree:
         root:
+          bowl_farther_half_position:
+            {}
           camera_link:
             camera_depth_frame:
               camera_depth_optical_frame:
@@ -151,6 +177,10 @@ Visualization Manager:
             camera_rgb_frame:
               camera_rgb_optical_frame:
                 {}
+          cup_position:
+            {}
+          handle:
+            {}
           j2n6a300_link_base:
             j2n6a300_link_1:
               j2n6a300_link_2:
@@ -169,6 +199,24 @@ Visualization Manager:
                         j2n6a300_link_finger_3:
                           j2n6a300_link_finger_tip_3:
                             {}
+          plate_position:
+            {}
+          unknown_1:
+            {}
+          unknown_2:
+            {}
+          unknown_3:
+            {}
+          unknown_4:
+            {}
+          unknown_5:
+            {}
+          unknown_6:
+            {}
+          unknown_7:
+            {}
+          unknown_8:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz/MarkerArray
@@ -182,93 +230,18 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: true
+      Enabled: false
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        j2n6a300_end_effector:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_4:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_5:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_6:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_finger_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_finger_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_finger_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_finger_tip_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_finger_tip_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        j2n6a300_link_finger_tip_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        root:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: true
+      Value: false
       Visual Enabled: true
     - Class: rviz/MarkerArray
       Enabled: true
@@ -359,7 +332,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.47248
+      Distance: 2.24038
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -371,10 +344,10 @@ Visualization Manager:
         Z: -0.113127
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.1248
+      Pitch: 0.909797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.73687
+      Yaw: 2.25187
     Saved: ~
 Window Geometry:
   Displays:
@@ -382,7 +355,7 @@ Window Geometry:
   Height: 1024
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000017000000371fc0200000008fb000000100044006900730070006c006100790073010000002800000371000000e200fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006600fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000035dfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000430000035d000000b800fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000778000000ddfc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f00000040fc0100000002fb0000000800540069006d006501000000000000073f0000034300fffffffb0000000800540069006d00650100000000000004500000000000000000000005c90000037100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000170000003b7fc0200000008fb000000100044006900730070006c0061007900730100000028000003b7000000e200fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006600fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000035dfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000430000035d000000b800fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000778000000ddfc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f00000040fc0100000002fb0000000800540069006d006500000000000000073f0000034300fffffffb0000000800540069006d00650100000000000004500000000000000000000005c9000003b700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -392,5 +365,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 1945
+  X: 1935
   Y: 14

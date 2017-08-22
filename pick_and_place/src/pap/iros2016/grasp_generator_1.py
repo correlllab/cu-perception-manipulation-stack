@@ -39,12 +39,13 @@ class grasp_generator(object):
 
     def broadcast_frame(self,msg):
         self.num_objects = msg.data
-        # print ('we have the frame')
-        if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_1"):
-            # print ('we have the frame')
-            t = self.listen.getLatestCommonTime("/root", "/unknown_1")
-            translation, quaternion = self.listen.lookupTransform("/root", "/unknown_1", rospy.Time(0))
-
+        # print ('we do not have the frame')
+        if self.listen.frameExists("/root") and self.listen.frameExists("/cup_position"):
+            print ('we have the frame')
+            t = self.listen.getLatestCommonTime("/root", "/cup_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/cup_position", rospy.Time(0))
+            print (quaternion)
+            print (translation)
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.57,0,1.4) # in radians
             requrd_trans = (-0.06,-0.08,0.1)
@@ -58,9 +59,9 @@ class grasp_generator(object):
                                     "spoon_position",
                                     "root")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_0"):
-            t = self.listen.getLatestCommonTime("/root", "/plate_0")
-            translation, quaternion = self.listen.lookupTransform("/root", "/plate_0", rospy.Time(0))
+        if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_farther_half_position"):
+            t = self.listen.getLatestCommonTime("/root", "/bowl_farther_half_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/bowl_farther_half_position", rospy.Time(0))
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.5,0,1.57) # in radians
@@ -76,23 +77,23 @@ class grasp_generator(object):
                                     "/root")
 
 
-        # if self.listen.frameExists("/root") and self.listen.frameExists("/unknown_0"):
-        #     # print ('we have the frame')
-        #     t = self.listen.getLatestCommonTime("/root", "/unknown_0")
-        #     translation, quaternion = self.listen.lookupTransform("/root", "/unknown_0", rospy.Time(0))
-        #
-        #     # Identity matrix. Set the requ rot n trans wrt obj frame
-        #     requrd_rot = (1.5,0,0) # in radians
-        #     requrd_trans = (0,0,0.15)
-        #     # calculate and get an offset frame w/o ref to objct frame
-        #     pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
-        #     trans_1= tuple(pose[:3])
-        #     quat_1= tuple(pose[3:])
-        #
-        #     self.broadcast.sendTransform(trans_1, quat_1,
-        #                             rospy.Time.now(),
-        #                             "plate_position",
-        #                             "root")
+        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
+            # print ('we have the frame')
+            t = self.listen.getLatestCommonTime("/root", "/plate_position")
+            translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
+
+            # Identity matrix. Set the requ rot n trans wrt obj frame
+            requrd_rot = (1.5,0,0) # in radians
+            requrd_trans = (0,0,0.15)
+            # calculate and get an offset frame w/o ref to objct frame
+            pose = self.getOffsetPoses(translation, quaternion, requrd_rot, requrd_trans)
+            trans_1= tuple(pose[:3])
+            quat_1= tuple(pose[3:])
+
+            self.broadcast.sendTransform(trans_1, quat_1,
+                                    rospy.Time.now(),
+                                    "plate_position",
+                                    "root")
 
 
 

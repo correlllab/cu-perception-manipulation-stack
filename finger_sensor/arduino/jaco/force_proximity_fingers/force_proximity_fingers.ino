@@ -1,14 +1,17 @@
 /*
    Driver for multi-finger hands, each finger using a dedicated I2C port.
+
    Brought to you by Sparkfun (orignial code), the Correll Lab at the University of Colorado, Boulder
    and Robotic Materials Inc.
+
    This software is open source and can be used for any purpose.
+
    Written for Teensy LC / 3.5
 */
 
 /***** Library parameters ****/
 
-#define NFINGERS 3
+#define NFINGERS 2
 
 #include <i2c_t3.h>     // Use <i2c_t3.h> for Teensy and <Wire.h> for Arduino
 #include <math.h>
@@ -50,14 +53,14 @@ char cmd;
 
 int  continuous_mode = 1;
 int  single_shot = 0;
-int  touch_analysis = 1;
+int  touch_analysis = 0;
 
 
 void setup()
 {
   if (NFINGERS) i2c_chans[0] = &Wire;
   if (NFINGERS > 1) i2c_chans[1] = &Wire1;
-  //if(NFINGERS>2) i2c_chans[2]=&Wire2; // requires Teensy 3.5
+//  if(NFINGERS>2) i2c_chans[2]=&Wire2; // requires Teensy 3.5
 
   Serial.begin(115200);
   for (int i = 0; i < NFINGERS; i++) {
@@ -115,7 +118,7 @@ void loop()
 
 
     if (continuous_mode || single_shot) {
-      Serial.print(proximity_value[i]); Serial.print(","); Serial.print(fa2[i]); //Serial.print(","); Serial.print(fa2derivative);
+      Serial.print(proximity_value[i]); Serial.print(" ");// Serial.print(fa2[i]); //Serial.print(","); Serial.print(fa2derivative);
 
       if (touch_analysis) {
         Serial.print(",");
