@@ -16,13 +16,8 @@ class grasp_generator(object):
         self.listener = tf.TransformListener()
         self.broadcast = tf.TransformBroadcaster()
 
-        # self.obj_pose_sub = rospy.Subscriber("/num_objects", Int64,
-        #                                   self.broadcast_frame,
-        #                                   queue_size=1)
 
     def getOffsetPoses(self, translation, quaternion, requrd_rot, requrd_trans):
-        # print ('we are in the fucntion')
-        # return 0
         matrix1 = self.listener.fromTranslationRotation(translation, quaternion)
         requrd_quat = tf.transformations.quaternion_from_euler(requrd_rot[0], requrd_rot[1], requrd_rot[2])
         # print (requrd_quat)
@@ -44,7 +39,7 @@ class grasp_generator(object):
     def broadcast_frame(self):
         # self.num_objects = msg.data
         # print ('we do not have the frame')
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
                 trans = self.tfBuffer.lookup_transform('root', 'cup_position', rospy.Time())
@@ -54,15 +49,11 @@ class grasp_generator(object):
             # print (trans.transform.translation.x)
             translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-            # print (self.listen.frameExists('/root'))
-            # if self.listen.frameExists("/root") and self.listen.frameExists("/cup_position"):
-            #     print ('we have the frame')
-            #     t = self.listen.getLatestCommonTime("/root", "/cup_position")
-            #     translation, quaternion = self.listen.lookupTransform("/root", "/cup_position", rospy.Time(0))
-            #
+
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.57,0,1.4) # in radians
-            requrd_trans = (-0.06,-0.08,0.1)
+            requrd_trans = (-0.04,-0.09,0.1)
+            requrd_trans = tuple(0.75 * x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -73,9 +64,6 @@ class grasp_generator(object):
                                     "spoon_position",
                                     "root")
 
-            # if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_farther_half_position"):
-            #     t = self.listen.getLatestCommonTime("/root", "/bowl_farther_half_position")
-            #     translation, quaternion = self.listen.lookupTransform("/root", "/bowl_farther_half_position", rospy.Time(0))
             try:
                 trans = self.tfBuffer.lookup_transform('root', 'bowl_farther_half_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
@@ -96,12 +84,7 @@ class grasp_generator(object):
                                     rospy.Time.now(),
                                     "bowl_position",
                                     "root")
-            #
-            #
-            # if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
-            #     # print ('we have the frame')
-            #     t = self.listen.getLatestCommonTime("/root", "/plate_position")
-            #     translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
+
             try:
                 trans = self.tfBuffer.lookup_transform('root', 'plate_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):

@@ -28,11 +28,12 @@ class SignalDetector():
     def detect_touch(self,msg):
         touch = self.current_fingers_touch[:]
         fai = [msg.finger1, msg.finger2, msg.finger3]
+        tol = 500
 
         for finger in range(3):
-            if fai[finger] > 2500.0 and self.current_fingers_touch[finger] == False:
+            if fai[finger] > tol and self.current_fingers_touch[finger] == False:
                 touch[finger] = True
-            elif fai[finger] < -2500.0 and self.current_fingers_touch[finger] == True:
+            elif fai[finger] < -tol and self.current_fingers_touch[finger] == True:
                 touch[finger] = False
 
         self.current_fingers_touch = self.send_finger_msg(self.touch_pub,FingerTouch,touch,self.current_fingers_touch)
@@ -48,7 +49,7 @@ class SignalDetector():
                     elif sai[finger] < self.sai_calibration[finger] and self.objectDet[finger] == True:
                         detected[finger] = False
             else:
-                self.calibrate_fingers(sai,finger,1800)
+                self.calibrate_fingers(sai,finger,150)
 
         self.objectDet = self.send_finger_msg(self.object_det_pub,FingerDetect,detected,self.objectDet)
 

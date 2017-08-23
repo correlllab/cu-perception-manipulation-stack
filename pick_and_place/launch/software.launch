@@ -12,6 +12,6 @@
 <node name="pap_with_perception" pkg="pick_and_place" type="pap_with_perception.py" output="screen" />
 -->
 <!-- launch keyboard listener -->
-<node name="keyboard" pkg="keyboard" type="keyboard" output="screen" />
+<!-- <node name="keyboard" pkg="keyboard" type="keyboard" output="screen" /> -->
 
 </launch>

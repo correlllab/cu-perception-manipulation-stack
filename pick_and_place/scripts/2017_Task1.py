@@ -5,7 +5,7 @@ import rospy
 from pap.jaco import Jaco
 from pap.manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
-
+from finger_sensor_msgs.msg import FingerDetect, FingerTouch
 from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import numpy as np
@@ -15,26 +15,26 @@ from pap import fingers_action_client
 from pap import joints_action_client
 
 import tf
+import tf2_ros
 import commands
 
 class pick_peas_class(object):
     def __init__(self):
         self.j = Jaco()
-        self.listen = tf.TransformListener()
+        self.listener = tf.TransformListener()
         self.current_joint_angles = [0]*6
 
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listen = tf2_ros.TransformListener(self.tfBuffer)
 
         self.velocity_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
                                             PoseVelocity, queue_size=1)
 
         self.obj_det_sub = rospy.Subscriber('/finger_sensor/obj_detected',
-                                            Bool, self.set_obj_det)
+                                            FingerDetect, self.set_obj_det)
 
-        self.finger_m_touch_sub = rospy.Subscriber('/finger_sensor_middle/touch',
-                                                    Bool, self.set_m_touch)
-
-        self.finger_r_touch_sub = rospy.Subscriber('/finger_sensor_right/touch',
-                                                    Bool, self.set_r_touch)
+        self.fingetouch_finger_2_sub = rospy.Subscriber('/finger_sensor/touch',
+                                                 FingerTouch, self.set_touch)
 
         self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
                                                 JointAngles, self.callback)
@@ -48,20 +48,20 @@ class pick_peas_class(object):
                                                     self.set_calibrated)
 
         self.obj_det = False
-        self.m_touch = False
-        self.r_touch = False
+        self.touch_finger_1 = False
+        self.touch_finger_3 = False
         self.calibrated = False
 
 
 
     def set_obj_det(self,msg):
-        self.obj_det = msg.data
+        self.obj_det = np.any(np.array([msg.finger1, msg.finger2, msg.finger3]))
+        print(self.obj_det)
 
-    def set_m_touch(self,msg):
-        self.m_touch = msg.data
 
-    def set_r_touch(self,msg):
-        self.r_touch = msg.data
+    def set_touch(self, msg):
+        self.touch_finger_1 = msg.finger1
+        self.touch_finger_3 = msg.finger3
 
     def callback(self,data):
         # self.current_joint_angles[0] = data.joint1
@@ -87,29 +87,6 @@ class pick_peas_class(object):
 
     def cmmnd_FingerPosition(self, finger_value):
         commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
-        # fingers_action_client.getCurrentFingerPosition('j2n6a300_')
-        #
-        # finger_turn, finger_meter, finger_percent = fingers_action_client.unitParser('percent', finger_value, '-r')
-        # finger_number = 3
-        # finger_maxDist = 18.9/2/1000  # max distance for one finger in meter
-        # finger_maxTurn = 6800  # max thread turn for one finger
-        #
-        # try:
-        #     if finger_number == 0:
-        #         print('Finger number is 0, check with "-h" to see how to use this node.')
-        #         positions = []  # Get rid of static analysis warning that doesn't see the exit()
-        #         exit()
-        #     else:
-        #         positions_temp1 = [max(0.0, n) for n in finger_turn]
-        #         positions_temp2 = [min(n, finger_maxTurn) for n in positions_temp1]
-        #         positions = [float(n) for n in positions_temp2]
-        #
-        #     print('Sending finger position ...')
-        #     result = fingers_action_client.gripper_client(positions)
-        #     print('Finger position sent!')
-        #
-        # except rospy.ROSInterruptException:
-        #     print('program interrupted before completion')
 
     def cmmnd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
@@ -119,17 +96,12 @@ class pick_peas_class(object):
             twist_angular_x=cart_velo[3],
             twist_angular_y=cart_velo[4],
             twist_angular_z=cart_velo[5])
-        # rate = rospy.Rate(100)
-        # while not rospy.is_shutdown():
-        # sup
         self.velocity_pub.publish(msg)
-            # rate.sleep()
 
     def cmmnd_JointAngles(self,joints_cmd, relative):
         joints_action_client.getcurrentJointCommand('j2n6a300_')
         joint_degree, joint_radian = joints_action_client.unitParser('degree', joints_cmd, relative)
         try:
-            # print("dafuq")
             positions = [float(n) for n in joint_degree]
             result = joints_action_client.joint_angle_client(positions)
         except rospy.ROSInterruptException:
@@ -139,55 +111,43 @@ class pick_peas_class(object):
         self.calibrated = msg.data
 
     def pick_spoon(self):
-
         self.calibrate_obj_det_pub.publish(True)
 
         while self.calibrated == False:
             pass
 
-        self.calibrate_obj_det_pub.publish(False)
-
         print("Finger Sensors calibrated")
 
-        if self.listen.frameExists("/root") and self.listen.frameExists("/spoon_position"):
-            print ("we have the spoon frame")
-            self.listen.waitForTransform('/root','/spoon_position',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/root", "/spoon_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/spoon_position", t)
+        try:
+            trans = self.tfBuffer.lookup_transform('root', 'spoon_position', rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            # continue
 
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-            # print (quaternion)
-            orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(quaternion)
+        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+        pose_value = translation + rotation
+        #second arg=0 (absolute movement), arg = '-r' (relative movement)
+        self.cmmnd_CartesianPosition(pose_value, 0)
 
-            # self.j.gripper.open()
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-
-            # self.j.gripper.close()
-
-        else:
-            print ("we DONT have the frame")
 
     def goto_bowl(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/bowl_position"):
-            self.listen.waitForTransform('/root','/bowl_position',rospy.Time(),rospy.Duration(100.0))
-            # print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/bowl_position", rospy.Time(0))
+        rate = rospy.Rate(100)
+        while not rospy.is_shutdown():
+            try:
+                trans = self.tfBuffer.lookup_transform('root', 'bowl_position', rospy.Time())
+                break
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rate.sleep()
 
-            translation =  list(translation)
-            quaternion = list(quaternion)
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-        else:
-            print ("we DONT have the bowl frame")
+        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+        pose_value = translation + rotation
+        self.cmmnd_CartesianPosition(pose_value, 0) #second arg=0 (absolute movement), arg = '-r' (relative movement)
 
 
     def goto_plate(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position"):
+        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position1"):
             self.listen.waitForTransform('/root','/plate_position',rospy.Time(),rospy.Duration(100.0))
             print ("we have the bowl frame")
             # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
@@ -205,83 +165,62 @@ class pick_peas_class(object):
     def lift_spoon(self):
         rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
         # self.move_fingercmmd([0, 0, 0])
-        while self.m_touch != True:
+        while self.touch_finger_3 != True:
             self.cmmnd_CartesianVelocity([0,0.025,0,0,0,0,1])
             rate.sleep()
-        self.r_touch = False
-        # while not(self.m_touch and self.r_touch):
-        #     self.cmmnd_CartesianVelocity([0.02,0,0,0,0,0,1])
-            # self.move_joints([0,0,0,0,0,-5])
-            # rate.sleep()
+        self.touch_finger_3 = False
 
-        self.cmmnd_FingerPosition([100, 00, 100])
+        self.cmmnd_FingerPosition([100, 0, 100])
         self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
         self.cmmnd_FingerPosition([100, 100, 100])
 
 
     def searchSpoon(self):
-        if self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/root"):
-            # print ("we are in the search spoon fucntion")
-            self.listen.waitForTransform('/j2n6a300_end_effector','/root',rospy.Time(),rospy.Duration(100.0))
-            t = self.listen.getLatestCommonTime("/j2n6a300_end_effector","/root")
-            translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector","/root",t)
-            matrix1=self.listen.fromTranslationRotation(translation,quaternion)
-            counter=0
-            rate=rospy.Rate(100)
-            while not self.obj_det:
-                  counter = counter + 1
-                  if(counter < 200):
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
-                    cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
-                  else:
-                    cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,-0.05])[np.newaxis].T)
-                    cart_velocities = cart_velocities.T[0].tolist()
-                    self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
-                  rate.sleep()
-                  if(counter >400):
-                     counter=0
+        rate = rospy.Rate(100)
+        while not rospy.is_shutdown():
+            try:
+                trans = self.tfBuffer.lookup_transform('root', 'j2n6a300_end_effector', rospy.Time())
+                break
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rate.sleep()
 
-    # def scoopSpoon(self):
-    #     while not (self.listen.frameExists("/j2n6a300_end_effector") and self.listen.frameExists("/j2n6a300_link_finger_tip_3")):
-    #         pass
-    #
-    #     print ("Publishing transform of figner wrt endEffector frame")
-    #     p.listen.waitForTransform('/j2n6a300_end_effector','/j2n6a300_link_finger_tip_3',rospy.Time(),rospy.Duration(100.0))
-    #     t = self.listen.getLatestCommonTime("/j2n6a300_end_effector", "/j2n6a300_link_finger_tip_3")
-    #     translation, quaternion = self.listen.lookupTransform("/j2n6a300_end_effector", "/j2n6a300_link_finger_tip_3", t)
-    #     # print (translation)
-    #     matrix2 = self.listen.fromTranslationRotation(translation, quaternion)
-    #     # print (matrix2)
-    #     # required_cartvelo = [0,0,0,0.1,0,0]
-    #     quaternion = pose_action_client.EulerXYZ2Quaternion([0.15,0,0]) # set rot angle HERE (deg)
-    #     matrix1 = self.listen.fromTranslationRotation([0,0,0], quaternion)
-    #     # print (matrix1)
-    #     matrix3 = np.dot(matrix2,matrix1)
-    #     scale, shear, rpy_angles, trans, perps = tf.transformations.decompose_matrix(matrix3)
-    #     trans = list(trans.tolist())
-    #     rpy_angles = list(rpy_angles)
-    #     # euler = pose_action_client.Quaternion2EulerXYZ(quat_1)
-    #     # pose = trans + rpy_angles
-    #     return pose
-    #     # return translation, quaternion
+        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+
+        matrix1 = self.listener.fromTranslationRotation(translation,rotation)
+        counter = 0
+        rate = rospy.Rate(100)
+        while not self.obj_det and not rospy.is_shutdown():
+            counter = counter + 1
+            if(counter < 200):
+                cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
+                cart_velocities = cart_velocities.T[0].tolist()
+                self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
+                print("forward")
+            else:
+                cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,-0.05])[np.newaxis].T)
+                cart_velocities = cart_velocities.T[0].tolist()
+                self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
+                print("backwards")
+            if(counter > 400):
+                counter = 0
+            rate.sleep()
+
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition([0, 0, 100])
-
-    while not (p.listen.frameExists("/root") and p.listen.frameExists("/spoon_position")) and p.listen.frameExists("bowl_position"):
-        pass
+    p.cmmnd_FingerPosition([0, 0, 75])
 
     print ("Starting task. . .\n")
     p.pick_spoon()
+    p.cmmnd_JointAngles([0,0,0,0,0,-15], '-r')
 
     print ("Searching spoon. . .\n")
     p.searchSpoon()
-    p.cmmnd_CartesianPosition([0.01,0,0,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0.015,0,0,0,0,0,1], '-r')
 
     print ("trying to touch the spoon now. . .\n")
     p.lift_spoon()
@@ -289,7 +228,7 @@ if __name__ == '__main__':
     print ("Going to bowl. . .\n")
     p.goto_bowl()
     print ("Bowl reached. . .\n")
-    #
+
     print ("Scooping the peas. . .")
     p.cmmnd_JointAngles([0,0,0,0,0,-25], '-r')
     p.cmmnd_CartesianPosition([0,0,-0.135,0,0,0,1], '-r')
@@ -297,7 +236,7 @@ if __name__ == '__main__':
     p.cmmnd_JointAngles([0,0,0,0,0,-40], '-r')
     p.cmmnd_CartesianPosition([0,0,0.135,0,0,0,1], '-r')
     print ("scooping done. . .")
-    #
+
     print ("dumping in the plate. . .")
-    p.cmmnd_CartesianPosition([0,0.25,-0.12,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([-0.25,0.1,-0.08,0,0,0,1], '-r')
     p.cmmnd_JointAngles([0,0,0,0,0,40], '-r')

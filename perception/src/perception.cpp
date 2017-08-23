@@ -281,7 +281,7 @@ Perception::Perception(int test)
     pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("z");
     // TODO: read parameters in a way that allows dynamic changes
-    pass.setFilterLimits(0.0, 0.95); // 0.5, 1.2
+    pass.setFilterLimits(0.0, 1); // 0.5, 1.2
     pass.filter(*z_filtered_objects);
     //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
     z_filtered_objects->header.frame_id = "camera_rgb_optical_frame";

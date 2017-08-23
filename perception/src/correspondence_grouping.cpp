@@ -53,7 +53,7 @@ std::string models[] =         {"cup", "plate", "bowl_farther_half", "spoon"};
  *     required correspondence of 100 needed to match a plate and 200 to match a
  *     cup
  */
-int correspondences_needed[] = {75,200,70,5};
+int correspondences_needed[] = {30,200,70,5};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
