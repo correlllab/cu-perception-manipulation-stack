@@ -20,11 +20,11 @@ finger_number = 0
 prefix = 'NO_ROBOT_TYPE_DEFINED_'
 finger_maxDist = 18.9/2/1000  # max distance for one finger
 finger_maxTurn = 6800  # max thread rotation for one finger
-currentJointCommand = [0]*6 # number of joints is defined in __main__
+currentJointCommand = [0]*7 # number of joints is defined in __main__
 
 def joint_angle_client(angle_set):
     """Send a joint angle goal to the action server."""
-    action_address = '/j2n6a300_driver/joints_action/joint_angles'
+    action_address = '/j2n6s300_driver/joints_action/joint_angles'
     client = actionlib.SimpleActionClient(action_address,
                                           kinova_msgs.msg.ArmJointAnglesAction)
     client.wait_for_server()
@@ -37,6 +37,7 @@ def joint_angle_client(angle_set):
     goal.angles.joint4 = angle_set[3]
     goal.angles.joint5 = angle_set[4]
     goal.angles.joint6 = angle_set[5]
+    goal.angles.joint7 = angle_set[6]
 
     client.send_goal(goal)
     if client.wait_for_result(rospy.Duration(20.0)):
@@ -48,9 +49,9 @@ def joint_angle_client(angle_set):
 
 
 def getcurrentJointCommand(prefix_):
-    # print ("inside getcurrentJointCommand")
     # wait to get current position
-    topic_address = '/j2n6a300_driver/out/joint_command'
+
+    topic_address = '/j2n6s300_driver/out/joint_command'
     rospy.Subscriber(topic_address, kinova_msgs.msg.JointAngles, setcurrentJointCommand)
     rospy.wait_for_message(topic_address, kinova_msgs.msg.JointAngles)
     print 'position listener obtained message for joint position. '
@@ -58,15 +59,15 @@ def getcurrentJointCommand(prefix_):
 
 def setcurrentJointCommand(feedback):
     global currentJointCommand
-    currentJointCommand_str_list = str(feedback).split("\n")
 
+    currentJointCommand_str_list = str(feedback).split("\n")
+    # print (len(currentJointCommand_str_list))
     for index in range(0,len(currentJointCommand_str_list)):
         temp_str=currentJointCommand_str_list[index].split(": ")
-        # print(temp_str)
         currentJointCommand[index] = float(temp_str[1])
-    # print(currentJointCommand)
-    # print 'currentJointCommand is: '
-    # print currentJointCommand
+
+    # print ("currentJointCommand is: " + str(currentJointCommand))
+
 
 
 def argumentParser(argument):
@@ -108,8 +109,8 @@ def unitParser(unit, joint_value, relative_):
 
     if unit == 'degree':
         joint_degree_command = joint_value
-        print (joint_degree_command)
-        print (currentJointCommand)
+        # print (len(joint_degree_command))
+        # print (len(currentJointCommand))
         # get absolute value
         if relative_:
             joint_degree_absolute_ = [joint_degree_command[i] + currentJointCommand[i] for i in range(0, len(joint_value))]
@@ -150,8 +151,8 @@ if __name__ == '__main__':
     rospy.init_node(prefix + 'gripper_workout')
 
     # currentJointCommand = [0]*arm_joint_number
-    # KinovaType defines AngularInfo has 6DOF, so for published topics on joints.
-    currentJointCommand = [0]*6
+    # KinovaType defines AngularInfo has 7DOF, so for published topics on joints.
+    currentJointCommand = [0]*7
 
     if len(args.joint_value) != arm_joint_number:
         print('Number of input values {} is not equal to number of joints {}. Please run help to check number of joints with different robot type.'.format(len(args.joint_value), arm_joint_number))
@@ -161,20 +162,16 @@ if __name__ == '__main__':
     getcurrentJointCommand(prefix)
     joint_degree, joint_radian = unitParser(args.unit, args.joint_value, args.relative)
 
+    positions = [0]*7
     try:
 
-        if arm_joint_number == 0:
+        if arm_joint_number < 1:
             print('Joint number is 0, check with "-h" to see how to use this node.')
             positions = []  # Get rid of static analysis warning that doesn't see the exit()
             sys.exit()
-        elif arm_joint_number == 4:
-            positions = [float(n) for n in joint_degree]
-            positions.extend([0,0])
-        elif arm_joint_number == 6:
-            positions = [float(n) for n in joint_degree]
         else:
-            print('Joint_action_client supports to set angles to 4DOF and 6DOF for now.');
-            sys.exit()
+            for i in range(0,arm_joint_number):
+              positions[i] = joint_degree[i]
 
         result = joint_angle_client(positions)
 

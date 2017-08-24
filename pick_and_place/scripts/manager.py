@@ -14,8 +14,8 @@ from interactive_markers.interactive_marker_server import (
     InteractiveMarkerServer
     )
 
-from .interactive_marker import make_interactive_marker
-from .utils import Point2list, Quaternion2list
+from interactive_marker import make_interactive_marker
+from utils import Point2list, Quaternion2list
 
 class Manager(object):
     def __init__(self, name):

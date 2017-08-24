@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /RawCloud1
+        - /TF1
         - /TF1/Frames1
         - /PoseArray1
         - /Marker2
@@ -112,111 +113,90 @@ Visualization Manager:
         cup_position:
           Value: true
         handle:
-          Value: true
-        j2n6a300_end_effector:
           Value: false
-        j2n6a300_link_1:
+        j2n6s300_end_effector:
           Value: false
-        j2n6a300_link_2:
+        j2n6s300_link_1:
           Value: false
-        j2n6a300_link_3:
+        j2n6s300_link_2:
           Value: false
-        j2n6a300_link_4:
+        j2n6s300_link_3:
           Value: false
-        j2n6a300_link_5:
+        j2n6s300_link_4:
           Value: false
-        j2n6a300_link_6:
+        j2n6s300_link_5:
           Value: false
-        j2n6a300_link_base:
+        j2n6s300_link_6:
           Value: false
-        j2n6a300_link_finger_1:
+        j2n6s300_link_base:
           Value: false
-        j2n6a300_link_finger_2:
+        j2n6s300_link_finger_1:
           Value: false
-        j2n6a300_link_finger_3:
+        j2n6s300_link_finger_2:
           Value: false
-        j2n6a300_link_finger_tip_1:
+        j2n6s300_link_finger_3:
           Value: false
-        j2n6a300_link_finger_tip_2:
+        j2n6s300_link_finger_tip_1:
           Value: false
-        j2n6a300_link_finger_tip_3:
+        j2n6s300_link_finger_tip_2:
+          Value: false
+        j2n6s300_link_finger_tip_3:
           Value: false
         plate_position:
           Value: true
         root:
           Value: true
-        unknown_1:
-          Value: true
-        unknown_2:
-          Value: true
         unknown_3:
           Value: true
         unknown_4:
           Value: true
-        unknown_5:
-          Value: true
-        unknown_6:
-          Value: true
-        unknown_7:
-          Value: true
-        unknown_8:
-          Value: true
+        world:
+          Value: false
       Marker Scale: 0.25
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
-        root:
-          bowl_farther_half_position:
-            {}
-          camera_link:
-            camera_depth_frame:
-              camera_depth_optical_frame:
-                {}
-            camera_rgb_frame:
-              camera_rgb_optical_frame:
-                {}
-          cup_position:
-            {}
-          handle:
-            {}
-          j2n6a300_link_base:
-            j2n6a300_link_1:
-              j2n6a300_link_2:
-                j2n6a300_link_3:
-                  j2n6a300_link_4:
-                    j2n6a300_link_5:
-                      j2n6a300_link_6:
-                        j2n6a300_end_effector:
-                          {}
-                        j2n6a300_link_finger_1:
-                          j2n6a300_link_finger_tip_1:
+        world:
+          root:
+            bowl_farther_half_position:
+              {}
+            camera_link:
+              camera_depth_frame:
+                camera_depth_optical_frame:
+                  {}
+              camera_rgb_frame:
+                camera_rgb_optical_frame:
+                  {}
+            cup_position:
+              {}
+            handle:
+              {}
+            j2n6s300_link_base:
+              j2n6s300_link_1:
+                j2n6s300_link_2:
+                  j2n6s300_link_3:
+                    j2n6s300_link_4:
+                      j2n6s300_link_5:
+                        j2n6s300_link_6:
+                          j2n6s300_end_effector:
                             {}
-                        j2n6a300_link_finger_2:
-                          j2n6a300_link_finger_tip_2:
-                            {}
-                        j2n6a300_link_finger_3:
-                          j2n6a300_link_finger_tip_3:
-                            {}
-          plate_position:
-            {}
-          unknown_1:
-            {}
-          unknown_2:
-            {}
-          unknown_3:
-            {}
-          unknown_4:
-            {}
-          unknown_5:
-            {}
-          unknown_6:
-            {}
-          unknown_7:
-            {}
-          unknown_8:
-            {}
+                          j2n6s300_link_finger_1:
+                            j2n6s300_link_finger_tip_1:
+                              {}
+                          j2n6s300_link_finger_2:
+                            j2n6s300_link_finger_tip_2:
+                              {}
+                          j2n6s300_link_finger_3:
+                            j2n6s300_link_finger_tip_3:
+                              {}
+            plate_position:
+              {}
+            unknown_3:
+              {}
+            unknown_4:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz/MarkerArray
@@ -344,10 +324,10 @@ Visualization Manager:
         Z: -0.113127
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.909797
+      Pitch: 0.839796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.25187
+      Yaw: 2.89687
     Saved: ~
 Window Geometry:
   Displays:
@@ -365,5 +345,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 1935
+  X: 1925
   Y: 14

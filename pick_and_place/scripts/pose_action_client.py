@@ -27,13 +27,12 @@ currentCartesianCommand = [0.212322831154, -0.257197618484, 0.509646713734, 1.63
 
 def cartesian_pose_client(position, orientation):
     """Send a cartesian goal to the action server."""
-    # print ("trying to use their function. . . .")
-    action_address = '/j2n6a300_driver/pose_action/tool_pose'
+    action_address = '/j2n6s300_driver/pose_action/tool_pose'
     client = actionlib.SimpleActionClient(action_address, kinova_msgs.msg.ArmPoseAction)
     client.wait_for_server()
 
     goal = kinova_msgs.msg.ArmPoseGoal()
-    goal.pose.header = std_msgs.msg.Header(frame_id='j2n6a300_link_base')
+    goal.pose.header = std_msgs.msg.Header(frame_id='j2n6s300_link_base')
     goal.pose.pose.position = geometry_msgs.msg.Point(
         x=position[0], y=position[1], z=position[2])
     goal.pose.pose.orientation = geometry_msgs.msg.Quaternion(
@@ -43,14 +42,12 @@ def cartesian_pose_client(position, orientation):
 
     client.send_goal(goal)
 
-    if client.wait_for_result(rospy.Duration(100.0)):
+    if client.wait_for_result(rospy.Duration(10.0)):
         return client.get_result()
     else:
         client.cancel_all_goals()
         print('        the cartesian action timed-out')
         return None
-
-    print ("their function works...yayy!!")
 
 
 def QuaternionNorm(Q_raw):
@@ -98,10 +95,8 @@ def EulerXYZ2Quaternion(EulerXYZ_):
 
 
 def getcurrentCartesianCommand(prefix_):
-    # print ('we are in getcurrentCartesianCommand')
     # wait to get current position
-    topic_address = '/' + prefix_ + 'driver/out/cartesian_command'
-    # print (topic_address)
+    topic_address = '/j2n6s300_driver/out/cartesian_command'
     rospy.Subscriber(topic_address, kinova_msgs.msg.KinovaPose, setcurrentCartesianCommand)
     rospy.wait_for_message(topic_address, kinova_msgs.msg.KinovaPose)
     print 'position listener obtained message for Cartesian pose. '
@@ -109,14 +104,12 @@ def getcurrentCartesianCommand(prefix_):
 
 def setcurrentCartesianCommand(feedback):
     global currentCartesianCommand
-    # print (feedback)
+
     currentCartesianCommand_str_list = str(feedback).split("\n")
 
     for index in range(0,len(currentCartesianCommand_str_list)):
         temp_str=currentCartesianCommand_str_list[index].split(": ")
         currentCartesianCommand[index] = float(temp_str[1])
-        # print ('this is the current cartesian command')
-        # print (currentCartesianCommand)
     # the following directly reading only read once and didn't update the value.
     # currentCartesianCommand = [feedback.X, feedback.Y, feedback.Z, feedback.ThetaX, feedback.ThetaY, feedback.Z]
     # print 'currentCartesianCommand in setcurrentCartesianCommand is: ', currentCartesianCommand
@@ -158,8 +151,6 @@ def kinova_robotTypeParser(kinova_robotType_):
 
 def unitParser(unit_, pose_value_, relative_):
     """ Argument unit """
-    # print ('we are in unit_parser')
-    # print ('this is the current cartesian position we have inside of unit parser')
     global currentCartesianCommand
 
     position_ = pose_value_[:3]
@@ -175,16 +166,14 @@ def unitParser(unit_, pose_value_, relative_):
 
     if unit_ == 'mq':
         if relative_:
-            # print ('we r inside the if loop')
             orientation_XYZ = Quaternion2EulerXYZ(orientation_)
-            orientation_xyz_list = [currentCartesianCommand[3+i] + orientation_XYZ[i] for i in range(0,3)]
+            orientation_xyz_list = [orientation_XYZ[i] + currentCartesianCommand[3+i] for i in range(0,3)]
             orientation_q = EulerXYZ2Quaternion(orientation_xyz_list)
         else:
             orientation_q = orientation_
 
         orientation_rad = Quaternion2EulerXYZ(orientation_q)
         orientation_deg = list(map(math.degrees, orientation_rad))
-
 
     elif unit_ == 'mdeg':
         if relative_:

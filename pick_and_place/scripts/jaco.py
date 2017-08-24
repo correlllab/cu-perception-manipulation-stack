@@ -10,7 +10,7 @@ from finger_sensor_msgs.msg import FingerTouch
 
 
 class JacoGripper(object):
-    def __init__(self, robot_type='j2n6a300'):
+    def __init__(self, robot_type='j2n6s300'):
         self.tol = 1.0
         self.robot_type = robot_type
         self.finger_maxDist = 18.9/2/1000  # max distance for one finger
@@ -99,7 +99,7 @@ class JacoGripper(object):
         return 'done'
 
 class Jaco(Robot):
-    def __init__(self, robot_type='j2n6a300', *args, **kwargs):
+    def __init__(self, robot_type='j2n6s300', *args, **kwargs):
         super(Jaco, self).__init__(base='root')
         self.robot_type = robot_type
         # self.home()

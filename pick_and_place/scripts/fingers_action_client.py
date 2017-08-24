@@ -22,8 +22,7 @@ currentFingerPosition = [0.0, 0.0, 0.0]
 
 def gripper_client(finger_positions):
     """Send a gripper goal to the action server."""
-
-    action_address = '/j2n6a300_driver/fingers_action/finger_positions'
+    action_address = '/' + prefix + 'driver/fingers_action/finger_positions'
 
     client = actionlib.SimpleActionClient(action_address,
                                           kinova_msgs.msg.SetFingersPositionAction)
@@ -51,6 +50,7 @@ def getCurrentFingerPosition(prefix_):
     topic_address = '/' + prefix_ + 'driver/out/finger_position'
     rospy.Subscriber(topic_address, kinova_msgs.msg.FingerPosition, setCurrentFingerPosition)
     rospy.wait_for_message(topic_address, kinova_msgs.msg.FingerPosition)
+    print 'obtained current finger position '
 
 
 def setCurrentFingerPosition(feedback):
@@ -82,7 +82,7 @@ def argumentParser(argument_):
 
 def kinova_robotTypeParser(kinova_robotType_):
     """ Argument kinova_robotType """
-    global robot_category, robot_category_version, wrist_type, arm_joint_number, robot_mode, finger_number, prefix, finger_maxDist, finger_maxTurn
+    global robot_category, robot_category_version, wrist_type, arm_joint_number, robot_mode, finger_number, prefix, finger_maxDist, finger_maxTurn 
     robot_category = kinova_robotType_[0]
     robot_category_version = int(kinova_robotType_[1])
     wrist_type = kinova_robotType_[2]
@@ -135,6 +135,7 @@ def unitParser(unit_, finger_value_, relative_):
         finger_percent_ = [x / finger_maxTurn * 100.0 for x in finger_turn_]
     else:
         raise Exception("Finger value have to be in turn, mm or percent")
+
     return finger_turn_, finger_meter_, finger_percent_
 
 

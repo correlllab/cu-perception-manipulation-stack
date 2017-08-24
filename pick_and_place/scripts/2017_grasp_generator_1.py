@@ -51,8 +51,8 @@ class grasp_generator(object):
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.57,0,1.4) # in radians
-            requrd_trans = (-0.04,-0.09,0.1)
+            requrd_rot = (1.57,0,1.57) # in radians
+            requrd_trans = (-0.04,-0.11,0.1)
             requrd_trans = tuple(0.75 * x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
@@ -73,7 +73,7 @@ class grasp_generator(object):
             translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.5,0,1.57) # in radians
+            requrd_rot = (1.5,0,1.74) # in radians
             requrd_trans = (0,-0.12,0.2)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)

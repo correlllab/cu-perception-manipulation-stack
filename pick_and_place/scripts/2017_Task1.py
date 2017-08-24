@@ -2,17 +2,17 @@
 from __future__ import division, print_function, absolute_import
 import sys
 import rospy
-from pap.jaco import Jaco
-from pap.manager import PickAndPlaceNode
+from jaco import Jaco
+from manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
 from finger_sensor_msgs.msg import FingerDetect, FingerTouch
 from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import numpy as np
 
-from pap import pose_action_client
-from pap import fingers_action_client
-from pap import joints_action_client
+import pose_action_client
+import fingers_action_client
+import joints_action_client
 
 import tf
 import tf2_ros
@@ -22,22 +22,22 @@ class pick_peas_class(object):
     def __init__(self):
         self.j = Jaco()
         self.listener = tf.TransformListener()
-        self.current_joint_angles = [0]*6
+        self.current_joint_angles = [0]*7
 
         self.tfBuffer = tf2_ros.Buffer()
         self.listen = tf2_ros.TransformListener(self.tfBuffer)
 
-        self.velocity_pub = rospy.Publisher('/j2n6a300_driver/in/cartesian_velocity',
+        self.velocity_pub = rospy.Publisher('/j2n6s300_driver/in/cartesian_velocity',
                                             PoseVelocity, queue_size=1)
+
+        self.joint_angles_sub = rospy.Subscriber("/j2n6s300_driver/out/joint_angles",
+                                                JointAngles, self.callback)
 
         self.obj_det_sub = rospy.Subscriber('/finger_sensor/obj_detected',
                                             FingerDetect, self.set_obj_det)
 
         self.fingetouch_finger_2_sub = rospy.Subscriber('/finger_sensor/touch',
                                                  FingerTouch, self.set_touch)
-
-        self.joint_angles_sub = rospy.Subscriber("/j2n6a300_driver/out/joint_angles",
-                                                JointAngles, self.callback)
 
         self.calibrate_obj_det_pub = rospy.Publisher("/finger_sensor/calibrate_obj_det",
                                                     Bool,
@@ -64,17 +64,18 @@ class pick_peas_class(object):
         self.touch_finger_3 = msg.finger3
 
     def callback(self,data):
-        # self.current_joint_angles[0] = data.joint1
+        self.current_joint_angles[0] = data.joint1
         self.current_joint_angles[1] = data.joint2
         self.current_joint_angles[2] = data.joint3
         self.current_joint_angles[3] = data.joint4
         self.current_joint_angles[4] = data.joint5
         self.current_joint_angles[5] = data.joint6
+        self.current_joint_angles[6] = data.joint7
         # print (self.current_joint_angles)
 
 
     def cmmnd_CartesianPosition(self, pose_value, relative):
-        pose_action_client.getcurrentCartesianCommand('j2n6a300_')
+        pose_action_client.getcurrentCartesianCommand('j2n6s300_')
         pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, relative)
         poses = [float(n) for n in pose_mq]
         orientation_XYZ = pose_action_client.Quaternion2EulerXYZ(poses[3:])
@@ -86,7 +87,7 @@ class pick_peas_class(object):
             print ("program interrupted before completion")
 
     def cmmnd_FingerPosition(self, finger_value):
-        commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6a300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
+        commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6s300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
 
     def cmmnd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
@@ -99,7 +100,7 @@ class pick_peas_class(object):
         self.velocity_pub.publish(msg)
 
     def cmmnd_JointAngles(self,joints_cmd, relative):
-        joints_action_client.getcurrentJointCommand('j2n6a300_')
+        joints_action_client.getcurrentJointCommand('j2n6s300_')
         joint_degree, joint_radian = joints_action_client.unitParser('degree', joints_cmd, relative)
         try:
             positions = [float(n) for n in joint_degree]
@@ -110,7 +111,7 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def pick_spoon(self):
+    def goto_spoon(self):
         self.calibrate_obj_det_pub.publish(True)
 
         while self.calibrated == False:
@@ -179,7 +180,7 @@ class pick_peas_class(object):
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'j2n6a300_end_effector', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'j2n6s300_end_effector', rospy.Time())
                 break
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
@@ -212,11 +213,11 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition([0, 0, 75])
+    p.cmmnd_FingerPosition([0, 0, 100])
 
     print ("Starting task. . .\n")
-    p.pick_spoon()
-    p.cmmnd_JointAngles([0,0,0,0,0,-15], '-r')
+    p.goto_spoon()
+    p.cmmnd_JointAngles([0,0,0,0,0,-15,0], '-r') # with the new Kinova-ros package for 7DOF add an additional 0 at the end for our 6DOF arm.
 
     print ("Searching spoon. . .\n")
     p.searchSpoon()
@@ -230,13 +231,15 @@ if __name__ == '__main__':
     print ("Bowl reached. . .\n")
 
     print ("Scooping the peas. . .")
-    p.cmmnd_JointAngles([0,0,0,0,0,-25], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,-25,0], '-r')
     p.cmmnd_CartesianPosition([0,0,-0.135,0,0,0,1], '-r')
-    # p.cmmnd_CartesianPosition([0,0.04,0,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,-40], '-r')
+    p.cmmnd_CartesianPosition([0,0.04,0,0,0,0,1], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,-40,0], '-r')
     p.cmmnd_CartesianPosition([0,0,0.135,0,0,0,1], '-r')
     print ("scooping done. . .")
 
     print ("dumping in the plate. . .")
     p.cmmnd_CartesianPosition([-0.25,0.1,-0.08,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,40], '-r')
+    p.cmmnd_JointAngles([0,0,0,0,0,40,0], '-r')
+
+    p.j.home()

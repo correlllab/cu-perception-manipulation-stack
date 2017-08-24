@@ -14,7 +14,7 @@ from geometry_msgs.msg import Point, Quaternion, Pose, PoseStamped
 import tf
 # import tf2_ros
 
-from .utils import Point2list
+from utils import Point2list
 
 class Robot(object):
     def __init__(self, base):
