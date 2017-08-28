@@ -207,6 +207,11 @@ class pick_peas_class(object):
                 counter = 0
             rate.sleep()
 
+    def saveData(self):
+        commands.getoutput('rostopic echo /sensor_values/data >> testSensorValues.txt')
+        commands.getoutput('rostopic echo /finger_sensor/sai >> testSAI.txt')
+
+
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
@@ -243,3 +248,9 @@ if __name__ == '__main__':
     p.cmmnd_JointAngles([0,0,0,0,0,40,0], '-r')
 
     p.j.home()
+
+
+    # record data
+    # rosbag record --duration=10 -a (saves data for 10s)
+    # rostopic echo -b 2017-08-27-10-53-29.bag -p /sensor_values >sensorvalues.txt (save specificed topic to txt file)
+    # rostopic echo -b 2017-08-27-10-53-29.bag -p /finger_sensor/sai >sai.txt (save specificed topic to txt file)

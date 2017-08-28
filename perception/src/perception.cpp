@@ -417,7 +417,7 @@ Perception::Perception(int test)
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     // SI units
     //ec.setClusterTolerance(0.02);//original before rebecca came
-    ec.setClusterTolerance(0.03);
+    ec.setClusterTolerance(0.025);
     /* From experiments:
      * - Tiny wood cubes have about 300 points
      * - Cubeletes have about 800 points
@@ -437,7 +437,7 @@ Perception::Perception(int test)
     }
     else
     {
-        ec.setMinClusterSize(150);  // less than a wood cube
+        ec.setMinClusterSize(250);  // less than a wood cube
         ec.setMaxClusterSize(20000);  // a plate is lots
     }
     ec.setSearchMethod(tree);
