@@ -10,6 +10,6 @@
 
 then run,
 
-'''
+```
 rosrun camera_calibration_tool  transform_camera.py
-'''
+```

@@ -4,9 +4,9 @@
 
 ## quick Demo
 
-'''
+```
 roslaunch finger_sensor jaco_fingers.launch
-'''
+```
 
 This launches the node that reads the sensor values over serial port, processes the signals and generates boolean topic for object and touch detection.
 
