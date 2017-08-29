@@ -45,6 +45,7 @@ Perception::Perception(int test)
     enabled_sub_ = nh_.subscribe("/perception/enabled", 1, &Perception::enableProcessing, this);
     // Debuggin clouds/publishers
     not_table_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/not_table_cloud", 1);
+    x_filtered_objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/x_filt_objects_cloud", 1);
     z_filtered_objects_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/z_filt_objects_cloud", 1);
     roi_cloud_pub_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/roi_cloud", 1);
     // Final clouds/publishers
@@ -275,14 +276,26 @@ Perception::Perception(int test)
 
     //ROS_DEBUG_STREAM_NAMED("ppc","starting segmentation");
 
-    // z-filtering
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr z_filtered_objects (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PassThrough<pcl::PointXYZRGB> pass;
-    pass.setInputCloud(raw_cloud);
-    pass.setFilterFieldName("z");
+    // x-filtering
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr x_filtered_objects(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PassThrough<pcl::PointXYZRGB> pass_X;
+    pass_X.setInputCloud(raw_cloud);
+    pass_X.setFilterFieldName("x");
     // TODO: read parameters in a way that allows dynamic changes
-    pass.setFilterLimits(0.0, 1); // 0.5, 1.2
-    pass.filter(*z_filtered_objects);
+    pass_X.setFilterLimits(-0.35, 0.4); // 0.5, 1.2
+    pass_X.filter(*x_filtered_objects);
+    //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
+    x_filtered_objects->header.frame_id = "camera_rgb_optical_frame";
+    x_filtered_objects_cloud_pub_.publish(x_filtered_objects);
+
+    // z-filtering
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr z_filtered_objects(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PassThrough<pcl::PointXYZRGB> pass_Z;
+    pass_Z.setInputCloud(x_filtered_objects);
+    pass_Z.setFilterFieldName("z");
+    // TODO: read parameters in a way that allows dynamic changes
+    pass_Z.setFilterLimits(0.0, 1.1); // 0.5, 1.2
+    pass_Z.filter(*z_filtered_objects);
     //ROS_INFO_STREAM_NAMED("ppc", "point cloud after z filtering has " << z_filtered_objects->width * z_filtered_objects->height);
     z_filtered_objects->header.frame_id = "camera_rgb_optical_frame";
     z_filtered_objects_cloud_pub_.publish(z_filtered_objects);

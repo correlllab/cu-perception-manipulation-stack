@@ -80,7 +80,7 @@ namespace perception
     int id; //unique id
     std::time_t timestamp; //time since last identified
     Eigen::Vector3d centroid; //centroid last seen
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud; 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud;
 
     single_object_ll* next;
   };
@@ -96,6 +96,7 @@ private:
     ros::Subscriber enabled_sub_;
     ros::Publisher not_table_cloud_pub_;
     ros::Publisher z_filtered_objects_cloud_pub_;
+    ros::Publisher x_filtered_objects_cloud_pub_;
     ros::Publisher roi_cloud_pub_;
     ros::Publisher objects_cloud_pub_;
     ros::Publisher number_of_objects_pub_;
@@ -111,7 +112,7 @@ private:
     Eigen::Vector3f table_orientation;
     rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
 
-    
+
     bool timed_out(std::time_t timestamp, double seconds_to_timeout);
     void add_tracking_object(Eigen::Vector3d centroid, std::string label, int id, std::string published_name);
     int get_unique_id();
@@ -124,10 +125,10 @@ private:
 public:
     Perception(int test);
     ~Perception(){}
-  
+
     void processPointCloud(const sensor_msgs::PointCloud2ConstPtr& msg);
     void enableProcessing(const std_msgs::Bool &enabled);
-  
+
 };
 
 }
