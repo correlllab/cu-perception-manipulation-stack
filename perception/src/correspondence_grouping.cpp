@@ -55,7 +55,7 @@ std::string models[] =         {"white_cup", "saucer"};
  *     cup
  */
 // int correspondences_needed[] = {80,30,200,70};
-int correspondences_needed[] = {140,160};
+int correspondences_needed[] = {100,160};
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
