@@ -46,16 +46,18 @@ std::string path_to_models = "/object_database/";
  *
  * then models should be set to `{"plate", "cup"}`
  */
-// std::string models[] =         {"cup","cup_with_spoon", "plate", "bowl_farther_half"};
-std::string models[] =         {"white_cup", "saucer"};
+std::string models[] =  {"cup", "cup_with_spoon", "plate", "bowl_farther_half", "salt_shaker"}; //for task1,3..
+// std::string models[] =  {"white_cup", "saucer"}; //for task2 2017
+// std::string models[] = {"cup"}; //for saving purpose
 /**
  * Correspondences needed for each associated model.
  * ex: if `models = {"plate", "cup"}`, this can be set to `{100, 200}` for a
  *     required correspondence of 100 needed to match a plate and 200 to match a
  *     cup
  */
-// int correspondences_needed[] = {80,30,200,70};
-int correspondences_needed[] = {100,160};
+int correspondences_needed[] = {80, 30, 200, 70, 50}; //numbers generated experimentally
+// int correspondences_needed[] = {100,160};
+// int correspondences_needed[] = {700}; //for saving purpose
 
 ObjectDetection::ObjectDetection()
     : nh_("~")
@@ -139,7 +141,7 @@ std::string ObjectDetection::label_object(pcl::PointCloud<PointType>::Ptr unknow
 
     iterator = iterator->next;
   }
-  // pcl::io::savePCDFileASCII ("saucer.pcd", *unknown);
+  pcl::io::savePCDFileASCII ("salt_shaker.pcd", *unknown);
   return "unknown";
 }
 
