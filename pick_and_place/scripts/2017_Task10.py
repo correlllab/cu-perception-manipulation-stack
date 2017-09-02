@@ -111,20 +111,18 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def goto_cup(self):
-        # self.calibrate_obj_det_pub.publish(True)
-        #
-        # while self.calibrated == False:
-        #     pass
-        #
-        # print("Finger Sensors calibrated")
-        rate = rospy.Rate(100)
-        while not rospy.is_shutdown():
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'teaCup_position', rospy.Time())
-                break
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
+    def goto_spoon(self):
+        self.calibrate_obj_det_pub.publish(True)
+
+        while self.calibrated == False:
+            pass
+
+        print("Finger Sensors calibrated")
+
+        try:
+            trans = self.tfBuffer.lookup_transform('root', 'spoon_position', rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
             # continue
 
         translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
@@ -134,57 +132,75 @@ class pick_peas_class(object):
         self.cmmnd_CartesianPosition(pose_value, 0)
 
 
-    def goto_sauccer(self):
+    def lift_spoon(self):
+        rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
+        # self.move_fingercmmd([0, 0, 0])
+        while self.touch_finger_3 != True:
+            self.cmmnd_CartesianVelocity([0,0.025,0,0,0,0,1])
+            rate.sleep()
+        self.touch_finger_3 = False
+
+        self.cmmnd_FingerPosition([100, 0, 100])
+        self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
+        self.cmmnd_FingerPosition([100, 100, 100])
+
+
+    def searchSpoon(self):
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'cupPlace_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'j2n6s300_end_effector', rospy.Time())
                 break
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
 
         translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
         rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-        pose_value = translation + rotation
-        self.cmmnd_CartesianPosition(pose_value, 0) #second arg=0 (absolute movement), arg = '-r' (relative movement)
 
+        matrix1 = self.listener.fromTranslationRotation(translation,rotation)
+        counter = 0
+        rate = rospy.Rate(100)
+        while not self.obj_det and not rospy.is_shutdown():
+            counter = counter + 1
+            if(counter < 200):
+                cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
+                cart_velocities = cart_velocities.T[0].tolist()
+                self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
+                print("forward")
+            else:
+                cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,-0.05])[np.newaxis].T)
+                cart_velocities = cart_velocities.T[0].tolist()
+                self.cmmnd_CartesianVelocity(cart_velocities + [0,0,0,1])
+                print("backwards")
+            if(counter > 400):
+                counter = 0
+            rate.sleep()
+
+
+    def goto_stirCup(self):
+
+        try:
+            trans = self.tfBuffer.lookup_transform('root', 'stir_position', rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            # continue
+
+        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+        pose_value = translation + rotation
+        #second arg=0 (absolute movement), arg = '-r' (relative movement)
+        self.cmmnd_CartesianPosition(pose_value, 0)
 
 
 if __name__ == '__main__':
-    rospy.init_node("task_2")
+    rospy.init_node("task_3")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition([50,50,0])
+    p.cmmnd_FingerPosition([0,0,0])
 
     print ("Starting task. . .\n")
-    p.goto_cup()
-
-    print ("Picking up the cup. . .\n")
-    p.cmmnd_CartesianPosition([0,0,-0.03,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,0])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-
-    print ("Placing up the cup. . .\n")
-    p.goto_sauccer()
-    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([50,50,0])
-
-    print ("Taking the cup to the edge of the table. . .\n")
-    p.cmmnd_CartesianPosition([0,0,0.035,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([50,0,0])
-    p.cmmnd_CartesianPosition([-0.09,0,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,-0.7,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.3,0,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,-0.2,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.35,0,0,0,0,0,1], '-r')
-
-    print ("Picking up the cup and sauccer. . .\n")
+    p.cmmnd_CartesianPosition([0.684292554855, -0.209516480565, 0.0163746066391, -0.56285661459, 0.433029979467, -0.341935753822, 0.615432739258],0)
+    p.cmmnd_CartesianPosition([0.04,0,0,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([80,80,0])
     p.cmmnd_CartesianPosition([0,0,0.1,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.2,0,0.2,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([60,60,60])
-    p.cmmnd_CartesianPosition([-0.175743330717,-0.61769002676,-0.0382262542844,0.662450253963,-0.187142148614,0.648516654968,0.32490542531],'')
-    p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')

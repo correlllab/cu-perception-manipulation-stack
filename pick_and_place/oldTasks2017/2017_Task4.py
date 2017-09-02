@@ -10,6 +10,8 @@ from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import numpy as np
 
+from 2017_grasp_generator_4 import grasp_generator
+
 import pose_action_client
 import fingers_action_client
 import joints_action_client
@@ -70,7 +72,7 @@ class pick_peas_class(object):
         self.current_joint_angles[3] = data.joint4
         self.current_joint_angles[4] = data.joint5
         self.current_joint_angles[5] = data.joint6
-        self.current_joint_angles[6] = data.joint7
+        self.current_joint_angles[6] = data.joint7p = pick_peas_class()
         # print (self.current_joint_angles)
 
 
@@ -94,6 +96,12 @@ class pick_peas_class(object):
             twist_linear_x=cart_velo[0],
             twist_linear_y=cart_velo[1],
             twist_linear_z=cart_velo[2],
+    rospy.init_node("grasp_generator")
+    gg = grasp_generator()
+    rate = rospy.Rate(100)
+    while not rospy.is_shutdown():
+        try:
+            gg.broadcast_frame('
             twist_angular_x=cart_velo[3],
             twist_angular_y=cart_velo[4],
             twist_angular_z=cart_velo[5])
@@ -111,7 +119,7 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def goto_shaker(self):
+    def goto_shaker(self):p = pick_peas_class()
 
         try:
             trans = self.tfBuffer.lookup_transform('root', 'shaker_position', rospy.Time())
@@ -143,7 +151,7 @@ class pick_peas_class(object):
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
-    rate = rospy.Rate(100)
+   
     p = pick_peas_class()
     p.j.home()
     p.cmmnd_FingerPosition([0, 0, 0])

@@ -42,7 +42,7 @@ class grasp_generator(object):
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'cup_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'white_cup_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -51,9 +51,9 @@ class grasp_generator(object):
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.57,0,1.57) # in radians
-            requrd_trans = (-0.04,-0.11,0.1)
-            requrd_trans = tuple(0.75 * x for x in requrd_trans)
+            requrd_rot = (3.14,0,0) # in radians
+            requrd_trans = (-0.02,0,0.07)
+            requrd_trans = tuple(x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -61,11 +61,11 @@ class grasp_generator(object):
 
             self.broadcast.sendTransform(trans_1, quat_1,
                                     rospy.Time.now(),
-                                    "spoon_position",
+                                    "teaCup_position",
                                     "root")
 
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'bowl_farther_half_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'saucer_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -73,8 +73,8 @@ class grasp_generator(object):
             translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
             # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.5,0,1.74) # in radians
-            requrd_trans = (0,-0.12,0.2)
+            requrd_rot = (3.14,0,0) # in radians
+            requrd_trans = (0,0.02,0.13)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -82,28 +82,7 @@ class grasp_generator(object):
 
             self.broadcast.sendTransform(trans_1, quat_1,
                                     rospy.Time.now(),
-                                    "bowl_position",
-                                    "root")
-
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'plate_position', rospy.Time())
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
-                continue
-
-            translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
-            rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-            # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (1.5,0,0) # in radians
-            requrd_trans = (0,0,0.15)
-            # calculate and get an offset frame w/o ref to objct frame
-            pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
-            trans_1= tuple(pose[:3])
-            quat_1= tuple(pose[3:])
-
-            self.broadcast.sendTransform(trans_1, quat_1,
-                                    rospy.Time.now(),
-                                    "plate_position1",
+                                    "cupPlace_position",
                                     "root")
 
             rate.sleep()

@@ -23,7 +23,13 @@ class grasp_generator(object):
         # print (requrd_quat)
         matrix2 = self.listener.fromTranslationRotation(requrd_trans, requrd_quat) #identity matrix
         # print (matrix2)
-        matrix3 =  np.zeros((4,4))
+        matrix3 =  np.zeros((4,while not rospy.is_shutdown():
+        try:
+            gg.broadcast_frame('salt_shaker_position', "shaker_position", (-np.pi/2,np.pi,-np.pi/6), (0.03,0,0.02))
+            gg.broadcast_frame('plate_position', "shake_position", (-np.pi/2,np.pi,-np.pi/6), (0,0,0.15))
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            continue4))
         matrix3 = np.dot(matrix1,matrix2)
         #get the euler angles from 4X4 T martix
         scale, shear, rpy_angles, trans_1, perps = tf.transformations.decompose_matrix(matrix3)
@@ -36,23 +42,12 @@ class grasp_generator(object):
         pose = trans_1 + quat_1
         return pose
 
-    def broadcast_frame(self):
-        # self.num_objects = msg.data
-        # print ('we do not have the frame')
-        rate = rospy.Rate(100)
-        while not rospy.is_shutdown():
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'salt_shaker_position', rospy.Time())
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
-                continue
-            # print (trans.transform.translation.x)
+    def broadcast_frame(self, from_frame, to_frame, requrd_rot, requrd_trans):
+            trans = self.tfBuffer.lookup_transform('root', from_frame, rospy.Time())
+
             translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
 
-            # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (-np.pi/2,np.pi,-np.pi/6) # in radians
-            requrd_trans = (0.03,0,0.02)
             requrd_trans = tuple(x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
@@ -61,37 +56,19 @@ class grasp_generator(object):
 
             self.broadcast.sendTransform(trans_1, quat_1,
                                     rospy.Time.now(),
-                                    "shaker_position",
+                                    to_frame,
                                     "root")
-
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'plate_position', rospy.Time())
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
-                continue
-
-            translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
-            rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-            # Identity matrix. Set the requ rot n trans wrt obj frame
-            requrd_rot = (-np.pi/2,np.pi,-np.pi/6) # in radians
-            requrd_trans = (0,0,0.15)
-            # calculate and get an offset frame w/o ref to objct frame
-            pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
-            trans_1= tuple(pose[:3])
-            quat_1= tuple(pose[3:])
-
-            self.broadcast.sendTransform(trans_1, quat_1,
-                                    rospy.Time.now(),
-                                    "shake_position",
-                                    "root")
-
-            rate.sleep()
-
 
 
 if __name__ == '__main__':
     rospy.init_node("grasp_generator")
     gg = grasp_generator()
-    # rate = rospy.Rate(100)
-    gg.broadcast_frame()
+    rate = rospy.Rate(100)
+    while not rospy.is_shutdown():
+        try:
+            gg.broadcast_frame('salt_shaker_position', "shaker_position", (-np.pi/2,np.pi,-np.pi/6), (0.03,0,0.02))
+            gg.broadcast_frame('plate_position', "shake_position", (-np.pi/2,np.pi,-np.pi/6), (0,0,0.15))
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            continue
     rospy.spin()
