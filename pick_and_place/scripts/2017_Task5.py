@@ -10,7 +10,7 @@ from std_msgs.msg import Header, Int32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import numpy as np
 
-from 2017_grasp_generator_4 import grasp_generator
+from finger_sensor_msgs.msg import FingerSAI, FingerFAI, FingerTouch, FingerDetect
 
 import pose_action_client
 import fingers_action_client
@@ -49,19 +49,33 @@ class pick_peas_class(object):
                                                     Bool,
                                                     self.set_calibrated)
 
+        self.bump_det_sub = rospy.Subscriber("/finger_sensor/fai",
+                                                    FingerFAI,
+                                                    self.detect_Bump)
+
         self.obj_det = False
         self.touch_finger_1 = False
         self.touch_finger_3 = False
         self.calibrated = False
+        self.bump_finger_1 = 0
 
+    def set_calibrated(self,msg):
+        self.calibrated = msg.data
 
+    def detect_Bump(self,msg):
+        self.bump_finger_1 = msg.finger1
+        # print (self.bump_finger_1)
 
     def set_obj_det(self,msg):
         self.obj_det = np.any(np.array([msg.finger1, msg.finger2, msg.finger3]))
-        print(self.obj_det)
+        # print(self.obj_det)
 
 
     def set_touch(self, msg):
+        '''
+        touch messages used for control
+        '''
+
         self.touch_finger_1 = msg.finger1
         self.touch_finger_3 = msg.finger3
 
@@ -72,11 +86,15 @@ class pick_peas_class(object):
         self.current_joint_angles[3] = data.joint4
         self.current_joint_angles[4] = data.joint5
         self.current_joint_angles[5] = data.joint6
-        self.current_joint_angles[6] = data.joint7p = pick_peas_class()
+        self.current_joint_angles[6] = data.joint7
         # print (self.current_joint_angles)
 
 
     def cmmnd_CartesianPosition(self, pose_value, relative):
+        '''
+        Commands the arm in cartesian position mode. Server client
+        interface from kinova api.
+        '''
         pose_action_client.getcurrentCartesianCommand('j2n6s300_')
         pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, relative)
         poses = [float(n) for n in pose_mq]
@@ -89,6 +107,10 @@ class pick_peas_class(object):
             print ("program interrupted before completion")
 
     def cmmnd_FingerPosition(self, finger_value):
+        '''
+        Commands the finger joints. Server client
+        interface from kinova api.
+        '''
         commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6s300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
 
     def cmmnd_CartesianVelocity(self,cart_velo):
@@ -96,18 +118,17 @@ class pick_peas_class(object):
             twist_linear_x=cart_velo[0],
             twist_linear_y=cart_velo[1],
             twist_linear_z=cart_velo[2],
-    rospy.init_node("grasp_generator")
-    gg = grasp_generator()
-    rate = rospy.Rate(100)
-    while not rospy.is_shutdown():
-        try:
-            gg.broadcast_frame('
             twist_angular_x=cart_velo[3],
             twist_angular_y=cart_velo[4],
             twist_angular_z=cart_velo[5])
         self.velocity_pub.publish(msg)
 
+
     def cmmnd_JointAngles(self,joints_cmd, relative):
+        '''
+        Commands the arm in joint position mode. Server client
+        interface from kinova api.
+        '''
         joints_action_client.getcurrentJointCommand('j2n6s300_')
         joint_degree, joint_radian = joints_action_client.unitParser('degree', joints_cmd, relative)
         try:
@@ -116,13 +137,14 @@ class pick_peas_class(object):
         except rospy.ROSInterruptException:
             print('program interrupted before completion')
 
-    def set_calibrated(self,msg):
-        self.calibrated = msg.data
 
-    def goto_shaker(self):p = pick_peas_class()
-
+    def goto(self, from_frame, to_frame):
+        '''
+        Calculates the transfrom from from_frame to to_frame
+        and commands the arm in cartesian mode.
+        '''
         try:
-            trans = self.tfBuffer.lookup_transform('root', 'shaker_position', rospy.Time())
+            trans = self.tfBuffer.lookup_transform(from_frame, to_frame, rospy.Time())
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
             # continue
@@ -133,32 +155,65 @@ class pick_peas_class(object):
         #second arg=0 (absolute movement), arg = '-r' (relative movement)
         self.cmmnd_CartesianPosition(pose_value, 0)
 
-    def goto_plate(self):
-
-        try:
-            trans = self.tfBuffer.lookup_transform('root', 'shake_position', rospy.Time())
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+    def cmmnd_makeContact_ground(self, sensitivity):
+        rate = rospy.Rate(100)
+        while (self.bump_finger_1<sensitivity)and not rospy.is_shutdown():
+            print (self.bump_finger_1)
+            self.cmmnd_CartesianVelocity([0,0,-0.03,0,0,0,1])
             rate.sleep()
-            # continue
+        print ("contact made with the ground")
 
-        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
-        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-        pose_value = translation + rotation
-        #second arg=0 (absolute movement), arg = '-r' (relative movement)
-        self.cmmnd_CartesianPosition(pose_value, 0)
+    def pick_USBlight_1(self, current_finger_position):
+        ii = 0
+        rate = rospy.Rate(1000)
+        while self.touch_finger_1 != True and not rospy.is_shutdown():
+            current_finger_position[0] += 2 # slowly close finger_1 until contact is made
+            print (current_finger_position[0])
+            self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
+            rate.sleep()
+
+    def pick_USBlight_2(self, current_finger_position):
+        ii = 0
+        rate = rospy.Rate(1000)
+        while self.touch_finger_3 != True and not rospy.is_shutdown():
+            current_finger_position[2] += 2 # slowly close finger_1 until contact is made
+            print (current_finger_position[0])
+            self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
+            rate.sleep()
+
+
 
 
 
 if __name__ == '__main__':
-    rospy.init_node("task_1")
-   
+    rospy.init_node("task_5")
+
     p = pick_peas_class()
+
     p.j.home()
-    p.cmmnd_FingerPosition([0, 0, 0])
 
-    print ("Starting task. . .\n")
-    p.goto_shaker()
-    p.cmmnd_FingerPosition([100, 100, 100])
+    p.cmmnd_FingerPosition([50,50,50])
+    # pick position (hand generated) for normal light
+    p.cmmnd_CartesianPosition([0.5, -0.2, 0.0739622414112, 0.742928683758, 0.66773968935, 0.00745002366602, 0.0286201387644], 0)
+    p.cmmnd_CartesianPosition([0,0,-0.06,0,0,0,1],'r')
+    p.cmmnd_FingerPosition([100,100,60])
+    p.cmmnd_CartesianPosition([0,0,0.07,0,0,0,1],'r')
+    # ## plug it back in
+    p.cmmnd_makeContact_ground(50) # argument #1 is sensitivity
+    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1],'r')
+    p.cmmnd_FingerPosition([0,0,0])
 
-    print ("Going to shake. . .\n")
-    p.goto_plate()
+    ## pick position (hand generated) for USB light
+    p.cmmnd_CartesianPosition([0.55, -0.207078665495, 0.0373686514795, -0.55370759964, -0.470494896173, -0.533289194107, -0.433180242777], 0)
+    p.cmmnd_FingerPosition([80,50,50])
+    p.cmmnd_CartesianPosition([0.06,0,0,0,0,0,1],'r')
+    p.pick_USBlight_1([80,50,50]) # start from the current finger position
+    # p.pick_USBlight_2([88,50,50])
+    p.cmmnd_FingerPosition([88,100,50])
+    p.cmmnd_FingerPosition([100,100,50])
+    p.cmmnd_CartesianPosition([0,0,0.08,0,0,0,1],'r')
+    ## plug it back in
+    p.cmmnd_makeContact_ground(100)
+    p.cmmnd_FingerPosition([0,0,0])
+
+    p.j.home()

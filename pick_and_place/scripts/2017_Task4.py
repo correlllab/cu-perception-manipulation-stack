@@ -60,6 +60,10 @@ class pick_peas_class(object):
 
 
     def set_touch(self, msg):
+        '''
+        touch messages used for control
+        '''
+
         self.touch_finger_1 = msg.finger1
         self.touch_finger_3 = msg.finger3
 
@@ -75,6 +79,10 @@ class pick_peas_class(object):
 
 
     def cmmnd_CartesianPosition(self, pose_value, relative):
+        '''
+        Commands the arm in cartesian position mode. Server client
+        interface from kinova api.
+        '''
         pose_action_client.getcurrentCartesianCommand('j2n6s300_')
         pose_mq, pose_mdeg, pose_mrad = pose_action_client.unitParser('mq', pose_value, relative)
         poses = [float(n) for n in pose_mq]
@@ -87,6 +95,10 @@ class pick_peas_class(object):
             print ("program interrupted before completion")
 
     def cmmnd_FingerPosition(self, finger_value):
+        '''
+        Commands the finger joints. Server client
+        interface from kinova api.
+        '''
         commands.getoutput('rosrun kinova_demo fingers_action_client.py j2n6s300 percent -- {0} {1} {2}'.format(finger_value[0],finger_value[1],finger_value[2]))
 
     def cmmnd_CartesianVelocity(self,cart_velo):
@@ -100,6 +112,10 @@ class pick_peas_class(object):
         self.velocity_pub.publish(msg)
 
     def cmmnd_JointAngles(self,joints_cmd, relative):
+        '''
+        Commands the arm in joint position mode. Server client
+        interface from kinova api.
+        '''
         joints_action_client.getcurrentJointCommand('j2n6s300_')
         joint_degree, joint_radian = joints_action_client.unitParser('degree', joints_cmd, relative)
         try:
@@ -108,23 +124,20 @@ class pick_peas_class(object):
         except rospy.ROSInterruptException:
             print('program interrupted before completion')
 
+
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
-    def goto_cup(self):
-        # self.calibrate_obj_det_pub.publish(True)
-        #
-        # while self.calibrated == False:
-        #     pass
-        #
-        # print("Finger Sensors calibrated")
-        rate = rospy.Rate(100)
-        while not rospy.is_shutdown():
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'teaCup_position', rospy.Time())
-                break
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
+
+    def goto(self, from_frame, to_frame):
+        '''
+        Calculates the transfrom from from_frame to to_frame
+        and commands the arm in cartesian mode.
+        '''
+        try:
+            trans = self.tfBuffer.lookup_transform(from_frame, to_frame, rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
             # continue
 
         translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
@@ -134,57 +147,23 @@ class pick_peas_class(object):
         self.cmmnd_CartesianPosition(pose_value, 0)
 
 
-    def goto_sauccer(self):
-        rate = rospy.Rate(100)
-        while not rospy.is_shutdown():
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'cupPlace_position', rospy.Time())
-                break
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
-
-        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
-        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-        pose_value = translation + rotation
-        self.cmmnd_CartesianPosition(pose_value, 0) #second arg=0 (absolute movement), arg = '-r' (relative movement)
-
-
 
 if __name__ == '__main__':
-    rospy.init_node("task_1")
+    rospy.init_node("task_4")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition([50,50,0])
-
-    print ("Starting task. . .\n")
-    p.goto_cup()
-
-    print ("Picking up the cup. . .\n")
-    p.cmmnd_CartesianPosition([0,0,-0.03,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,0])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-
-    print ("Placing up the cup. . .\n")
-    p.goto_sauccer()
-    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([50,50,0])
-
-    print ("Taking the cup to the edge of the table. . .\n")
-    p.cmmnd_CartesianPosition([0,0,0.035,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([50,0,0])
-    p.cmmnd_CartesianPosition([-0.09,0,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,-0.7,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.3,0,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,-0.2,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.35,0,0,0,0,0,1], '-r')
-
-    print ("Picking up the cup and sauccer. . .\n")
-    p.cmmnd_CartesianPosition([0,0,0.1,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.2,0,0.2,0,0,0,1], '-r')
     p.cmmnd_FingerPosition([60,60,60])
-    p.cmmnd_CartesianPosition([-0.175743330717,-0.61769002676,-0.0382262542844,0.662450253963,-0.187142148614,0.648516654968,0.32490542531],'')
-    p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
+
+    ## pour position (hand generated)
+    p.cmmnd_CartesianPosition([ 0.599633812904, -0.299243062735, 0.0949880501628, -0.41516315937, 0.56139343977, -0.560089945793, 0.445843100548], 0)
+    p.cmmnd_CartesianPosition([0.04,-0.01,0,0,0,0,1],'r')
+
+    ## close the fingers. pick up the mug.
     p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1],'r')
+
+    ## go to pour positions
+    p.goto("root", "pour_3")
+    p.goto("root", "pour_2")
+    p.goto("root", "pour_1")

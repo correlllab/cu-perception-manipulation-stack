@@ -23,14 +23,8 @@ class grasp_generator(object):
         # print (requrd_quat)
         matrix2 = self.listener.fromTranslationRotation(requrd_trans, requrd_quat) #identity matrix
         # print (matrix2)
-        matrix3 =  np.zeros((4,while not rospy.is_shutdown():
-        try:
-            gg.broadcast_frame('salt_shaker_position', "shaker_position", (-np.pi/2,np.pi,-np.pi/6), (0.03,0,0.02))
-            gg.broadcast_frame('plate_position', "shake_position", (-np.pi/2,np.pi,-np.pi/6), (0,0,0.15))
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            rate.sleep()
-            continue4))
-        matrix3 = np.dot(matrix1,matrix2)
+        matrix3 =  np.zeros((4,4))
+        matrix3 = np.dot(matrix1, matrix2)
         #get the euler angles from 4X4 T martix
         scale, shear, rpy_angles, trans_1, perps = tf.transformations.decompose_matrix(matrix3)
         # covert quaternion to euler
@@ -44,20 +38,14 @@ class grasp_generator(object):
 
     def broadcast_frame(self, from_frame, to_frame, requrd_rot, requrd_trans):
             trans = self.tfBuffer.lookup_transform('root', from_frame, rospy.Time())
-
             translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-
             requrd_trans = tuple(x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
             quat_1= tuple(pose[3:])
-
-            self.broadcast.sendTransform(trans_1, quat_1,
-                                    rospy.Time.now(),
-                                    to_frame,
-                                    "root")
+            self.broadcast.sendTransform(trans_1, quat_1,rospy.Time.now(),to_frame,"root")
 
 
 if __name__ == '__main__':
@@ -66,8 +54,9 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     while not rospy.is_shutdown():
         try:
-            gg.broadcast_frame('salt_shaker_position', "shaker_position", (-np.pi/2,np.pi,-np.pi/6), (0.03,0,0.02))
-            gg.broadcast_frame('plate_position', "shake_position", (-np.pi/2,np.pi,-np.pi/6), (0,0,0.15))
+            gg.broadcast_frame("unknown_3", 'pour_3', (1.5, 3, -3), (0.15, 0.0, 0.2546))
+            gg.broadcast_frame("unknown_2", 'pour_2', (1.5, 3, -3), (0.15, 0.0, 0.2546))
+            gg.broadcast_frame("unknown_1", 'pour_1', (1.5, 3, -3), (0.15, 0.0, 0.2546))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
             continue

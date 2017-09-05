@@ -132,37 +132,6 @@ class pick_peas_class(object):
         self.cmmnd_CartesianPosition(pose_value, 0)
 
 
-    def goto_bowl(self):
-        rate = rospy.Rate(100)
-        while not rospy.is_shutdown():
-            try:
-                trans = self.tfBuffer.lookup_transform('root', 'bowl_position', rospy.Time())
-                break
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                rate.sleep()
-
-        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
-        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
-        pose_value = translation + rotation
-        self.cmmnd_CartesianPosition(pose_value, 0) #second arg=0 (absolute movement), arg = '-r' (relative movement)
-
-
-    def goto_plate(self):
-        if self.listen.frameExists("/root") and self.listen.frameExists("/plate_position1"):
-            self.listen.waitForTransform('/root','/plate_position',rospy.Time(),rospy.Duration(100.0))
-            print ("we have the bowl frame")
-            # t1 = self.listen.getLatestCommonTime("/root", "bowl_position")
-            translation, quaternion = self.listen.lookupTransform("/root", "/plate_position", rospy.Time(0))
-
-            translation =  list(translation)
-            quaternion = [0.8678189045198146, 0.0003956789257977804, -0.4968799802988633, 0.0006910675928639343]
-            pose_value = translation + quaternion
-            #second arg=0 (absolute movement), arg = '-r' (relative movement)
-            self.cmmnd_CartesianPosition(pose_value, 0)
-
-        else:
-            print ("we DONT have the bowl frame")
-
     def lift_spoon(self):
         rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
         # self.move_fingercmmd([0, 0, 0])
@@ -207,50 +176,31 @@ class pick_peas_class(object):
                 counter = 0
             rate.sleep()
 
-    def saveData(self):
-        commands.getoutput('rostopic echo /sensor_values/data >> testSensorValues.txt')
-        commands.getoutput('rostopic echo /finger_sensor/sai >> testSAI.txt')
 
+    def goto_stirCup(self):
+
+        try:
+            trans = self.tfBuffer.lookup_transform('root', 'stir_position', rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            # continue
+
+        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+        pose_value = translation + rotation
+        #second arg=0 (absolute movement), arg = '-r' (relative movement)
+        self.cmmnd_CartesianPosition(pose_value, 0)
 
 
 if __name__ == '__main__':
-    rospy.init_node("task_1")
+    rospy.init_node("task_3")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition([0, 0, 100])
+    p.cmmnd_FingerPosition([0,0,0])
 
     print ("Starting task. . .\n")
-    p.goto_spoon()
-    p.cmmnd_JointAngles([0,0,0,0,0,-15,0], '-r') # with the new Kinova-ros package for 7DOF add an additional 0 at the end for our 6DOF arm.
-
-    print ("Searching spoon. . .\n")
-    p.searchSpoon()
-    p.cmmnd_CartesianPosition([0.015,0,0,0,0,0,1], '-r')
-
-    print ("trying to touch the spoon now. . .\n")
-    p.lift_spoon()
-
-    print ("Going to bowl. . .\n")
-    p.goto_bowl()
-    print ("Bowl reached. . .\n")
-
-    print ("Scooping the peas. . .")
-    p.cmmnd_JointAngles([0,0,0,0,0,-25,0], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.135,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,0.04,0,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,-40,0], '-r')
-    p.cmmnd_CartesianPosition([0,0,0.135,0,0,0,1], '-r')
-    print ("scooping done. . .")
-
-    print ("dumping in the plate. . .")
-    p.cmmnd_CartesianPosition([-0.25,0.1,-0.08,0,0,0,1], '-r')
-    p.cmmnd_JointAngles([0,0,0,0,0,40,0], '-r')
-
-    p.j.home()
-
-
-    # record data
-    # rosbag record --duration=10 -a (saves data for 10s)
-    # rostopic echo -b 2017-08-27-10-53-29.bag -p /sensor_values >sensorvalues.txt (save specificed topic to txt file)
-    # rostopic echo -b 2017-08-27-10-53-29.bag -p /finger_sensor/sai >sai.txt (save specificed topic to txt file)
+    p.cmmnd_CartesianPosition([0.631503105164, -0.175630912185, 0.178180411458, 0.127205222845, 0.692967712879, 0.696734428406, 0.134817928076],0)
+    p.cmmnd_FingerPosition([100,100,100])
+    p.cmmnd_CartesianPosition([0,-0.15,0,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0,-0.2,0,0,0,1], '-r')
