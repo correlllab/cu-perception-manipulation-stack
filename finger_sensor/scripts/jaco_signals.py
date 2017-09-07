@@ -28,7 +28,7 @@ class SignalDetector():
     def detect_touch(self,msg):
         touch = self.current_fingers_touch[:]
         fai = [msg.finger1, msg.finger2, msg.finger3]
-        tol = 500
+        tol = 700
 
         for finger in range(3):
             if fai[finger] > tol and self.current_fingers_touch[finger] == False:

@@ -157,13 +157,13 @@ if __name__ == '__main__':
 
     ## pour position (hand generated)
     p.cmmnd_CartesianPosition([ 0.599633812904, -0.299243062735, 0.0949880501628, -0.41516315937, 0.56139343977, -0.560089945793, 0.445843100548], 0)
-    p.cmmnd_CartesianPosition([0.04,-0.01,0,0,0,0,1],'r')
+    # p.cmmnd_CartesianPosition([0.04,-0.01,0,0,0,0,1],'r')
 
     ## close the fingers. pick up the mug.
-    p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1],'r')
+    # p.cmmnd_FingerPosition([100,100,100])
+    # p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1],'r')
 
     ## go to pour positions
-    p.goto("root", "pour_3")
-    p.goto("root", "pour_2")
-    p.goto("root", "pour_1")
+    # p.goto("root", "pour_3")
+    # p.goto("root", "pour_2")
+    # p.goto("root", "pour_1")
