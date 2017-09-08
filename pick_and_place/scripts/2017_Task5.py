@@ -192,7 +192,7 @@ if __name__ == '__main__':
 
     p = pick_peas_class()
 
-    p.j.home()
+    # p.j.home()
 
     p.cmmnd_FingerPosition([50,40,0])
     # pick position (hand generated) for normal light
@@ -200,27 +200,31 @@ if __name__ == '__main__':
     p.cmmnd_CartesianPosition([0,0,-0.065,0,0,0,1],'r')
     p.cmmnd_JointAngles([0,0,0,0,0,8,0], 'r')
 
-    current_finger_position = p.pick_USBlight_1([50,40,0])
-    p.cmmnd_FingerPosition([current_finger_position[0],100,current_finger_position[2]])
-    p.cmmnd_FingerPosition([100,100,current_finger_position[2]])
+    # current_finger_position = p.pick_USBlight_1([50,40,0]) # close fingers with feedback
+    # p.cmmnd_FingerPosition([current_finger_position[0],100,current_finger_position[2]]) # close fingers with feedback
+    # p.cmmnd_FingerPosition([100,100,current_finger_position[2]]) # close fingers with feedback
+
+    p.cmmnd_FingerPosition([100,100,0]) # close fingers without feedback
 
     p.cmmnd_CartesianPosition([0,0,0.06,0,0,0,1],'r')
     ## plug it back in
-    p.cmmnd_makeContact_ground(40) # argument #1 is sensitivity
-    p.cmmnd_CartesianPosition([0,0,-0.015,0,0,0,1],'r')
+    # p.cmmnd_makeContact_ground(40) # argument #1 is sensitivity
+    # p.cmmnd_CartesianPosition([0,0,-0.015,0,0,0,1],'r')
+    # p.cmmnd_FingerPosition([0,0,0])
+    p.cmmnd_CartesianPosition([0,0,-0.06,0,0,0,1],'r')
     p.cmmnd_FingerPosition([0,0,0])
 
     ## pick position (hand generated) for USB light
-    p.cmmnd_CartesianPosition([0.55, -0.2, 0.0373686514795, -0.55370759964, -0.470494896173, -0.533289194107, -0.433180242777], 0)
-    p.cmmnd_FingerPosition([50,50,50])
+    # p.cmmnd_CartesianPosition([0.55, -0.2, 0.0373686514795, -0.55370759964, -0.470494896173, -0.533289194107, -0.433180242777], 0)
+    # p.cmmnd_FingerPosition([50,50,50])
+    # # p.cmmnd_FingerPosition([100,100,50])
+    # p.cmmnd_CartesianPosition([0.06,0,0,0,0,0,1],'r')
+    # current_finger_position = p.pick_USBlight_1([50,50,50]) # start from the current finger position
+    # p.cmmnd_FingerPosition([current_finger_position[0],100,50])
     # p.cmmnd_FingerPosition([100,100,50])
-    p.cmmnd_CartesianPosition([0.06,0,0,0,0,0,1],'r')
-    current_finger_position = p.pick_USBlight_1([50,50,50]) # start from the current finger position
-    p.cmmnd_FingerPosition([current_finger_position[0],100,50])
-    p.cmmnd_FingerPosition([100,100,50])
-    p.cmmnd_CartesianPosition([0,0,0.08,0,0,0,1],'r')
-    ## plug it back in
-    p.cmmnd_makeContact_ground(100)
-    p.cmmnd_FingerPosition([0,0,0])
-
-    p.j.home()
+    # p.cmmnd_CartesianPosition([0,0,0.08,0,0,0,1],'r')
+    # ## plug it back in
+    # p.cmmnd_makeContact_ground(100)
+    # p.cmmnd_FingerPosition([0,0,0])
+    #
+    # p.j.home()

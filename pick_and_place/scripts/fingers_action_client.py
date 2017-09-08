@@ -17,7 +17,7 @@ arm_joint_number = 0
 finger_number = 0
 prefix = 'NO_ROBOT_TYPE_DEFINED_'
 finger_maxDist = 18.9/2/1000  # max distance for one finger
-finger_maxTurn = 6800  # max thread rotation for one finger
+finger_maxTurn = 8000  # max thread rotation for one finger
 currentFingerPosition = [0.0, 0.0, 0.0]
 
 def gripper_client(finger_positions):
@@ -82,7 +82,7 @@ def argumentParser(argument_):
 
 def kinova_robotTypeParser(kinova_robotType_):
     """ Argument kinova_robotType """
-    global robot_category, robot_category_version, wrist_type, arm_joint_number, robot_mode, finger_number, prefix, finger_maxDist, finger_maxTurn 
+    global robot_category, robot_category_version, wrist_type, arm_joint_number, robot_mode, finger_number, prefix, finger_maxDist, finger_maxTurn
     robot_category = kinova_robotType_[0]
     robot_category_version = int(kinova_robotType_[1])
     wrist_type = kinova_robotType_[2]

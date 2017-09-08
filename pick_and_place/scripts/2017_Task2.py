@@ -114,15 +114,14 @@ class pick_peas_class(object):
 
 
 if __name__ == '__main__':
-    rospy.init_node("task_6")
+    rospy.init_node("task_2")
     rate = rospy.Rate(100)
     p = pick_peas_class()
     p.j.home()
-    p.cmmnd_FingerPosition([50,50,50])
+    p.cmmnd_FingerPosition([75,75,75])
 
     print ("Starting task. . .\n")
-    p.cmmnd_CartesianPosition([0.612064242363, -0.102864965796, 0.156103774905, -0.123335294425, -0.716815114021, -0.68497890234, -0.0420527271926],0)
+    p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
+    p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
     p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_JointAngles([0,0,0,0,0,180,0],'r')
-    p.cmmnd_CartesianPosition([0,-0.1,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,0,0.4,0,0,0,1], '-r')
+    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
