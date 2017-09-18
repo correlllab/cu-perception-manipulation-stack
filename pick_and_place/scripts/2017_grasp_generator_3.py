@@ -42,7 +42,7 @@ class grasp_generator(object):
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'cup_with_spoon_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'green_cup_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -52,7 +52,7 @@ class grasp_generator(object):
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.57,0,1.57) # in radians
-            requrd_trans = (-0.04,-0.11,0.1)
+            requrd_trans = (-0.08,-0.05,0.12)
             requrd_trans = tuple(0.75 * x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
@@ -65,7 +65,7 @@ class grasp_generator(object):
                                     "root")
 
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'cup_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'unknown_0', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -74,7 +74,7 @@ class grasp_generator(object):
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.5,0,1.74) # in radians
-            requrd_trans = (-0.03,-0.07,0.2)
+            requrd_trans = (-0.04,-0.02,0.2)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])

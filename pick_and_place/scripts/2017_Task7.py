@@ -7,12 +7,13 @@ from manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
 from finger_sensor_msgs.msg import FingerDetect, FingerTouch
 from std_msgs.msg import Header, Int32MultiArray, Bool
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, WrenchStamped
 import numpy as np
 
 import pose_action_client
 import fingers_action_client
 import joints_action_client
+from finger_sensor_msgs.msg import FingerSAI, FingerFAI, FingerTouch, FingerDetect
 
 import tf
 import tf2_ros
@@ -47,21 +48,41 @@ class pick_peas_class(object):
                                                     Bool,
                                                     self.set_calibrated)
 
+        self.bump_det_sub = rospy.Subscriber("/finger_sensor/fai",
+                                                    FingerFAI,
+                                                    self.detect_Bump)
+
+        self.tool_wrench_sub = rospy.Subscriber("/j2n6s300_driver/out/tool_wrench",
+                                                    WrenchStamped,
+                                                    self.tool_wrench)
+
         self.obj_det = False
         self.touch_finger_1 = False
         self.touch_finger_3 = False
         self.calibrated = False
+        self.bump_finger_1 = 0
+        self.bump_finger_2 = 0
+        self.tool_wrench_x = 0
+        self.tool_wrench_y = 0
+        self.tool_wrench_z = 0
 
+    def tool_wrench(self,msg):
+        self.tool_wrench_x = msg.wrench.force.x
+        self.tool_wrench_y = msg.wrench.force.y
+        self.tool_wrench_z = msg.wrench.force.z
+        # print((self.tool_wrench_x/(self.tool_wrench_x+self.tool_wrench_y)), (self.tool_wrench_y/(self.tool_wrench_x+self.tool_wrench_y)))
 
+    def detect_Bump(self,msg):
+        self.bump_finger_1 = msg.finger1
 
     def set_obj_det(self,msg):
         self.obj_det = np.any(np.array([msg.finger1, msg.finger2, msg.finger3]))
-        print(self.obj_det)
+        # print(self.obj_det)
 
 
     def set_touch(self, msg):
         self.touch_finger_1 = msg.finger1
-        self.touch_finger_3 = msg.finger3
+        self.touch_finger_2 = msg.finger2
 
     def callback(self,data):
         self.current_joint_angles[0] = data.joint1
@@ -111,36 +132,46 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
+    def cmmnd_makeContact_ground(self, sensitivity):
+        rate = rospy.Rate(100)
+        while (self.bump_finger_1<sensitivity)and not rospy.is_shutdown():
+            # print (self.tool_wrench_x, self.tool_wrench_y)
+            self.cmmnd_CartesianVelocity([0,0,-0.03,0,0,0,1])
+            rate.sleep()
+        print ("contact made with the ground")
+
+    def cmmd_touchBlock(self,current_finger_position):
+        ii = 0
+        rate = rospy.Rate(100)
+        while self.touch_finger_1 != True and not rospy.is_shutdown():
+            current_finger_position[0] += 5 # slowly close finger_1 until contact is made
+            # print (current_finger_position[0])
+            self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
+            rate.sleep()
+        self.touch_finger_1 = False
+
+        while self.touch_finger_2 != True and not rospy.is_shutdown():
+            current_finger_position[1] += 5 # slowly close finger_1 until contact is made
+            # print (current_finger_position[0])
+            self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
+            rate.sleep()
+        self.touch_finger_2 = False
+
+        return current_finger_position
+
+
 
 
 if __name__ == '__main__':
-    rospy.init_node("task_2")
+    rospy.init_node("task_7")
     rate = rospy.Rate(100)
     p = pick_peas_class()
-    # p.j.home()
-    # p.cmmnd_FingerPosition([75,75,75])
-    #
-    # print ("Starting task. . .\n")
-    # p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
-    # p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
-    # p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # ## placing
-    # p.cmmnd_CartesianPosition([0.60404330492, 0, 0, 0.611618876457, 0.788678228855, 0.0379388593137, 0.0496951676905],0)
-    # p.cmmnd_FingerPosition([75,75,75])
-    #
-    # p.cmmnd_CartesianPosition([0.58, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
-    # p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
-    # p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # ## placing
-    # p.cmmnd_CartesianPosition([0.60404330492, 0.2, 0, 0.611618876457, 0.788678228855, 0.0379388593137, 0.0496951676905],0)
+    p.j.home()
     p.cmmnd_FingerPosition([75,75,75])
 
-    p.cmmnd_CartesianPosition([0.61, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
-    p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
-    p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    ## placing
-    p.cmmnd_CartesianPosition([0.60404330492, 0.25, 0, 0.611618876457, 0.788678228855, 0.0379388593137, 0.0496951676905],0)
-    p.cmmnd_FingerPosition([75,75,75])
+    # print ("Starting task. . .\n")
+    # p.cmmnd_CartesianPosition([0.361263722181, -0.428992092609, -0.017090972513, 0.972156882286, -0.232297956944, 0.0305838417262, -0.00364511157386],0)
+    # p.cmmnd_makeContact_ground(20)
+    # rospy.spin()
+    current_finger_position = p.cmmd_touchBlock([30,30,30])
+    print (current_finger_position[0], current_finger_position[1])

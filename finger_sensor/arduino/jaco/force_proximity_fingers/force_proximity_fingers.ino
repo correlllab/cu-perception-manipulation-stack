@@ -19,7 +19,7 @@
 
 
 /***** USER PARAMETERS *****/
-int ir_current_ = 8;                     // range = [0, 20]. current = value * 10 mA
+int ir_current_ = 3;                     // range = [0, 20]. current = value * 10 mA
 int ambient_light_measurement_rate_ = 7; // range = [0, 7]. 1, 2, 3, 4, 5, 6, 8, 10 samples per second
 int averaging_function_ = 7;  // range [0, 7] measurements per run are 2**value, with range [1, 2**7 = 128]
 int proximity_freq_ = 0; // range = [0 , 3]. 390.625kHz, 781.250kHz, 1.5625MHz, 3.125MHz

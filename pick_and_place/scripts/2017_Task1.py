@@ -148,43 +148,56 @@ class pick_peas_class(object):
         pose_value = translation + rotation
         self.cmmnd_CartesianPosition(pose_value, 0) #second arg=0 (absolute movement), arg = '-r' (relative movement)
 
+    def goto_saucer_pick(self):
+        rate = rospy.Rate(100)
+        while not rospy.is_shutdown():
+            try:
+                trans = self.tfBuffer.lookup_transform('root', 'saucer_pick_position', rospy.Time())
+                break
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rate.sleep()
+
+        translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+        rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+        pose_value = translation + rotation
+        self.cmmnd_CartesianPosition(pose_value, 0)
+
+
 
 
 if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
+    # p.j.home()
+    # p.cmmnd_FingerPosition([50,50,0])
+    #
+    # print ("Starting task. . .\n")
+    # p.goto_cup()
+    #
+    # print ("Picking up the cup. . .\n")
+    # p.cmmnd_CartesianPosition([0,0,-0.03,0,0,0,1], '-r')
+    # p.cmmnd_FingerPosition([100,100,0])
+    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+    # #
+    # # print ("Placing up the cup. . .\n")
+    # p.goto_sauccer()
+    # p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1], '-r')
+    # p.cmmnd_FingerPosition([50,50,0])
+
     p.j.home()
-    p.cmmnd_FingerPosition([50,50,0])
 
-    print ("Starting task. . .\n")
-    p.goto_cup()
-
-    print ("Picking up the cup. . .\n")
-    p.cmmnd_CartesianPosition([0,0,-0.03,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([100,100,0])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-
-    print ("Placing up the cup. . .\n")
-    p.goto_sauccer()
-    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([50,50,0])
-
-    print ("Taking the cup to the edge of the table. . .\n")
-    p.cmmnd_CartesianPosition([0,0,0.035,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([50,0,0])
-    p.cmmnd_CartesianPosition([-0.09,0,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,-0.7,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.3,0,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([0,-0.2,0,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.35,0,0,0,0,0,1], '-r')
-
-    print ("Picking up the cup and sauccer. . .\n")
-    p.cmmnd_CartesianPosition([0,0,0.1,0,0,0,1], '-r')
-    p.cmmnd_CartesianPosition([-0.2,0,0.2,0,0,0,1], '-r')
-    p.cmmnd_FingerPosition([60,60,60])
-    p.cmmnd_CartesianPosition([-0.175743330717,-0.61769002676,-0.0382262542844,0.662450253963,-0.187142148614,0.648516654968,0.32490542531],'')
-    p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1], '-r')
+    # saucer pick up position
+    p.cmmnd_FingerPosition([75,70,70])
+    p.goto_saucer_pick()
+    p.cmmnd_JointAngles([0,0,0,0,0,23,0],'r')
+    p.cmmnd_CartesianPosition([0,0.12,0,0,0,0,1],'r')
+    p.cmmnd_FingerPosition([75,100,70])
+    p.cmmnd_CartesianPosition([0,0,0,0,0.21,0,0.97],'r')
     p.cmmnd_FingerPosition([100,100,100])
-    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+
+    # stabilize the cup and pick
+    p.cmmnd_CartesianPosition([0,0,0,0.21,-0.025,-0.084,0.962],'r')
+    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
+
+    # go to final target location

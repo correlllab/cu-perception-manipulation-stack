@@ -42,7 +42,7 @@ class grasp_generator(object):
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'white_cup_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'green_cup_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -65,7 +65,7 @@ class grasp_generator(object):
                                     "root")
 
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'saucer_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'green_saucer_position', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -74,7 +74,7 @@ class grasp_generator(object):
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (3.14,0,0) # in radians
-            requrd_trans = (0,0.02,0.13)
+            requrd_trans = (0,0,0.13)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
@@ -83,6 +83,27 @@ class grasp_generator(object):
             self.broadcast.sendTransform(trans_1, quat_1,
                                     rospy.Time.now(),
                                     "cupPlace_position",
+                                    "root")
+
+            try:
+                trans = self.tfBuffer.lookup_transform('root', 'green_saucer_position', rospy.Time())
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rate.sleep()
+                continue
+
+            translation  = [trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z]
+            rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
+            # Identity matrix. Set the requ rot n trans wrt obj frame
+            requrd_rot = (4,-1,0.8) # in radians
+            requrd_trans = (0,-0.12,0.03)
+            # calculate and get an offset frame w/o ref to objct frame
+            pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
+            trans_1= tuple(pose[:3])
+            quat_1= tuple(pose[3:])
+
+            self.broadcast.sendTransform(trans_1, quat_1,
+                                    rospy.Time.now(),
+                                    "saucer_pick_position",
                                     "root")
 
             rate.sleep()
