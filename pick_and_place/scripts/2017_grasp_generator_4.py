@@ -54,7 +54,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     while not rospy.is_shutdown():
         try:
-            gg.broadcast_frame("unknown_3", 'pour_3', (1.5, 3, -3), (0.15, 0.0, 0.2546))
+            gg.broadcast_frame("green_cup_with_spoon_position", 'pour_3', (1.5, 3, -3), (0.15, 0.0, 0.2546))
             gg.broadcast_frame("unknown_2", 'pour_2', (1.5, 3, -3), (0.15, 0.0, 0.2546))
             gg.broadcast_frame("unknown_1", 'pour_1', (1.5, 3, -3), (0.15, 0.0, 0.2546))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):

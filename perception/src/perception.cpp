@@ -312,23 +312,24 @@ Perception::Perception(int test)
     }
     else
       table_segmenter.setModelType(pcl::SACMODEL_PLANE);
-    table_segmenter.setOptimizeCoeffiif(timed_out(tracked_objects->timestamp, seconds_keep_alive))
-    {
-      previous = tracked_objects;
-      tracked_objects = tracked_objects->next;
-      if(one_of_each && next->label != "unknown" && next->label != "block")
-      {
-        ss << previous->label << "_position";
-      }
-      else
-      {
-        ss << previous->label << "_" << previous->id;
-      }
 
-      tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
-      delete previous;
-    }
-  }cients(true);
+    // table_segmenter.setOptimizeCoeffiif(timed_out(tracked_objects->timestamp, seconds_keep_alive))
+    // {
+    //   previous = tracked_objects;
+    //   tracked_objects = tracked_objects->next;
+    //   if(one_of_each && next->label != "unknown" && next->label != "block")
+    //   {
+    //     ss << previous->label << "_position";
+    //   }
+    //   else
+    //   {
+    //     ss << previous->label << "_" << previous->id;
+    //   }
+    //
+    //   tf_visualizer_.publishTransform(Eigen::Affine3d::Identity(), base_frame, ss.str());
+    //   delete previous;
+    // }
+  // }cients(true);
 
     table_segmenter.setMethodType(pcl::SAC_RANSAC);
     table_segmenter.setMaxIterations(1000);

@@ -7,7 +7,7 @@ from manager import PickAndPlaceNode
 from kinova_msgs.msg import JointAngles, PoseVelocity
 from finger_sensor_msgs.msg import FingerDetect, FingerTouch
 from std_msgs.msg import Header, Int32MultiArray, Bool
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, WrenchStamped
 import numpy as np
 
 import pose_action_client
@@ -47,16 +47,28 @@ class pick_peas_class(object):
                                                     Bool,
                                                     self.set_calibrated)
 
+        self.tool_wrench_sub = rospy.Subscriber("/j2n6s300_driver/out/tool_wrench",
+                                                    WrenchStamped,
+                                                    self.tool_wrench)
+
         self.obj_det = False
         self.touch_finger_1 = False
         self.touch_finger_3 = False
         self.calibrated = False
+        self.tool_wrench_x = 0
+        self.tool_wrench_y = 0
+        self.tool_wrench_z = 0
 
+
+    def tool_wrench(self,msg):
+        self.tool_wrench_x = msg.wrench.force.x
+        self.tool_wrench_y = msg.wrench.force.y
+        self.tool_wrench_z = msg.wrench.force.z
 
 
     def set_obj_det(self,msg):
         self.obj_det = np.any(np.array([msg.finger1, msg.finger2, msg.finger3]))
-        print(self.obj_det)
+        # print(self.obj_det)
 
 
     def set_touch(self, msg):
@@ -111,36 +123,45 @@ class pick_peas_class(object):
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
+    def cmmnd_makeContact_ground(self, sensitivity):
+        rate = rospy.Rate(100)
+        while (self.tool_wrench_z > sensitivity)and not rospy.is_shutdown():
+            print (self.tool_wrench_z)
+            self.cmmnd_CartesianVelocity([0,0,-0.05,0,0,0,1])
+            rate.sleep()
+        print ("contact made with the ground")
+
 
 
 if __name__ == '__main__':
     rospy.init_node("task_2")
     rate = rospy.Rate(100)
     p = pick_peas_class()
-    # p.j.home()
-    # p.cmmnd_FingerPosition([75,75,75])
-    #
-    # print ("Starting task. . .\n")
-    # p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
-    # p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
-    # p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # ## placing
-    # p.cmmnd_CartesianPosition([0.60404330492, 0, 0, 0.611618876457, 0.788678228855, 0.0379388593137, 0.0496951676905],0)
-    # p.cmmnd_FingerPosition([75,75,75])
-    #
-    # p.cmmnd_CartesianPosition([0.58, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
-    # p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
-    # p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # ## placing
-    # p.cmmnd_CartesianPosition([0.60404330492, 0.2, 0, 0.611618876457, 0.788678228855, 0.0379388593137, 0.0496951676905],0)
-    p.cmmnd_FingerPosition([75,75,75])
+    p.j.home()
+    p.cmmnd_FingerPosition([80,80,75])
 
-    p.cmmnd_CartesianPosition([0.61, -0.342241108418, 0.08, 0.994541704655, 0.095476359129, 0.0416482128203, 0.0060525611043],0)
-    p.cmmnd_CartesianPosition([0,0,-0.11,0,0,0,1],'r')
-    p.cmmnd_FingerPosition([100,100,100])
+    print ("Starting task. . .\n")
+    p.cmmnd_CartesianPosition([0.476334422827,-0.345300972462,0.0714216381311,-0.998056650162,0.0282405298203,-0.0554221756756,0.00370769621804],0)
+    p.cmmnd_CartesianPosition([0,0,-0.075,0,0,0,1],'r')
+    # p.cmmnd_makeContact_ground(-3)
+    p.cmmnd_FingerPosition([100,100,75])
     p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    ## placing
-    p.cmmnd_CartesianPosition([0.60404330492, 0.25, 0, 0.611618876457, 0.788678228855, 0.0379388593137, 0.0496951676905],0)
-    p.cmmnd_FingerPosition([75,75,75])
+    # placing
+    # p.cmmnd_CartesianPosition([0.64, 0, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    # p.cmmnd_FingerPosition([80,80,75])
+    #
+    # p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
+    # p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1],'r')
+    # p.cmmnd_FingerPosition([100,100,75])
+    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
+    # # # # placing
+    # p.cmmnd_CartesianPosition([0.60404330492, 0.3, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    # p.cmmnd_FingerPosition([80,80,75])
+    #
+    # p.cmmnd_CartesianPosition([0.590910434723, -0.331213414669, 0.111737504601, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
+    # p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1],'r')
+    # p.cmmnd_FingerPosition([100,100,75])
+    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
+    # # # ## placing
+    # p.cmmnd_CartesianPosition([0.60404330492, 0.05, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    # p.cmmnd_FingerPosition([80,80,75])

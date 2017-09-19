@@ -104,6 +104,7 @@ class pick_peas_class(object):
     def cmmnd_CartesianVelocity(self,cart_velo):
         msg = PoseVelocity(
             twist_linear_x=cart_velo[0],
+
             twist_linear_y=cart_velo[1],
             twist_linear_z=cart_velo[2],
             twist_angular_x=cart_velo[3],
@@ -122,6 +123,7 @@ class pick_peas_class(object):
             positions = [float(n) for n in joint_degree]
             result = joints_action_client.joint_angle_client(positions)
         except rospy.ROSInterruptException:
+
             print('program interrupted before completion')
 
 
@@ -156,14 +158,16 @@ if __name__ == '__main__':
     p.cmmnd_FingerPosition([60,60,60])
 
     ## pour position (hand generated)
-    p.cmmnd_CartesianPosition([ 0.599633812904, -0.299243062735, 0.0949880501628, -0.41516315937, 0.56139343977, -0.560089945793, 0.445843100548], 0)
-    # p.cmmnd_CartesianPosition([0.04,-0.01,0,0,0,0,1],'r')
+    p.cmmnd_CartesianPosition([ 0.53318965435, -0.314717978239, 0.0891292691231, 0.619124174118, 0.32073751092, 0.408030241728, 0.589341938496], 0)
+    p.cmmnd_CartesianPosition([0.04,-0.01,0,0,0,0,1],'r')
+    p.cmmnd_FingerPosition([100,100,100])
+    # p.cmmnd_JointAngles([0,0,0,0,0,15,0],'-r')
+    #
+    # ## close the fingers. pick up the mug.
 
-    ## close the fingers. pick up the mug.
-    # p.cmmnd_FingerPosition([100,100,100])
-    # p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1],'r')
-
-    ## go to pour positions
-    # p.goto("root", "pour_3")
-    # p.goto("root", "pour_2")
+    p.cmmnd_CartesianPosition([0,0,0.15,0,0,0,1],'r')
+    #
+    # ## go to pour positions
     # p.goto("root", "pour_1")
+    # p.goto("root", "pour_2")
+    # p.goto("root", "pour_3")

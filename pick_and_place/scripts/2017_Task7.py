@@ -56,7 +56,10 @@ class pick_peas_class(object):
                                                     WrenchStamped,
                                                     self.tool_wrench)
 
+        self.sensor_sub = rospy.Subscriber('/sensor_values',Int32MultiArray,self.handle_sensor)
+
         self.obj_det = False
+        self.sensor_values = []
         self.touch_finger_1 = False
         self.touch_finger_3 = False
         self.calibrated = False
@@ -65,6 +68,9 @@ class pick_peas_class(object):
         self.tool_wrench_x = 0
         self.tool_wrench_y = 0
         self.tool_wrench_z = 0
+        self.angles = []
+        self.sensorValues_1 = []
+        self.sensorValues_2 = []
 
     def tool_wrench(self,msg):
         self.tool_wrench_x = msg.wrench.force.x
@@ -74,6 +80,11 @@ class pick_peas_class(object):
 
     def detect_Bump(self,msg):
         self.bump_finger_1 = msg.finger1
+
+    def handle_sensor(self, msg):
+        self.sensor_values = msg.data
+        self.sensorValues_1.append(self.sensor_values[0])
+        self.sensorValues_2.append(self.sensor_values[1])
 
     def set_obj_det(self,msg):
         self.obj_det = np.any(np.array([msg.finger1, msg.finger2, msg.finger3]))
@@ -92,7 +103,7 @@ class pick_peas_class(object):
         self.current_joint_angles[4] = data.joint5
         self.current_joint_angles[5] = data.joint6
         self.current_joint_angles[6] = data.joint7
-        # print (self.current_joint_angles)
+        # print (self.current_joint_angles[5])
 
 
     def cmmnd_CartesianPosition(self, pose_value, relative):
@@ -164,14 +175,35 @@ class pick_peas_class(object):
 
 if __name__ == '__main__':
     rospy.init_node("task_7")
-    rate = rospy.Rate(100)
+    rate = rospy.Rate(49)
     p = pick_peas_class()
-    p.j.home()
-    p.cmmnd_FingerPosition([75,75,75])
+    # p.j.home()
+    # p.cmmnd_FingerPosition([75,75,75])
+    p.cmmnd_JointAngles([0,0,0,0,0,-360,0],'-r')
 
     # print ("Starting task. . .\n")
     # p.cmmnd_CartesianPosition([0.361263722181, -0.428992092609, -0.017090972513, 0.972156882286, -0.232297956944, 0.0305838417262, -0.00364511157386],0)
     # p.cmmnd_makeContact_ground(20)
     # rospy.spin()
-    current_finger_position = p.cmmd_touchBlock([30,30,30])
-    print (current_finger_position[0], current_finger_position[1])
+    # current_finger_position = p.cmmd_touchBlock([30,30,30])
+    # print (current_finger_position[0], current_finger_position[1])
+    # ii = 0
+    # while ii < 180 and not rospy.is_shutdown():
+    #     p.cmmnd_JointAngles([0,0,0,0,0,1,0],'-r')
+    #     print (p.current_joint_angles[5])
+    #     print (p.sensor_values[0])
+    #     p.angles.append(p.current_joint_angles[5])
+    #     p.sensorValues.append(p.sensor_values[0])
+    #     ii += 1
+    #     rate.sleep()
+
+    # print (p.angles)
+    # print (p.sensorValues)
+    # with open('angles.txt', 'w') as f:
+    #     f.writelines(["%s\n" % item  for item in p.angles])
+    rospy.sleep(16)
+    with open('values_1.txt', 'w') as f:
+        f.writelines(["%s\n" % item  for item in p.sensorValues_1])
+    with open('values_2.txt', 'w') as f:
+        f.writelines(["%s\n" % item  for item in p.sensorValues_2])
+    # rospy.spin()

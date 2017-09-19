@@ -57,13 +57,15 @@ class pick_peas_class(object):
         self.touch_finger_1 = False
         self.touch_finger_3 = False
         self.calibrated = False
-        self.bump_finger_1 = 0
+        self.bump_finger_1 = False
+        self.bump_finger_3 = False
 
     def set_calibrated(self,msg):
         self.calibrated = msg.data
 
     def detect_Bump(self,msg):
         self.bump_finger_1 = msg.finger1
+        self.bump_finger_3 = msg.finger3
         # print (self.bump_finger_1)
 
     def set_obj_det(self,msg):
@@ -157,33 +159,37 @@ class pick_peas_class(object):
 
     def cmmnd_makeContact_ground(self, sensitivity):
         rate = rospy.Rate(100)
-        while (self.bump_finger_1<sensitivity)and not rospy.is_shutdown():
+        while (self.bump_finger_3 < sensitivity)and not rospy.is_shutdown():
             print (self.bump_finger_1)
             self.cmmnd_CartesianVelocity([0,0,-0.03,0,0,0,1])
             rate.sleep()
         print ("contact made with the ground")
 
-    def pick_USBlight_1(self, current_finger_position):
-        ii = 0
+    def cmmnd_makeContact_USBPlug(self, sensitivity):
         rate = rospy.Rate(100)
-        while self.touch_finger_1 != True and not rospy.is_shutdown():
-            current_finger_position[0] += 5 # slowly close finger_1 until contact is made
-            print (current_finger_position[0])
-            self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
+        while (self.bump_finger_3 < sensitivity)and not rospy.is_shutdown():
+            print (self.bump_finger_1)
+            self.cmmnd_CartesianVelocity([-0.03,0,0,0,0,0,1])
+            rate.sleep()
+        print ("contact made with the ground")
+
+    # def pick_USBlight_1(self, current_finger_position):
+    #     ii = 0
+    #     rate = rospy.Rate(100)
+    #     while self.touch_finger_3 != True and not rospy.is_shutdown():
+    #         current_finger_position[0] += 5 # slowly close finger_1 until contact is made
+    #         print (current_finger_position[0])
+    #         self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
+    #         rate.sleep()
+    #     self.touch_finger_1 = False
+    #     return current_finger_position
+
+    def pick_USBlight_1(self):
+        rate = rospy.Rate(100)
+        while self.touch_finger_3 != True and not rospy.is_shutdown():
+            self.cmmnd_CartesianVelocity([0.03,0,0,0,0,0,1])
             rate.sleep()
         self.touch_finger_1 = False
-        return current_finger_position
-
-    def pick_USBlight_2(self, current_finger_position):
-        ii = 0
-        rate = rospy.Rate(1000)
-        while self.touch_finger_3 != True and not rospy.is_shutdown():
-            current_finger_position[2] += 2 # slowly close finger_1 until contact is made
-            print (current_finger_position[0])
-            self.cmmnd_FingerPosition([current_finger_position[0], current_finger_position[1], current_finger_position[2]])
-            rate.sleep()
-
-
 
 
 
@@ -194,37 +200,66 @@ if __name__ == '__main__':
 
     # p.j.home()
 
-    p.cmmnd_FingerPosition([50,40,0])
-    # pick position (hand generated) for normal light
-    p.cmmnd_CartesianPosition([0.5, -0.19, 0.0726234141737, 0.765976846218, 0.641924321651, -0.00027509778738, -0.00027509778738], 0)
-    p.cmmnd_CartesianPosition([0,0,-0.065,0,0,0,1],'r')
-    p.cmmnd_JointAngles([0,0,0,0,0,8,0], 'r')
+    '''
+    Picking and placing normal light
+    '''
+    # p.cmmnd_FingerPosition([50,40,0])
+    ## pick position (hand generated) for normal light
+    # p.cmmnd_CartesianPosition([0.5, -0.19, 0.07, 0.765976846218, 0.641924321651, -0.00027509778738, -0.00027509778738], 0)
+    # p.cmmnd_CartesianPosition([0,0,-0.065,0,0,0,1],'r')
+    # p.cmmnd_JointAngles([0,0,0,0,0,8,0], 'r')
 
+    ##  not thinking of using the feedback
     # current_finger_position = p.pick_USBlight_1([50,40,0]) # close fingers with feedback
     # p.cmmnd_FingerPosition([current_finger_position[0],100,current_finger_position[2]]) # close fingers with feedback
-    # p.cmmnd_FingerPosition([100,100,current_finger_position[2]]) # close fingers with feedback
+    # p.cmmnd_FingerPosition([90,90,current_finger_position[2]]) # close fingers with feedback
 
-    p.cmmnd_FingerPosition([100,100,0]) # close fingers without feedback
+    # p.cmmnd_FingerPosition([100,100,0]) # close fingers without feedback
 
-    p.cmmnd_CartesianPosition([0,0,0.06,0,0,0,1],'r')
+    # p.cmmnd_CartesianPosition([0,0,0.06,0,0,0,1],'r') #lift up the light
+
     ## plug it back in
-    # p.cmmnd_makeContact_ground(40) # argument #1 is sensitivity
+    # p.cmmnd_makeContact_ground(30) # argument #1 is sensitivity
     # p.cmmnd_CartesianPosition([0,0,-0.015,0,0,0,1],'r')
     # p.cmmnd_FingerPosition([0,0,0])
-    p.cmmnd_CartesianPosition([0,0,-0.06,0,0,0,1],'r')
-    p.cmmnd_FingerPosition([0,0,0])
+
+    ## go back to home
+    # p.j.home()
+
+    '''
+    Picking and placing USB light
+    '''
 
     ## pick position (hand generated) for USB light
-    # p.cmmnd_CartesianPosition([0.55, -0.2, 0.0373686514795, -0.55370759964, -0.470494896173, -0.533289194107, -0.433180242777], 0)
-    # p.cmmnd_FingerPosition([50,50,50])
-    # # p.cmmnd_FingerPosition([100,100,50])
-    # p.cmmnd_CartesianPosition([0.06,0,0,0,0,0,1],'r')
-    # current_finger_position = p.pick_USBlight_1([50,50,50]) # start from the current finger position
+    p.cmmnd_JointAngles([0,0,0,0,0,180,0],'-r')
+    p.cmmnd_CartesianPosition([0.615, -0.085, 0.19826370161, -0.0292747318745, 0.725579082966, -0.683705151081, 0.0722849443555], 0)
+    p.cmmnd_FingerPosition([70,70,50])
+    p.cmmnd_CartesianPosition([0,0,-0.21,0,0,0,1],'r')
+    p.cmmnd_CartesianPosition([0,-0.09,0,0,0,0,1],'r')
+    p.cmmnd_JointAngles([0,0,0,0,0,-7,0],'-r')
+
+    p.cmmnd_FingerPosition([100,100,50])
+
+    ## uncomment code below to close the fingers with feedback
+    # current_finger_position = p.pick_USBlight_1() # start from the current finger position
+    # p.cmmnd_CartesianPosition([-0.03,0,0,0,0,0,1],'r')
     # p.cmmnd_FingerPosition([current_finger_position[0],100,50])
+
     # p.cmmnd_FingerPosition([100,100,50])
-    # p.cmmnd_CartesianPosition([0,0,0.08,0,0,0,1],'r')
-    # ## plug it back in
-    # p.cmmnd_makeContact_ground(100)
+
+    ##lift the light
+    p.cmmnd_CartesianPosition([0,0,0.03,0,0,0,1],'r')
+
+    ## last resort
+    # p.cmmnd_CartesianPosition([0,0,0.01,0,0,0,1],'r')
+    # p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1],'r')
+
+    ## plug it back in
+    p.cmmnd_makeContact_ground(15) #arg1 is sensitivity
+    p.cmmnd_CartesianPosition([0,0,0.005,0,0,0,1],'r')
+    # rospy.sleep(4.)
+    # p.cmmnd_makeContact_USBPlug(17)
+    # p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1],'r')
     # p.cmmnd_FingerPosition([0,0,0])
-    #
+
     # p.j.home()
