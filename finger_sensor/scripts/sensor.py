@@ -8,7 +8,7 @@ import numpy as np
 
 BAUD_RATE = 115200
 PORT_NAME = '/dev/ttyACM0'
-NUM_SENSORS = 2  # CHANGE this to no. of sensor values read
+NUM_SENSORS = 3  # CHANGE this to no. of sensor values read
 
 def sensor_node():
 

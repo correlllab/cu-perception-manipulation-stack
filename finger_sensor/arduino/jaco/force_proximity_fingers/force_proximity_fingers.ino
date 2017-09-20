@@ -11,7 +11,7 @@
 
 /***** Library parameters ****/
 
-#define NFINGERS 2
+#define NFINGERS 3
 
 #include <i2c_t3.h>     // Use <i2c_t3.h> for Teensy and <Wire.h> for Arduino
 #include <math.h>
@@ -58,9 +58,10 @@ int  touch_analysis = 0;
 
 void setup()
 {
+  
   if (NFINGERS) i2c_chans[0] = &Wire;
   if (NFINGERS > 1) i2c_chans[1] = &Wire1;
-//  if(NFINGERS>2) i2c_chans[2]=&Wire2; // requires Teensy 3.5
+  if(NFINGERS>2) i2c_chans[2]=&Wire2; // requires Teensy 3.5+
 
   Serial.begin(115200);
   for (int i = 0; i < NFINGERS; i++) {
@@ -93,6 +94,7 @@ void setup()
 
 void loop()
 {
+//  Serial.println("are we inside?");
   time = millis();
   if (Serial.available() > 0) {
     // read the incoming byte:

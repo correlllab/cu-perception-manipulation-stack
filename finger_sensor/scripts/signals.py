@@ -94,9 +94,9 @@ class FilterSignal(object):
 
     def compute_sai(self):
         # Skipping the front tip sensor (idx 7 and 15)
-        finger2 = sum(self.sensor_values[-1][1:2])
         finger1 = sum(self.sensor_values[-1][0:1])
-        finger3 = sum(self.sensor_values[-1][1:2])
+        finger2 = sum(self.sensor_values[-1][1:2])
+        finger3 = sum(self.sensor_values[-1][2:3])
         msg = FingerSAI()
         msg.finger1 = float(finger1)
         msg.finger2 = float(finger2)
@@ -115,7 +115,7 @@ class FilterSignal(object):
         # print shape()
         finger1 = filtered_values[-1][0:1].sum()
         finger2 = filtered_values[-1][1:2].sum()
-        finger3 = filtered_values[-1][1:2].sum()
+        finger3 = filtered_values[-1][2:3].sum()
         msg = FingerSAI()
         msg.finger1 = float(finger1)
         msg.finger2 = float(finger2)
