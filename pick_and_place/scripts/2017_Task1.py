@@ -169,21 +169,22 @@ if __name__ == '__main__':
     rospy.init_node("task_1")
     rate = rospy.Rate(100)
     p = pick_peas_class()
-    # p.j.home()
-    # p.cmmnd_FingerPosition([50,50,0])
-    #
-    # print ("Starting task. . .\n")
-    # p.goto_cup()
-    #
-    # print ("Picking up the cup. . .\n")
-    # p.cmmnd_CartesianPosition([0,0,-0.03,0,0,0,1], '-r')
-    # p.cmmnd_FingerPosition([100,100,0])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
-    # #
-    # # print ("Placing up the cup. . .\n")
-    # p.goto_sauccer()
-    # p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1], '-r')
-    # p.cmmnd_FingerPosition([50,50,0])
+    p.j.home()
+    p.cmmnd_FingerPosition([50,50,0])
+
+    print ("Starting task. . .\n")
+    p.goto_cup()
+
+    print ("Picking up the cup. . .\n")
+    p.cmmnd_CartesianPosition([0,0,-0.03,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([100,100,0])
+    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1], '-r')
+
+    print ("Placing up the cup. . .\n")
+    p.goto_sauccer()
+    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1], '-r')
+    p.cmmnd_FingerPosition([50,50,0])
+    p.cmmnd_CartesianPosition([0,0,0.3,0,0,0,1],'r')
 
     p.j.home()
 
@@ -201,3 +202,4 @@ if __name__ == '__main__':
     p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
 
     # go to final target location
+    # TODO: add the final location. Keep the orientation fixed.

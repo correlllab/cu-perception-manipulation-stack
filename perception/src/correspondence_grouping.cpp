@@ -47,8 +47,8 @@ std::string path_to_models = "/object_database/";
  * then models should be set to `{"plate", "cup"}`
  */
 // std::string models[] =  {"cup", "cup_with_spoon", "plate", "bowl_farther_half", "salt_shaker"}; //for task1,3..
-// std::string models[] =  {"green_cup", "green_saucer", "green_cup_with_spoon"}; //for task2 2017
-std::string models[] =  {"hexagon","square"};
+std::string models[] =  {"green_cup", "green_saucer", "green_cup_with_spoon"}; //for task2 2017
+// std::string models[] =  {"hexagon","square"};
 // std::string models[] = {"cup"}; //for saving purpose
 /**
  * Correspondences needed for each associated model.
@@ -57,8 +57,8 @@ std::string models[] =  {"hexagon","square"};
  *     cup
  */
 // int correspondences_needed[] = {80, 30, 200, 70, 50}; //numbers generated experimentally
-// int correspondences_needed[] = {50, 50, 50};
-int correspondences_needed[] = {10,10};
+int correspondences_needed[] = {50, 50, 50};
+// int correspondences_needed[] = {10,10};
 // int correspondences_needed[] = {700}; //for saving purpose
 
 ObjectDetection::ObjectDetection()

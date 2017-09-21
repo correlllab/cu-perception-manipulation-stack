@@ -42,7 +42,7 @@ class grasp_generator(object):
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
-                trans = self.tfBuffer.lookup_transform('root', 'green_cup_position', rospy.Time())
+                trans = self.tfBuffer.lookup_transform('root', 'unknown_1', rospy.Time())
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rate.sleep()
                 continue
@@ -52,7 +52,7 @@ class grasp_generator(object):
 
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (1.57,0,1.57) # in radians
-            requrd_trans = (-0.08,-0.05,0.12)
+            requrd_trans = (-0.08,-0.07,0.1)
             requrd_trans = tuple(0.75 * x for x in requrd_trans)
             # calculate and get- an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)

@@ -49,7 +49,9 @@ class pick_peas_class(object):
 
         self.obj_det_finger_1 = False
         self.obj_det_finger_2 = False
+        self.obj_det_finger_3 = False
         self.touch_finger_1 = False
+        self.touch_finger_2 = False
         self.touch_finger_3 = False
         self.calibrated = False
 
@@ -59,12 +61,14 @@ class pick_peas_class(object):
         # self.obj_det = np.any(np.array([msg.finger1, msg.finger2, msg.finger3]))
         self.obj_det_finger_1 = msg.finger1
         self.obj_det_finger_2 = msg.finger2
+        self.obj_det_finger_3 = msg.finger3
         # print(self.obj_det)
 
 
     def set_touch(self, msg):
         self.touch_finger_1 = msg.finger1
-        self.touch_finger_3 = msg.finger2
+        self.touch_finger_2 = msg.finger2
+        self.touch_finger_3 = msg.finger3
 
     def callback(self,data):
         self.current_joint_angles[0] = data.joint1
@@ -132,15 +136,17 @@ class pick_peas_class(object):
     def lift_spoon(self):
 
         rate = rospy.Rate(100) # NOTE to publish cmmds to velocity_pub at 100Hz
-        while self.touch_finger_1 != True:
+        while self.touch_finger_3 != True:
             self.cmmnd_CartesianVelocity([0,0.025,0,0,0,0,1])
             rate.sleep()
-        self.touch_finger_1 = False
+        self.touch_finger_3 = False
 
         # p.cmmnd_CartesianPosition([0.02,0,0,0,0,0,1],'-r')
 
         self.cmmnd_FingerPosition([0, 0, 60])
+        self.cmmnd_FingerPosition([100, 0, 60])
         self.cmmnd_FingerPosition([100, 0, 100])
+        self.cmmnd_FingerPosition([100, 100, 100])
         self.cmmnd_CartesianPosition([0, 0, 0.13, 0, 0, 0, 1],'-r')
         # self.cmmnd_FingerPosition([100, 100, 100])
 
@@ -162,7 +168,7 @@ class pick_peas_class(object):
 
         counter = 0
         rate = rospy.Rate(100)
-        while not self.obj_det_finger_1 or self.obj_det_finger_2 and not rospy.is_shutdown():
+        while not self.obj_det_finger_3 and not rospy.is_shutdown():
             counter = counter + 1
             if(counter < 300):
                 cart_velocities = np.dot(matrix1[:3,:3],np.array([0,0,0.05])[np.newaxis].T) #change in y->x, z->y, x->z
@@ -214,25 +220,26 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     p = pick_peas_class()
 
-    p.j.home()
-    p.cmmnd_FingerPosition([0, 0, 60])
-
-    p.calibrate_obj_det_pub.publish(True)
-    while p.calibrated == False:
-        pass
-
-    print ("Starting task. . .\n")
-    p.goto_spoon()
-    p.cmmnd_JointAngles([0,0,0,0,0,-8,0],'-r')
-
-    print ("Searching spoon. . .\n")
-    # p.searchSpoon()
-    p.searchSpoon()
-    p.lift_spoon()
-
-    print ("Going to stir bowl. . .\n")
-    p.goto_stirCup()
-    p.cmmnd_CartesianPosition([0,0,-0.085,0,0,0,1],'-r')
-    p.stir_cup()
-
     # p.j.home()
+    # p.cmmnd_FingerPosition([0, 0, 60])
+    #
+    # p.calibrate_obj_det_pub.publish(True)
+    # while p.calibrated == False:
+    #     pass
+    #
+    # print ("Starting task. . .\n")
+    # p.goto_spoon()
+    # p.cmmnd_JointAngles([0,0,0,0,0,-8,0],'-r')
+    #
+    # print ("Searching spoon. . .\n")
+    # # p.searchSpoon()
+    # p.searchSpoon()
+    # p.lift_spoon()
+    #
+    # print ("Going to stir bowl. . .\n")
+    # p.goto_stirCup()
+    # p.cmmnd_CartesianPosition([0,0,-0.085,0,0,0,1],'-r')
+    # p.stir_cup()
+
+    p.cmmnd_FingerPosition([0, 0, 0])
+    p.j.home()

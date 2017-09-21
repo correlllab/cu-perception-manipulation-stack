@@ -141,27 +141,53 @@ if __name__ == '__main__':
     p.cmmnd_FingerPosition([80,80,75])
 
     print ("Starting task. . .\n")
+    # ====================================
+    ## picking utensils from tray
+    # ====================================
+    ## picking spoon
     p.cmmnd_CartesianPosition([0.476334422827,-0.345300972462,0.0714216381311,-0.998056650162,0.0282405298203,-0.0554221756756,0.00370769621804],0)
     p.cmmnd_CartesianPosition([0,0,-0.075,0,0,0,1],'r')
-    # p.cmmnd_makeContact_ground(-3)
     p.cmmnd_FingerPosition([100,100,75])
     p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # placing
-    # p.cmmnd_CartesianPosition([0.64, 0, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
-    # p.cmmnd_FingerPosition([80,80,75])
-    #
-    # p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
-    # p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1],'r')
-    # p.cmmnd_FingerPosition([100,100,75])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # # # # placing
-    # p.cmmnd_CartesianPosition([0.60404330492, 0.3, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
-    # p.cmmnd_FingerPosition([80,80,75])
-    #
-    # p.cmmnd_CartesianPosition([0.590910434723, -0.331213414669, 0.111737504601, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
-    # p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1],'r')
-    # p.cmmnd_FingerPosition([100,100,75])
-    # p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    # # # ## placing
-    # p.cmmnd_CartesianPosition([0.60404330492, 0.05, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
-    # p.cmmnd_FingerPosition([80,80,75])
+    p.cmmnd_CartesianPosition([0.64, 0, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    p.cmmnd_FingerPosition([80,80,75])
+
+    ## picking fork
+    p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
+    p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1],'r')
+    p.cmmnd_FingerPosition([100,100,75])
+    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
+    p.cmmnd_CartesianPosition([0.60404330492, 0.3, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    p.cmmnd_FingerPosition([80,80,75])
+
+    ## picking knife
+    p.cmmnd_CartesianPosition([0.590910434723, -0.331213414669, 0.111737504601, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
+    p.cmmnd_CartesianPosition([0,0,-0.13,0,0,0,1],'r')
+    p.cmmnd_FingerPosition([100,100,75])
+    p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
+    p.cmmnd_CartesianPosition([0.60404330492, 0.05, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    p.cmmnd_FingerPosition([80,80,75])
+
+    # ====================================
+    ## placing utensils in tray
+    # ====================================
+    ## picking spoon
+    p.cmmnd_CartesianPosition([0.64, 0, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1],'-r')
+    p.cmmnd_FingerPosition([100,100,100])
+    p.cmmnd_CartesianPosition([0.476334422827,-0.345300972462,0.1,-0.998056650162,0.0282405298203,-0.0554221756756,0.00370769621804],0)
+    p.cmmnd_FingerPosition([80,80,75])
+
+    ## picking fork
+    p.cmmnd_CartesianPosition([0.60404330492, 0.3, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1],'-r')
+    p.cmmnd_FingerPosition([100,100,100])
+    p.cmmnd_CartesianPosition([0.539246678352, -0.342241108418, 0.08, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
+    p.cmmnd_FingerPosition([80,80,75])
+
+    ## picking knife
+    p.cmmnd_CartesianPosition([0.60404330492, 0.05, 0, -0.725623369217, -0.685643792152, -0.0564622879028, -0.0132434144616],0)
+    p.cmmnd_CartesianPosition([0,0,-0.02,0,0,0,1],'-r')
+    p.cmmnd_FingerPosition([100,100,100])
+    p.cmmnd_CartesianPosition([0.590910434723, -0.331213414669, 0.111737504601, -0.999147117138, 0.02394787594689, -0.0333280749619, 0.00455530406907],0)
+    p.cmmnd_FingerPosition([80,80,75])

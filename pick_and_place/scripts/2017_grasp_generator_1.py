@@ -74,7 +74,7 @@ class grasp_generator(object):
             rotation = [trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w]
             # Identity matrix. Set the requ rot n trans wrt obj frame
             requrd_rot = (3.14,0,0) # in radians
-            requrd_trans = (0,0,0.13)
+            requrd_trans = (-0.04,0.03,0.13)
             # calculate and get an offset frame w/o ref to objct frame
             pose = self.getOffsetPoses(translation, rotation, requrd_rot, requrd_trans)
             trans_1= tuple(pose[:3])
