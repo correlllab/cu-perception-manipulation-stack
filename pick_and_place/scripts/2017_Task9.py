@@ -172,14 +172,23 @@ if __name__ == '__main__':
 
     p = pick_peas_class()
 
-    p.j.home()
+    # p.j.home()
+    # p.cmmnd_FingerPosition([100,100,0])
+    # p.cmmnd_CartesianPosition([0.535237491131, -0.36780333519, 0.211361071467, -0.989761471748, 0.142704561353, 0.00245477142744, 0.00130534102209], 0)
+    # p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1],'r')
+    # p.cmmnd_JointAngles([0,0,0,0,0,-200,0],'-r')
 
-    p.cmmnd_FingerPosition([50,50,50])
-    # pick position (hand generated) for normal light
-    p.cmmnd_CartesianPosition([0.611308574677, -0.245148137212, 0.0795629844069, -0.225930243731, -0.789678096771, -0.5496519804, -0.152469292283], 0)
-    p.cmmnd_CartesianPosition([0,0.05,0,0,0,0,1],'r')
+    p.j.home()
+    p.cmmnd_FingerPosition([80,80,0])
+    p.cmmnd_CartesianPosition([0.421602904797, -0.410114049911, 0.0666319057345, 0.60971480608, 0.404368281364, 0.484864085913, 0.4792085886], 0)
+    p.cmmnd_JointAngles([0,0,0,0,0,-10,0],'-r')
+    p.cmmnd_CartesianPosition([0.05,0,0,0,0,0,1],'r')
     p.cmmnd_FingerPosition([100,100,0])
     p.cmmnd_CartesianPosition([0,0,0.2,0,0,0,1],'r')
-    p.cmmnd_CartesianPosition([0,0.35,0,0,0,0,1],'r')
-    p.cmmnd_CartesianPosition([0,0,-0.15,0,0,0,1],'r')
+
+
+    # p.cmmnd_CartesianPosition([0,0.34,0,0,0,0,1],'-r')
+    p.cmmnd_CartesianPosition([0.478082627058,-0.0699163973331,0.193045318127,0.565289139748,0.463054895401,0.500159859657,0.464616537094],0)
+    # p.cmmnd_JointAngles([0,0,0,0,0,15,0],'-r')
+    p.cmmnd_CartesianPosition([0,0,-0.1,0,0,0,1],'r')
     p.cmmnd_FingerPosition([0,0,0])

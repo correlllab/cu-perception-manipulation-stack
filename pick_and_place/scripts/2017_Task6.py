@@ -124,6 +124,7 @@ if __name__ == '__main__':
     p.cmmnd_CartesianPosition([0.612064242363, -0.102864965796, 0.156103774905, -0.123335294425, -0.716815114021, -0.68497890234, -0.0420527271926],0)
     p.cmmnd_FingerPosition([100,100,100])
     p.cmmnd_JointAngles([0,0,0,0,0,180,0],'r')
+    p.cmmnd_CartesianPosition([0,-0.05,0,0,0,0,1], '-r')
     p.cmmnd_CartesianPosition([0,-0.1,0,0,0,0,1], '-r')
     p.cmmnd_CartesianPosition([0,0,0.4,0,0,0,1], '-r')
 
